@@ -124,9 +124,11 @@
         } @else {
           @for (product of products(); track product.id) {
             <a class="card" [routerLink]="['/product', product.id]">
-              @if (product.image) {
-                <img [src]="product.image" [alt]="product.name" loading="lazy" />
-              }
+              <div class="cardImage">
+                @if (product.image) {
+                  <img [src]="product.image" [alt]="product.name" loading="lazy" />
+                }
+              </div>
               <p class="prodNam">{{ product.name }}</p>
               <p class="prodPrice">{{ product.price | currency: product.currency }}</p>
             </a>

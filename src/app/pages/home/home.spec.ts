@@ -68,16 +68,36 @@ describe('Home', () => {
     expect(card.querySelector('img')?.getAttribute('src')).toBe('/berry.jpg');
   });
 
-  it('preserves page scrolling and supports horizontal and Shift-wheel slider input', () => {
+  it('preserves page scrolling and supports horizontal and Shift-wheel slider input', async () => {
     const track = fixture.nativeElement.querySelector('.sec3Slider') as HTMLElement;
     const previous = fixture.nativeElement.querySelector('.slider-prev') as HTMLButtonElement;
     const next = fixture.nativeElement.querySelector('.slider-next') as HTMLButtonElement;
-    Object.defineProperties(track, {
-      scrollWidth: { configurable: true, value: 1400 },
-      clientWidth: { configurable: true, value: 400 },
+    const catalog = TestBed.inject(Products) as unknown as { getActiveProducts: ReturnType<typeof vi.fn> };
+    Object.defineProperty(track, 'scrollTo', {
+      configurable: true,
+      value: ({ left }: ScrollToOptions) => { track.scrollLeft = left ?? 0; },
     });
+    catalog.getActiveProducts.mockResolvedValueOnce([
+      { id: 4, name: 'Berry Blast', price: 12, currency: 'USD', image: '/berry.jpg', slug: 'berry-blast', category: 'boost-blends', categoryName: 'Boost Blends' },
+      { id: 5, name: 'Citrus Charge', price: 14, currency: 'USD', image: '/citrus.jpg', slug: 'citrus-charge', category: 'boost-blends', categoryName: 'Boost Blends' },
+    ]);
+    await component.loadProducts();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    Object.defineProperties(track, {
+      scrollWidth: { configurable: true, value: 1240 },
+      clientWidth: { configurable: true, value: 408 },
+      offsetLeft: { configurable: true, value: 0 },
+    });
+    track.querySelectorAll<HTMLElement>('.card').forEach((card, index) => {
+      Object.defineProperties(card, {
+        offsetLeft: { configurable: true, value: index * 208 },
+        offsetWidth: { configurable: true, value: 200 },
+      });
+    });
+    track.scrollLeft = 416;
     track.dispatchEvent(new Event('scroll'));
-    expect(previous.disabled).toBe(true);
+    expect(previous.disabled).toBe(false);
     expect(next.disabled).toBe(false);
     const wheel = (deltaX: number, deltaY: number, ctrlKey = false, shiftKey = false) => {
       const event = new WheelEvent('wheel', { deltaX, deltaY, ctrlKey, shiftKey, cancelable: true });
@@ -85,37 +105,44 @@ describe('Home', () => {
       return event;
     };
     expect(wheel(0, 120).defaultPrevented).toBe(false);
-    expect(track.scrollLeft).toBe(0);
+    expect(track.scrollLeft).toBe(416);
     expect(wheel(0, 120, false, true).defaultPrevented).toBe(true);
-    expect(track.scrollLeft).toBe(120);
+    expect(track.scrollLeft).toBe(482);
     expect(previous.disabled).toBe(false);
     wheel(-80, 0);
-    expect(track.scrollLeft).toBe(40);
+    expect(track.scrollLeft).toBe(438);
     wheel(0, -120, false, true);
-    expect(track.scrollLeft).toBe(0);
+    expect(track.scrollLeft).toBe(372);
     expect(wheel(0, -120).defaultPrevented).toBe(false);
     wheel(2000, 0);
-    expect(track.scrollLeft).toBe(1000);
-    expect(next.disabled).toBe(true);
+    expect(track.scrollLeft).toBe(416);
+    expect(next.disabled).toBe(false);
     expect(wheel(0, 120).defaultPrevented).toBe(false);
     expect(wheel(0, -120).defaultPrevented).toBe(false);
-    expect(track.scrollLeft).toBe(1000);
+    expect(track.scrollLeft).toBe(416);
     expect(wheel(0, -120, true).defaultPrevented).toBe(false);
     const scrollBy = vi.fn();
     Object.defineProperty(track, 'scrollBy', { configurable: true, value: scrollBy });
-    track.scrollLeft = 400;
+    track.scrollLeft = 416;
     track.dispatchEvent(new Event('scroll'));
     next.click();
-    expect(scrollBy).toHaveBeenLastCalledWith({ left: expect.any(Number), behavior: 'smooth' });
-    expect(scrollBy.mock.calls[0][0].left).toBeGreaterThan(0);
+    expect(scrollBy).toHaveBeenLastCalledWith({ left: 200, behavior: 'smooth' });
+    expect(scrollBy.mock.calls[0][0].left).toBe(200);
+    next.click();
+    expect(scrollBy).toHaveBeenCalledTimes(1);
+    track.dispatchEvent(new Event('scrollend'));
+    expect(scrollBy).toHaveBeenCalledTimes(2);
+    expect(scrollBy.mock.calls[1][0].left).toBe(200);
+    track.dispatchEvent(new Event('scrollend'));
     previous.click();
-    expect(scrollBy.mock.calls[1][0].left).toBeLessThan(0);
+    expect(scrollBy.mock.calls[2][0].left).toBe(-200);
+    track.dispatchEvent(new Event('scrollend'));
     reduced = true;
     next.click();
-    expect(scrollBy.mock.calls[2][0].behavior).toBe('auto');
+    expect(scrollBy.mock.calls[3][0].behavior).toBe('instant');
     fixture.destroy();
     expect(wheel(0, 120).defaultPrevented).toBe(false);
-    expect(track.scrollLeft).toBe(400);
+    expect(track.scrollLeft).toBe(416);
   });
 
   afterEach(() => {

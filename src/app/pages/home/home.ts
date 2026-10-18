@@ -150,31 +150,108 @@ export class Home {
     const next = carousel?.querySelector<HTMLButtonElement>('.slider-next');
     if (!track || !previous || !next) return;
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let loopClones: HTMLElement[] = [];
+    let cloneSources: HTMLElement[] = [];
+    const cardStart = (card: HTMLElement) => card.offsetLeft - track.offsetLeft;
+    const syncLoopClone = () => {
+      const originals = Array.from(track.querySelectorAll<HTMLElement>('.card:not([data-loop-clone])'));
+      if (originals.length === cloneSources.length && originals.every((card, index) => card === cloneSources[index]) &&
+          loopClones.every((clone) => clone.parentElement === track)) return;
+      loopClones.forEach((clone) => clone.remove());
+      loopClones = [];
+      cloneSources = originals;
+      if (originals.length < 2) return;
+      const before = originals.slice(-2).map((card) => card.cloneNode(true) as HTMLElement);
+      const after = originals.slice(0, 2).map((card) => card.cloneNode(true) as HTMLElement);
+      for (const clone of before) clone.dataset['loopClone'] = 'before';
+      for (const clone of after) clone.dataset['loopClone'] = 'after';
+      for (const clone of [...before, ...after]) {
+        clone.setAttribute('aria-hidden', 'true');
+        clone.inert = true;
+      }
+      before.forEach((clone) => track.insertBefore(clone, originals[0]));
+      after.forEach((clone) => track.append(clone));
+      loopClones = [...before, ...after];
+      track.scrollTo({ left: cardStart(originals[0]), behavior: 'instant' });
+    };
     const update = () => {
-      previous.disabled = track.scrollLeft <= 1;
-      next.disabled = track.scrollLeft >= track.scrollWidth - track.clientWidth - 1;
+      const originals = Array.from(track.querySelectorAll<HTMLElement>('.card:not([data-loop-clone])'));
+      previous.disabled = next.disabled = originals.length < 2;
+      const cards = Array.from(track.querySelectorAll<HTMLElement>('.card'));
+      if (!cards.length) return;
+      const currentStart = cards.reduce((closest, card) =>
+        Math.abs(cardStart(card) - track.scrollLeft) < Math.abs(cardStart(closest) - track.scrollLeft)
+          ? card : closest,
+      );
+      const cloneDirection = currentStart.dataset['loopClone'];
+      if (cloneDirection === 'before' || cloneDirection === 'after') {
+        const target = cloneDirection === 'before' ? originals[originals.length - 1] : originals[0];
+        if (target) track.scrollTo({ left: cardStart(target), behavior: 'instant' });
+      }
+      const settledCards = Array.from(track.querySelectorAll<HTMLElement>('.card'));
+      const active = settledCards.reduce((closest, card) =>
+        Math.abs(cardStart(card) - track.scrollLeft) < Math.abs(cardStart(closest) - track.scrollLeft)
+          ? card : closest,
+      );
+      settledCards.forEach((card) => {
+        card.classList.toggle('is-active', card === active);
+        card.classList.toggle('is-inactive', card === active.nextElementSibling);
+      });
+    };
+    let moving = false;
+    let queuedMoves = 0;
+    let movementTimer: number | undefined;
+    const finishMove = () => {
+      if (!moving) return;
+      moving = false;
+      window.clearTimeout(movementTimer);
+      if (queuedMoves !== 0) {
+        const direction = Math.sign(queuedMoves);
+        queuedMoves -= direction;
+        move(direction);
+      }
     };
     const move = (direction: number) => {
-      const card = track.querySelector<HTMLElement>('.card');
-      const distance = card ? card.getBoundingClientRect().width +
+      if (track.querySelectorAll('.card:not([data-loop-clone])').length < 2) return;
+      if (moving) {
+        queuedMoves += direction;
+        return;
+      }
+      const card = track.querySelector<HTMLElement>('.card:not([data-loop-clone])');
+      // offsetWidth stays fixed while CSS scale transforms animate the card visually.
+      const distance = card ? card.offsetWidth +
         (parseFloat(window.getComputedStyle(track).columnGap) || 0) : track.clientWidth;
-      track.scrollBy({ left: direction * distance, behavior: motion.matches ? 'auto' : 'smooth' });
+      if (motion.matches) {
+        track.scrollBy({ left: direction * distance, behavior: 'instant' });
+        return;
+      }
+      moving = true;
+      track.scrollBy({ left: direction * distance, behavior: 'smooth' });
+      movementTimer = window.setTimeout(finishMove, 900);
     };
     const back = () => move(-1);
     const forward = () => move(1);
+    let autoplay: number | undefined;
+    const scheduleAutoplay = () => {
+      window.clearInterval(autoplay);
+      autoplay = window.setInterval(() => {
+        if (track.querySelectorAll('.card:not([data-loop-clone])').length < 2) return;
+        move(1);
+      }, 5000);
+    };
     const wheel = (event: WheelEvent) => {
-      // Vertical wheel input belongs to the page; Shift explicitly selects the slider.
       if (event.ctrlKey) return;
-      if (!event.shiftKey && Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
-      const delta = event.shiftKey && Math.abs(event.deltaY) > Math.abs(event.deltaX)
-        ? event.deltaY : event.deltaX;
-      const pixels = delta * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? track.clientWidth : 1) * 0.55;
+      const isShiftScroll = event.shiftKey && Math.abs(event.deltaY) > Math.abs(event.deltaX);
+      if (!isShiftScroll && Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
+      const wheelDelta = isShiftScroll ? event.deltaY : event.deltaX;
+      const pixels = wheelDelta * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? track.clientWidth : 1) * 0.55;
       const end = Math.max(0, track.scrollWidth - track.clientWidth);
       if (end === 0 || pixels === 0) return;
       const target = Math.max(0, Math.min(end, track.scrollLeft + pixels));
       event.preventDefault();
       track.scrollLeft = target;
       update();
+      scheduleAutoplay();
     };
     let pointerStartX = 0;
     let pointerStartY = 0;
@@ -202,6 +279,7 @@ export class Home {
       if (dragging) {
         track.scrollLeft = pointerStartScroll - deltaX * 0.82;
         update();
+        scheduleAutoplay();
       }
     };
     const pointerUp = (event: PointerEvent) => {
@@ -220,8 +298,11 @@ export class Home {
     };
     previous.addEventListener('click', back);
     next.addEventListener('click', forward);
+    previous.addEventListener('click', scheduleAutoplay);
+    next.addEventListener('click', scheduleAutoplay);
     track.addEventListener('wheel', wheel, { passive: false });
     track.addEventListener('scroll', update, { passive: true });
+    track.addEventListener('scrollend', finishMove);
     track.addEventListener('pointerdown', pointerDown);
     track.addEventListener('pointermove', pointerMove);
     track.addEventListener('pointerup', pointerUp);
@@ -230,6 +311,7 @@ export class Home {
     const observer = new ResizeObserver(update);
     observer.observe(track);
     const observeCards = () => {
+      syncLoopClone();
       observer.disconnect();
       observer.observe(track);
       track.querySelectorAll('.card').forEach((card) => observer.observe(card));
@@ -239,11 +321,15 @@ export class Home {
     cardsObserver.observe(track, { childList: true });
     observeCards();
     update();
+    scheduleAutoplay();
     this.destroyRef.onDestroy(() => {
       previous.removeEventListener('click', back);
       next.removeEventListener('click', forward);
+      previous.removeEventListener('click', scheduleAutoplay);
+      next.removeEventListener('click', scheduleAutoplay);
       track.removeEventListener('wheel', wheel);
       track.removeEventListener('scroll', update);
+      track.removeEventListener('scrollend', finishMove);
       track.removeEventListener('pointerdown', pointerDown);
       track.removeEventListener('pointermove', pointerMove);
       track.removeEventListener('pointerup', pointerUp);
@@ -251,6 +337,8 @@ export class Home {
       track.removeEventListener('click', click, true);
       observer.disconnect();
       cardsObserver.disconnect();
+      window.clearInterval(autoplay);
+      window.clearTimeout(movementTimer);
     });
   }
 
