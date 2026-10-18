@@ -1,0 +1,32 @@
+<dialog #drawer id="cart-sidebar" aria-labelledby="cart-sidebar-title" (cancel)="cancel($event)"
+  (close)="finishClose()" (click)="outside($event)">
+  <div class="cart-panel">
+    <div class="cart-heading">
+      <h2 id="cart-sidebar-title">Your Cart</h2>
+      <button type="button" class="cart-close" aria-label="Close cart" autofocus (click)="close()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
+    @if (cart.items().length) {
+      <div class="cart-items">
+        @for (line of cart.items(); track line.product.id) {
+          <div class="cart-line">
+            @if (line.product.image) { <img [src]="line.product.image" [alt]="line.product.name" /> }
+            <div>
+              <p>{{ line.product.name }}</p>
+              <p>Quantity: {{ line.quantity }}</p>
+              <p>{{ line.product.price * line.quantity | currency: line.product.currency }}</p>
+              <button type="button" class="remove-item" [attr.aria-label]="'Remove ' + line.product.name" (click)="cart.remove(line.product.id)">Remove</button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+    <div class="cart-empty">
+      <p>Your cart is currently empty.</p>
+      <a routerLink="/shop" (click)="close()">Continue shopping</a>
+    </div>
+    }
+    <a class="view-cart" routerLink="/cart" (click)="close()">View Cart</a>
+  </div>
+</dialog>

@@ -1,0 +1,185 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  text-decoration: none;
+  list-style: none;
+  border: none;
+  background: none;
+}
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+button,
+input {
+  cursor: pointer;
+}
+
+header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.infoslideWrapper {
+  width: 100%;
+  position: fixed;
+  top: 0;
+  z-index: 999999;
+  overflow: hidden;
+  background-color: #de1313;
+}
+
+.infoslideAnimation {
+  display: flex;
+  width: max-content;
+  animation: infiniteSlide 15s linear infinite;
+}
+
+.slideGroup {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.slideGroup p {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 12px 40px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #f9f4f4;
+}
+
+@keyframes infiniteSlide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.headerContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 2rem;
+  position: fixed;
+  top: 80px;
+  z-index: 999999;
+}
+
+.logo {
+  font-family: 'Climate Crisis', system-ui;
+  font-size: 2.5rem;
+  font-weight: 300;
+}
+
+.logo span {
+  color: #fefefe;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+  padding: 1rem 2rem;
+}
+
+.navbar span {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  color: #fefefe;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.active {
+  color: #f68458;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.headerIcons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 0.6rem 1rem;
+  border-radius: 10px;
+}
+
+.headerIcons svg {
+  scale: 2.3;
+  color: #fefefe;
+}
+
+.headerIcons span {
+  font-size: 1.2rem;
+  font-weight: 300;
+  color: #fefefe;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.headerIcons a, .headerIcons .cart-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.cart-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
+.logout-button { padding: 0; border: 0; background: transparent; color: #fefefe; font: inherit; font-family: Helvetica, Arial, sans-serif; cursor: pointer; }
+.logout-button:disabled { opacity: .5; cursor: wait; }
+.logout-button:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
+.headerIcons .auth-error { font-size: 12px; max-width: 180px; }
+
+@media (max-width: 900px) {
+  .navbar, .headerIcons { display: none; }
+  .headerContainer { padding: 0 20px; }
+  .logo { font-size: clamp(22px, 6vw, 32px); }
+}
+
+.infoslideWrapper,
+.logo,
+.navbar > a,
+.headerIcons > a,
+.headerIcons > .cart-toggle {
+  animation: header-blur-reveal 900ms ease-out backwards;
+}
+.logo { animation-delay: 100ms; }
+.navbar > a:nth-child(1) { animation-delay: 200ms; }
+.navbar > a:nth-child(2) { animation-delay: 300ms; }
+.navbar > a:nth-child(3) { animation-delay: 400ms; }
+.headerIcons > a { animation-delay: 450ms; }
+.headerIcons > .cart-toggle { animation-delay: 550ms; }
+
+@keyframes header-blur-reveal {
+  from { opacity: 0; filter: blur(8px); }
+  to { opacity: 1; filter: blur(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .infoslideWrapper, .logo, .navbar > a, .headerIcons > a, .headerIcons > .cart-toggle { animation: none; }
+}
+
+@keyframes slideInfinite {
+  0% {
+    transform: translateX(-100vw);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}

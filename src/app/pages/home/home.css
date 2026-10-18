@@ -1,0 +1,752 @@
+.hero {
+  background: linear-gradient(
+    to bottom,
+    #001f3f 0%,
+    #003b8e 15%,
+    #007bff 30%,
+    #00bfff 42%,
+    #f68458 100%
+  );
+  min-height: 140vh;
+  color: #fff;
+  border-radius: 60px;
+  margin: 50px 10px;
+}
+
+.hero-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  height: 140vh;
+}
+
+.hero h1 {
+  font-family: 'Climate Crisis', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  text-align: center;
+  font-size: 6rem;
+  transform: translateY(10%);
+  font-style: normal;
+  background-color: none !important;
+  font-variation-settings: 'YEAR' 1979;
+}
+
+.heroImages {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heroImages img {
+  width: 250px;
+  height: auto;
+  margin: 0 -15px;
+  position: relative;
+  will-change: transform;
+}
+
+.heroImages img:first-child {
+  z-index: 1;
+  animation: floatLeft 4s ease-in-out infinite;
+}
+
+.heroImages img:nth-child(2) {
+  z-index: 3;
+  animation: floatMiddle 4s ease-in-out infinite;
+}
+
+.heroImages img:last-child {
+  z-index: 1;
+  animation: floatRight 4s ease-in-out infinite;
+}
+
+@keyframes floatLeft {
+  0%,
+  100% {
+    transform: translateY(-20px) rotate(-20deg);
+  }
+  50% {
+    transform: translateY(-45px) rotate(-20deg);
+  }
+}
+
+@keyframes floatMiddle {
+  0%,
+  100% {
+    transform: translateY(-25px) rotate(45deg) scale(1.2);
+  }
+  50% {
+    transform: translateY(15px) rotate(45deg) scale(1.2);
+  }
+}
+
+@keyframes floatRight {
+  0%,
+  100% {
+    transform: translate(30px, 0) rotate(35deg);
+  }
+  50% {
+    transform: translate(30px, -25px) rotate(35deg);
+  }
+}
+
+.heroBox {
+  position: absolute;
+  top: 55%;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  max-width: 450px;
+  background: rgba(0, 0, 0, 0.329);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 15px;
+  padding: 2rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.heroBox h3 {
+  font-family: 'Climate Crisis', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  text-align: center;
+  font-size: 3rem;
+  font-style: normal;
+  min-height: fit-content;
+  background-color: rebeccapurple;
+  font-variation-settings: 'YEAR' 1979;
+}
+
+.heroBox h4 {
+  font-family: 'Climate Crisis', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 300;
+  text-align: center;
+  font-size: 1.5rem;
+  font-style: normal;
+  font-variation-settings: 'YEAR' 1979;
+}
+
+.heroBox p {
+  font-optical-sizing: auto;
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 300;
+  text-align: center;
+  font-size: 1.2rem;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  font-style: normal;
+  text-transform: capitalize;
+}
+
+.heroBtns {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.heroBtns button {
+  padding: 1.2rem 3.2rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  border-radius: 60px;
+  transition: transform 0.3s ease;
+}
+
+.heroBtns button:hover {
+  text-decoration: underline;
+  transition: transform 0.3s ease;
+}
+
+.learnMoreBtn {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+}
+
+/* ssecond Section */
+
+.features {
+  /* Clip translated cards without creating a new scroll container. */
+  overflow-x: clip;
+}
+
+.featuresCont {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.features-title {
+  font-family: 'Climate Crisis', sans-serif;
+  color: #fff;
+  text-transform: capitalize;
+  text-align: center;
+  font-weight: 500;
+  font-size: 2.3rem;
+}
+
+.productCategories {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+}
+
+.productCategories > :is(.boostBlends, .zeroSugar, .classic) {
+  /* Hidden before the browser-only controller measures the original flex layout. */
+  transform: translate3d(var(--category-x, calc(-100vw - 100%)), 0, 0);
+}
+
+.productCategories img {
+  scale: 0.8;
+}
+
+.productCategoriesText {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  color: #fff;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Open Sans',
+    'Helvetica Neue',
+    sans-serif;
+  text-transform: capitalize;
+  font-size: 1.7rem;
+}
+
+.productCategoriesText svg {
+  scale: 2;
+  border: 1px solid #fff;
+  border-radius: 50%;
+  padding: 3px;
+}
+
+.productCategoriesText svg:hover {
+  transition: all 0.3s ease-in-out;
+  background-color: #fff;
+  color: #000;
+}
+
+/* third section */
+
+.sec3 {
+  min-height: 100vh;
+}
+
+.sec3-content {
+  display: grid;
+  grid-template-columns: minmax(280px, 600px) minmax(0, 1fr);
+  align-items: center;
+  height: 100vh;
+  margin: 0 20px;
+  gap: 30px;
+}
+
+.sec3-carousel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 70%;
+}
+
+.sec3box {
+  background-color: #fffffff6;
+  border-radius: 40px;
+  height: 70%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.sec3box h3 {
+  font-size: 2.3rem;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+  text-transform: capitalize;
+}
+
+.sec3box h3 span {
+  font-weight: 100;
+}
+
+.sec3box p {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1.2rem;
+  width: 60%;
+  justify-self: center;
+  align-self: center;
+}
+
+.viewallBtn {
+  color: #000000;
+  background: transparent;
+  border: 1px solid #000000;
+  padding: 1rem 2rem;
+  border-radius: 30px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  width: fit-content;
+  justify-self: center;
+  align-self: center;
+}
+
+.sec3Slider {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: auto;
+  touch-action: pan-y pan-x;
+  scrollbar-width: none;
+  padding: 4px 0;
+}
+
+.sec3Slider::-webkit-scrollbar {
+  display: none;
+}
+
+.slider-arrow {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  padding: 0;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.slider-arrow svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.slider-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.slider-prev {
+  left: 4px;
+}
+
+.slider-next {
+  right: 4px;
+}
+
+.sec3Slider .card {
+  box-sizing: border-box;
+  height: 90%;
+  min-width: 0;
+  flex: 0 0 min(280px, 82%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #fff;
+  border: 0;
+  border-radius: 0;
+  padding: 16px 8px;
+  text-decoration: none;
+  scroll-snap-align: center;
+}
+
+.sec3Slider .card img {
+  display: block;
+  width: 100%;
+  height: min(34vh, 320px);
+  min-height: 180px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.sec3Slider .card .prodNam,
+.sec3Slider .card .prodPrice {
+  margin: 0;
+  text-align: center;
+}
+
+.sec3Slider .card .prodNam {
+  font-size: 1.1rem;
+}
+
+.sec3Slider .card .prodPrice {
+  font-weight: 700;
+}
+
+.sec4 {
+  margin: 0 30px;
+  min-height: 200vh;
+  position: relative;
+  overflow-x: clip;
+  view-timeline: --sec4-scroll block;
+}
+
+.sec4text {
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+}
+
+.sec4content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  position: relative;
+}
+
+.sec4text p {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1.2rem;
+  width: 60%;
+  color: #fff;
+  text-transform: capitalize;
+}
+
+.sec4text h1 {
+  font-family: 'Climate Crisis', sans-serif;
+  font-size: 5rem;
+  text-align: start;
+  color: #ffffff;
+  width: 80%;
+  line-height: 1.5;
+  background: none;
+}
+
+.saveNowBtn {
+  background-color: #fff;
+  display: flex;
+  margin-top: 10%;
+  justify-self: center;
+  border-radius: 50px;
+  padding: 20px 50px;
+  color: #000;
+  border: none;
+}
+
+.sec4 img {
+  scale: 1.3em;
+}
+
+.sec4img1 {
+  position: absolute;
+  top: 90%;
+  z-index: 9;
+  right: 70%;
+  transform: rotate(40deg);
+}
+
+.sec4img2 {
+  position: absolute;
+  top: 40%;
+  right: 10%;
+  z-index: 9;
+  transform: rotate(-40deg);
+}
+
+/* fifth section */
+
+.sec5 {
+  min-height: 110vh;
+  position: relative;
+  overflow: clip;
+}
+
+.sec5img1 {
+  position: absolute;
+  height: 110vh;
+  z-index: 9;
+  width: 50%;
+  transform: translateX(-100%);
+}
+
+.sec5img2 {
+  position: absolute;
+  height: 110vh;
+  width: 50%;
+  right: 0;
+  z-index: 9;
+  transform: translateX(100%);
+}
+
+.sec5 .stars svg {
+  position: relative;
+  z-index: 1;
+}
+
+.sec5 .reviewBox {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: 35vw;
+  text-align: center;
+  z-index: 10;
+  bottom: 5%;
+  color: #fff;
+  border-radius: 30px;
+  min-height: fit-content;
+  font-family:
+    'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+  background: rgba(10, 15, 30, 0.182);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition:
+    background 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.sec5 .reviewBox:hover {
+  background: rgba(10, 15, 30, 0.45);
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  transform: translateY(20px);
+}
+
+.stars p {
+  color: gold;
+  font-size: 1.6rem;
+}
+
+.stars svg {
+  width: fit-content;
+  scale: 2.3;
+}
+
+.reviewBox h4 {
+  font-size: 2.4rem;
+  text-transform: capitalize;
+}
+
+.reviewBox h4 span {
+  font-size: 2.6rem;
+}
+
+.reviewBox .firstp {
+  font-size: 1.4rem;
+  width: 80%;
+  justify-self: center;
+}
+
+.reviewBox .lastp {
+  font-size: 1.6rem;
+}
+
+/* sixth section */
+
+.sec6 {
+  min-height: 100vh;
+  position: relative;
+  overflow: clip;
+}
+
+.sec6 > img {
+  display: block;
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+}
+
+.subscriptionForm {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background: rgb(255, 255, 255);
+  color: #000000;
+  border-radius: 30px;
+  width: 50%;
+  min-height: 45vh;
+  padding: 30px;
+  transform: translate(-50%, -50%);
+}
+
+.subscriptionForm h4 {
+  font-family: 'Climate Crisis', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  text-align: center;
+  font-size: 2rem;
+  text-transform: capitalize;
+  font-style: normal;
+  min-height: fit-content;
+  font-variation-settings: 'YEAR' 1979;
+}
+
+.subscriptionForm p {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 1.2rem;
+}
+
+.subscriptionForm form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.mailInp {
+  display: flex;
+  flex-direction: column;
+  justify-self: start;
+  width: 100%;
+  gap: 10px;
+}
+
+.mailInp label {
+  font-size: 1.2rem;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.mailInp input {
+  border: none;
+  border-bottom: 1px solid #000000;
+  border-radius: 0;
+  padding: 10px;
+  font-size: 1.2rem;
+  width: 100%;
+}
+
+.sec6 .mailInp input:focus {
+  outline: none;
+  border-bottom-color: #007bff;
+  box-shadow: 0 1px 0 #007bff;
+}
+
+@supports (animation-timeline: --sec4-scroll) and
+  (animation-range: entry-crossing 0% entry-crossing 100%) {
+  .sec4img1,
+  .sec4img2 {
+    animation: sec4-image-1 linear both;
+    animation-timeline: --sec4-scroll;
+    animation-range: entry-crossing 0% entry-crossing 100%;
+  }
+  .sec4img2 {
+    animation-name: sec4-image-2;
+  }
+}
+
+@media (max-width: 900px) {
+  .sec3-content {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    height: auto;
+    min-height: 100vh;
+    padding: 48px 0;
+  }
+
+  .sec3box {
+    min-height: 320px;
+    height: auto;
+    padding: 24px;
+  }
+
+  .sec3-carousel {
+    height: min(560px, 72vh);
+    min-height: 360px;
+  }
+
+  .sec3Slider .card {
+    flex-basis: min(300px, 82%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sec3Slider {
+    scroll-behavior: auto;
+  }
+}
+
+@keyframes sec4-image-1 {
+  from {
+    transform: translateY(0) rotate(40deg);
+  }
+  to {
+    transform: translateY(-50px) rotate(-35deg);
+  }
+}
+
+@keyframes sec4-image-2 {
+  from {
+    transform: translateY(0) rotate(-20deg);
+  }
+  to {
+    transform: translateY(50px) rotate(35deg);
+  }
+}
+
+/* media */
+
+@media (prefers-reduced-motion: reduce) {
+  .sec5img1,
+  .sec5img2 {
+    transform: none;
+  }
+  .sec4img1,
+  .sec4img2 {
+    animation: none;
+  }
+  .productCategories > :is(.boostBlends, .zeroSugar, .classic) {
+    transform: none;
+  }
+  .heroImages img {
+    animation: none;
+  }
+  .heroImages img:first-child {
+    transform: translateY(-20px) rotate(-20deg);
+  }
+  .heroImages img:nth-child(2) {
+    transform: translateY(-10px) rotate(30deg) scale(1.2);
+  }
+  .heroImages img:last-child {
+    transform: translateX(30px) rotate(35deg);
+  }
+}

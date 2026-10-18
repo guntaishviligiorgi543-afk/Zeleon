@@ -1,0 +1,43 @@
+<section class="product-page" [attr.aria-busy]="loading()">
+  @if (loading()) {
+    <p role="status">Loading product…</p>
+  } @else if (error()) {
+    <p role="alert">{{ error() }} <button type="button" (click)="retry()">Try again</button></p>
+  } @else if (product(); as item) {
+    <div class="product-layout">
+      <div class="product-left">
+        <nav class="breadcrumbs" aria-label="Product breadcrumb">
+          <ol>
+            <li><a routerLink="/">Home</a></li>
+            <li><a routerLink="/shop" [queryParams]="{ category: item.category }">{{ item.categoryName || 'Shop' }}</a></li>
+            <li aria-current="page">{{ item.name }}</li>
+          </ol>
+        </nav>
+        <div class="product-image">
+          @if (item.image) { <img [src]="item.image" [alt]="item.name" /> }
+          @else { <p>Image unavailable</p> }
+        </div>
+      </div>
+      <div class="product-info">
+        <h1>{{ item.name }}</h1>
+        <p class="prodPrice" aria-live="polite">{{ totalPrice() | currency: item.currency }} <span>Price</span></p>
+        <div class="quantity-field">
+          <label for="product-quantity">Quantity<span aria-hidden="true">*</span></label>
+          <input id="product-quantity" type="number" min="1" max="99" step="1" required [value]="quantity()"
+            (input)="changeQuantity($event)" [attr.aria-invalid]="!validQuantity()" aria-describedby="quantity-error" />
+          <p id="quantity-error" class="quantity-error" aria-live="polite">
+            @if (!validQuantity()) { Enter a whole number between 1 and 99. }
+          </p>
+        </div>
+        <div class="purchase-actions">
+          <button class="add-cart" type="button" [disabled]="cartBusy() || (!inCart() && !validQuantity())" [attr.aria-busy]="cartBusy()" (click)="addToCart()">{{ inCart() ? 'Added to Cart' : 'Add to Cart' }}</button>
+          <button class="buy-now" type="button" [disabled]="!validQuantity()" (click)="buyNow()">Buy Now</button>
+        </div>
+        <p class="product-description">I'm a product description. This is a great place to "sell" your product and grab buyers' attention. Describe your product clearly and concisely. Use unique keywords. Write your own description instead of using manufacturers' copy.</p>
+      </div>
+    </div>
+  } @else {
+    <p role="status">Product not found or no longer available.</p>
+  }
+  @if (!product() && !loading()) { <a class="back-link" routerLink="/shop">Back to Shop</a> }
+</section>

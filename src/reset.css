@@ -1,0 +1,25 @@
+/* Conservative normalization: existing pages depend on native spacing,
+   content-box sizing, heading margins, and form-control fonts. Keep those.
+   Unlayered component styles take precedence over these defaults. */
+@layer reset {
+  :where(html) {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  :where(body) {
+    margin: 0;
+  }
+
+  :where(img) {
+    border-style: none;
+  }
+
+  :where(textarea) {
+    overflow: auto;
+  }
+
+  :where(template, [hidden]:not([hidden='until-found'])) {
+    display: none;
+  }
+}

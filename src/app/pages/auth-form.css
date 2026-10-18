@@ -1,0 +1,55 @@
+:host { display: block; }
+:host, :host * { box-sizing: border-box; border-radius: 0; }
+.auth-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  max-width: 1440px;
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 150px clamp(20px, 4vw, 60px) 64px;
+  font-family: 'Montserrat', Arial, sans-serif;
+}
+.brand-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+  padding: clamp(24px, 4vw, 56px);
+  background: #101010;
+  color: #fff;
+  border: 1px solid #303030;
+}
+.brand-logo { color: #fff; text-decoration: none; font-family: 'Climate Crisis', sans-serif; font-size: clamp(22px, 2.7vw, 36px); }
+.brand-panel h2 { margin: 0; font-family: 'Climate Crisis', sans-serif; font-size: clamp(24px, 3.2vw, 44px); font-weight: 400; line-height: 1.35; }
+.brand-panel img { display: block; align-self: center; width: min(360px, 100%); height: 260px; object-fit: contain; }
+.brand-panel p { margin: 0; font-size: 14px; line-height: 1.7; }
+.form-panel { min-width: 0; display: flex; flex-direction: column; justify-content: center; padding: clamp(24px, 4vw, 56px); background: #fff; color: #000; }
+.eyebrow { margin: 0 0 18px; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+h1 { margin: 0 0 16px; font-size: clamp(28px, 3vw, 42px); line-height: 1.2; letter-spacing: -0.035em; }
+.intro { margin: 0 0 36px; color: #444; font-size: 14px; line-height: 1.7; }
+form { display: grid; gap: 24px; }
+.form-group { display: grid; gap: 10px; min-width: 0; }
+label { font-size: 14px; font-weight: 600; }
+input { width: 100%; min-width: 0; padding: 12px 0; border: 0; border-bottom: 1px solid #000; border-radius: 0; background: #fff; color: #000; font: inherit; font-size: 16px; }
+input:focus { outline: none; box-shadow: 0 1px #000; }
+input[aria-invalid='true'] { border-bottom-color: #b91c1c; }
+.field-error { margin: 0; color: #b91c1c; font-size: 12px; line-height: 1.5; }
+.field-hint { margin: 0; color: #555; font-size: 12px; line-height: 1.5; }
+.field-error:empty, .form-status:empty { display: none; }
+a { color: inherit; text-underline-offset: 4px; }
+.forgot-link { justify-self: end; font-size: 13px; }
+button[type='submit'] { width: 100%; padding: 16px 24px; border: 1px solid #000; background: #000; color: #fff; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+button[type='submit']:hover { background: #fff; color: #000; }
+button[type='submit']:disabled { opacity: .5; cursor: wait; }
+button:focus-visible, a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.form-status { margin: 0; padding: 12px; border: 1px solid #aaa; font-size: 13px; line-height: 1.6; }
+.account-link { margin: 32px 0 0; font-size: 13px; line-height: 1.7; text-align: center; }
+.account-link a { font-weight: 600; }
+@media (max-width: 800px) {
+  .auth-page { grid-template-columns: minmax(0, 1fr); gap: 0; padding-top: 140px; }
+  .brand-panel { gap: 20px; }
+  .brand-panel img { display: none; }
+  .brand-panel h2 { font-size: 28px; }
+}

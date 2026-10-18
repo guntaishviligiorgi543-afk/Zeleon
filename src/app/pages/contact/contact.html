@@ -1,0 +1,585 @@
+<section class="hero" data-aos="fade">
+  <h1>contact us</h1>
+  <div class="heroText">
+    <p>we are here</p>
+    <h5>
+      Reach out to our customer experience team for any inquiries regarding orders, ingredients, or
+      partnerships.
+    </h5>
+  </div>
+</section>
+<section class="sec2" data-aos="fade">
+  <div class="contact-scene">
+    <img
+      src="https://static.wixstatic.com/media/c837a6_aca7d0be7ced4e32aa66c987a9ed8b64~mv2.png/v1/fill/w_1841,h_1454,fp_0.50_0.50,q_95,usm_0.66_1.00_0.01,enc_auto/Energy%20Drink_Gemini%203%20(Nano%20Banana%20Pro)_2026-06-30_08-50-00.png"
+      alt=""
+    />
+
+    <div class="contactUsForm">
+      <h4>contact <span>us</span></h4>
+      <form action="">
+        <div class="firstnam-lastNam">
+          <div class="fNam">
+            <label for="name">first name*</label>
+            <input type="text" id="name" name="name" />
+          </div>
+          <div class="lNam">
+            <label for="lastName">Last Name*</label>
+            <input type="text" id="lastName" name="lastName" />
+          </div>
+        </div>
+        <div class="mailInp">
+          <label for="email">Email*</label>
+          <input type="email" id="email" name="email" required />
+        </div>
+        <div class="messageInp">
+          <label for="message">Message*</label>
+          <textarea name="message" id="message" cols="30" rows="10"></textarea>
+        </div>
+        <button type="submit">submit</button>
+      </form>
+    </div>
+  </div>
+  <div class="contacInfo" data-aos="fade">
+    <div class="leftSide">
+      <p>contact <span>info</span></p>
+    </div>
+    <div class="rightSide">
+      <div class="adress">
+        <h5>adress</h5>
+        <p>1234 Energy Street, Suite 567<br />Cityville, State 12345</p>
+      </div>
+      <div class="contactWays">
+        <h5>ways to contact</h5>
+        <p>Phone: (123) 456-7890<br />Email:</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec3" data-aos="fade">
+  <img
+    src="https://static.wixstatic.com/media/c837a6_a0ae71812bf243e6a3bf1e7ea80e08b7~mv2.jpg/v1/fill/w_1462,h_1136,fp_0.50_0.50,q_85,enc_auto/Energy-Drink_Gemini-3-(Nano-Banana-Pro)_2026-06-28_08-12-14.jpg"
+    alt=""
+  />
+
+  <div class="faqAcordion" id="faq">
+    <h4>Frequently Asked Questions</h4>
+    <p class="share-error" role="status">{{ shareError() }}</p>
+
+    <div class="faqItem">
+      <h5>
+        <button
+          type="button"
+          (click)="toggleFaq(0)"
+          [attr.aria-expanded]="openFaqs().has(0)"
+          aria-controls="faq-answer-0"
+        >
+          How do I place an order?<svg
+            class="faq-arrow"
+            [class.is-open]="openFaqs().has(0)"
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 17V7m0 0l-4 4m4-4l4 4"
+            />
+          </svg>
+        </button>
+      </h5>
+      <div class="resp" id="faq-answer-0" [hidden]="!openFaqs().has(0)">
+        <p>You can place an order by visiting our website and navigating to the "Shop" section.</p>
+        <div class="socIcons">
+          <a href="#" aria-label="Facebook"
+            ><svg aria-hidden="true" focusable="false"
+              xmlns="http://www.w3.org/2000/svg"
+              width="0.49em"
+              height="1em"
+              viewBox="0 0 486.037 1000"
+            >
+              <path d="M0 0h486.037v1000H0z" fill="none" />
+              <path
+                fill="currentColor"
+                d="M124.074 1000V530.771H0V361.826h124.074V217.525C124.074 104.132 197.365 0 366.243 0C434.619 0 485.18 6.555 485.18 6.555l-3.984 157.766s-51.564-.502-107.833-.502c-60.9 0-70.657 28.065-70.657 74.646v123.361h183.331l-7.977 168.945H302.706V1000z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Twitter"
+            ><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 128 128">
+              <path d="M0 0h128v128H0z" fill="none" />
+              <path
+                d="M75.916 54.2L122.542 0h-11.05L71.008 47.06L38.672 0H1.376l48.898 71.164L1.376 128h11.05L55.18 78.303L89.328 128h37.296L75.913 54.2ZM60.782 71.79l-4.955-7.086l-39.42-56.386h16.972L65.19 53.824l4.954 7.086l41.353 59.15h-16.97L60.782 71.793Z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Instagram">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                d="M7.465 1.066C8.638 1.012 9.012 1 12 1s3.362.013 4.534.066s1.972.24 2.672.511c.733.277 1.398.71 1.948 1.27c.56.549.992 1.213 1.268 1.947c.272.7.458 1.5.512 2.67C22.988 8.639 23 9.013 23 12s-.013 3.362-.066 4.535c-.053 1.17-.24 1.97-.512 2.67a5.4 5.4 0 0 1-1.268 1.949c-.55.56-1.215.992-1.948 1.268c-.7.272-1.5.458-2.67.512c-1.174.054-1.548.066-4.536.066s-3.362-.013-4.535-.066c-1.17-.053-1.97-.24-2.67-.512a5.4 5.4 0 0 1-1.949-1.268a5.4 5.4 0 0 1-1.269-1.948c-.271-.7-.457-1.5-.511-2.67C1.012 15.361 1 14.987 1 12s.013-3.362.066-4.534s.24-1.972.511-2.672a5.4 5.4 0 0 1 1.27-1.948a5.4 5.4 0 0 1 1.947-1.269c.7-.271 1.5-.457 2.67-.511m8.98 1.98c-1.16-.053-1.508-.064-4.445-.064s-3.285.011-4.445.064c-1.073.049-1.655.228-2.043.379c-.513.2-.88.437-1.265.822a3.4 3.4 0 0 0-.822 1.265c-.151.388-.33.97-.379 2.043c-.053 1.16-.064 1.508-.064 4.445s.011 3.285.064 4.445c.049 1.073.228 1.655.379 2.043c.176.477.457.91.822 1.265c.355.365.788.646 1.265.822c.388.151.97.33 2.043.379c1.16.053 1.507.064 4.445.064s3.285-.011 4.445-.064c1.073-.049 1.655-.228 2.043-.379c.513-.2.88-.437 1.265-.822c.365-.355.646-.788.822-1.265c.151-.388.33-.97.379-2.043c.053-1.16.064-1.508.064-4.445s-.011-3.285-.064-4.445c-.049-1.073-.228-1.655-.379-2.043c-.2-.513-.437-.88-.822-1.265a3.4 3.4 0 0 0-1.265-.822c-.388-.151-.97-.33-2.043-.379m-5.85 12.345a3.669 3.669 0 0 0 4-5.986a3.67 3.67 0 1 0-4 5.986M8.002 8.002a5.654 5.654 0 1 1 7.996 7.996a5.654 5.654 0 0 1-7.996-7.996m10.906-.814a1.337 1.337 0 1 0-1.89-1.89a1.337 1.337 0 0 0 1.89 1.89"
+                clip-rule="evenodd"
+              />
+            </svg>
+            </a>
+          <div class="shareLink">
+            <button
+              class="share-button"
+              type="button"
+              aria-label="Copy page link"
+              [hidden]="sharedFaqs().has(0)"
+              (click)="shareFaq(0)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 512 512"
+              >
+                <path d="M0 0h512v512H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  d="M503.691 189.836L327.687 37.851C312.281 24.546 288 35.347 288 56.015v80.053C127.371 137.907 0 170.1 0 322.326c0 61.441 39.581 122.309 83.333 154.132c13.653 9.931 33.111-2.533 28.077-18.631C66.066 312.814 132.917 274.316 288 272.085V360c0 20.7 24.3 31.453 39.687 18.164l176.004-152c11.071-9.562 11.086-26.753 0-36.328"
+                />
+              </svg>
+            </button>
+            <div class="sharedResp" [hidden]="!sharedFaqs().has(0)" role="status">
+              <span>shared</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48">
+                <path d="M0 0h48v48H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20m10.742-26.33a1 1 0 1 0-1.483-1.34L21.28 29.567l-6.59-6.291a1 1 0 0 0-1.382 1.446l7.334 7l.743.71l.689-.762z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="faqItem">
+      <h5>
+        <button
+          type="button"
+          (click)="toggleFaq(1)"
+          [attr.aria-expanded]="openFaqs().has(1)"
+          aria-controls="faq-answer-1"
+        >
+          What is your return policy?<svg
+            class="faq-arrow"
+            [class.is-open]="openFaqs().has(1)"
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 17V7m0 0l-4 4m4-4l4 4"
+            />
+          </svg>
+        </button>
+      </h5>
+      <div class="resp" id="faq-answer-1" [hidden]="!openFaqs().has(1)">
+        <p>We offer a 30-day return policy for all products.</p>
+        <div class="socIcons">
+          <a href="#" aria-label="Facebook"
+            ><svg aria-hidden="true" focusable="false"
+              xmlns="http://www.w3.org/2000/svg"
+              width="0.49em"
+              height="1em"
+              viewBox="0 0 486.037 1000"
+            >
+              <path d="M0 0h486.037v1000H0z" fill="none" />
+              <path
+                fill="currentColor"
+                d="M124.074 1000V530.771H0V361.826h124.074V217.525C124.074 104.132 197.365 0 366.243 0C434.619 0 485.18 6.555 485.18 6.555l-3.984 157.766s-51.564-.502-107.833-.502c-60.9 0-70.657 28.065-70.657 74.646v123.361h183.331l-7.977 168.945H302.706V1000z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Twitter"
+            ><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 128 128">
+              <path d="M0 0h128v128H0z" fill="none" />
+              <path
+                d="M75.916 54.2L122.542 0h-11.05L71.008 47.06L38.672 0H1.376l48.898 71.164L1.376 128h11.05L55.18 78.303L89.328 128h37.296L75.913 54.2ZM60.782 71.79l-4.955-7.086l-39.42-56.386h16.972L65.19 53.824l4.954 7.086l41.353 59.15h-16.97L60.782 71.793Z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Instagram">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                d="M7.465 1.066C8.638 1.012 9.012 1 12 1s3.362.013 4.534.066s1.972.24 2.672.511c.733.277 1.398.71 1.948 1.27c.56.549.992 1.213 1.268 1.947c.272.7.458 1.5.512 2.67C22.988 8.639 23 9.013 23 12s-.013 3.362-.066 4.535c-.053 1.17-.24 1.97-.512 2.67a5.4 5.4 0 0 1-1.268 1.949c-.55.56-1.215.992-1.948 1.268c-.7.272-1.5.458-2.67.512c-1.174.054-1.548.066-4.536.066s-3.362-.013-4.535-.066c-1.17-.053-1.97-.24-2.67-.512a5.4 5.4 0 0 1-1.949-1.268a5.4 5.4 0 0 1-1.269-1.948c-.271-.7-.457-1.5-.511-2.67C1.012 15.361 1 14.987 1 12s.013-3.362.066-4.534s.24-1.972.511-2.672a5.4 5.4 0 0 1 1.27-1.948a5.4 5.4 0 0 1 1.947-1.269c.7-.271 1.5-.457 2.67-.511m8.98 1.98c-1.16-.053-1.508-.064-4.445-.064s-3.285.011-4.445.064c-1.073.049-1.655.228-2.043.379c-.513.2-.88.437-1.265.822a3.4 3.4 0 0 0-.822 1.265c-.151.388-.33.97-.379 2.043c-.053 1.16-.064 1.508-.064 4.445s.011 3.285.064 4.445c.049 1.073.228 1.655.379 2.043c.176.477.457.91.822 1.265c.355.365.788.646 1.265.822c.388.151.97.33 2.043.379c1.16.053 1.507.064 4.445.064s3.285-.011 4.445-.064c1.073-.049 1.655-.228 2.043-.379c.513-.2.88-.437 1.265-.822c.365-.355.646-.788.822-1.265c.151-.388.33-.97.379-2.043c.053-1.16.064-1.508.064-4.445s-.011-3.285-.064-4.445c-.049-1.073-.228-1.655-.379-2.043c-.2-.513-.437-.88-.822-1.265a3.4 3.4 0 0 0-1.265-.822c-.388-.151-.97-.33-2.043-.379m-5.85 12.345a3.669 3.669 0 0 0 4-5.986a3.67 3.67 0 1 0-4 5.986M8.002 8.002a5.654 5.654 0 1 1 7.996 7.996a5.654 5.654 0 0 1-7.996-7.996m10.906-.814a1.337 1.337 0 1 0-1.89-1.89a1.337 1.337 0 0 0 1.89 1.89"
+                clip-rule="evenodd"
+              />
+            </svg>
+            </a>
+          <div class="shareLink">
+            <button
+              class="share-button"
+              type="button"
+              aria-label="Copy page link"
+              [hidden]="sharedFaqs().has(1)"
+              (click)="shareFaq(1)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 512 512"
+              >
+                <path d="M0 0h512v512H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  d="M503.691 189.836L327.687 37.851C312.281 24.546 288 35.347 288 56.015v80.053C127.371 137.907 0 170.1 0 322.326c0 61.441 39.581 122.309 83.333 154.132c13.653 9.931 33.111-2.533 28.077-18.631C66.066 312.814 132.917 274.316 288 272.085V360c0 20.7 24.3 31.453 39.687 18.164l176.004-152c11.071-9.562 11.086-26.753 0-36.328"
+                />
+              </svg>
+            </button>
+            <div class="sharedResp" [hidden]="!sharedFaqs().has(1)" role="status">
+              <span>shared</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48">
+                <path d="M0 0h48v48H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20m10.742-26.33a1 1 0 1 0-1.483-1.34L21.28 29.567l-6.59-6.291a1 1 0 0 0-1.382 1.446l7.334 7l.743.71l.689-.762z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="faqItem">
+      <h5>
+        <button
+          type="button"
+          (click)="toggleFaq(2)"
+          [attr.aria-expanded]="openFaqs().has(2)"
+          aria-controls="faq-answer-2"
+        >
+          Do you offer international shipping?<svg
+            class="faq-arrow"
+            [class.is-open]="openFaqs().has(2)"
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 17V7m0 0l-4 4m4-4l4 4"
+            />
+          </svg>
+        </button>
+      </h5>
+      <div class="resp" id="faq-answer-2" [hidden]="!openFaqs().has(2)">
+        <p>Yes, we offer international shipping to most countries.</p>
+        <div class="socIcons">
+          <a href="#" aria-label="Facebook"
+            ><svg aria-hidden="true" focusable="false"
+              xmlns="http://www.w3.org/2000/svg"
+              width="0.49em"
+              height="1em"
+              viewBox="0 0 486.037 1000"
+            >
+              <path d="M0 0h486.037v1000H0z" fill="none" />
+              <path
+                fill="currentColor"
+                d="M124.074 1000V530.771H0V361.826h124.074V217.525C124.074 104.132 197.365 0 366.243 0C434.619 0 485.18 6.555 485.18 6.555l-3.984 157.766s-51.564-.502-107.833-.502c-60.9 0-70.657 28.065-70.657 74.646v123.361h183.331l-7.977 168.945H302.706V1000z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Twitter"
+            ><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 128 128">
+              <path d="M0 0h128v128H0z" fill="none" />
+              <path
+                d="M75.916 54.2L122.542 0h-11.05L71.008 47.06L38.672 0H1.376l48.898 71.164L1.376 128h11.05L55.18 78.303L89.328 128h37.296L75.913 54.2ZM60.782 71.79l-4.955-7.086l-39.42-56.386h16.972L65.19 53.824l4.954 7.086l41.353 59.15h-16.97L60.782 71.793Z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Instagram">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                d="M7.465 1.066C8.638 1.012 9.012 1 12 1s3.362.013 4.534.066s1.972.24 2.672.511c.733.277 1.398.71 1.948 1.27c.56.549.992 1.213 1.268 1.947c.272.7.458 1.5.512 2.67C22.988 8.639 23 9.013 23 12s-.013 3.362-.066 4.535c-.053 1.17-.24 1.97-.512 2.67a5.4 5.4 0 0 1-1.268 1.949c-.55.56-1.215.992-1.948 1.268c-.7.272-1.5.458-2.67.512c-1.174.054-1.548.066-4.536.066s-3.362-.013-4.535-.066c-1.17-.053-1.97-.24-2.67-.512a5.4 5.4 0 0 1-1.949-1.268a5.4 5.4 0 0 1-1.269-1.948c-.271-.7-.457-1.5-.511-2.67C1.012 15.361 1 14.987 1 12s.013-3.362.066-4.534s.24-1.972.511-2.672a5.4 5.4 0 0 1 1.27-1.948a5.4 5.4 0 0 1 1.947-1.269c.7-.271 1.5-.457 2.67-.511m8.98 1.98c-1.16-.053-1.508-.064-4.445-.064s-3.285.011-4.445.064c-1.073.049-1.655.228-2.043.379c-.513.2-.88.437-1.265.822a3.4 3.4 0 0 0-.822 1.265c-.151.388-.33.97-.379 2.043c-.053 1.16-.064 1.508-.064 4.445s.011 3.285.064 4.445c.049 1.073.228 1.655.379 2.043c.176.477.457.91.822 1.265c.355.365.788.646 1.265.822c.388.151.97.33 2.043.379c1.16.053 1.507.064 4.445.064s3.285-.011 4.445-.064c1.073-.049 1.655-.228 2.043-.379c.513-.2.88-.437 1.265-.822c.365-.355.646-.788.822-1.265c.151-.388.33-.97.379-2.043c.053-1.16.064-1.508.064-4.445s-.011-3.285-.064-4.445c-.049-1.073-.228-1.655-.379-2.043c-.2-.513-.437-.88-.822-1.265a3.4 3.4 0 0 0-1.265-.822c-.388-.151-.97-.33-2.043-.379m-5.85 12.345a3.669 3.669 0 0 0 4-5.986a3.67 3.67 0 1 0-4 5.986M8.002 8.002a5.654 5.654 0 1 1 7.996 7.996a5.654 5.654 0 0 1-7.996-7.996m10.906-.814a1.337 1.337 0 1 0-1.89-1.89a1.337 1.337 0 0 0 1.89 1.89"
+                clip-rule="evenodd"
+              />
+            </svg>
+            </a>
+          <div class="shareLink">
+            <button
+              class="share-button"
+              type="button"
+              aria-label="Copy page link"
+              [hidden]="sharedFaqs().has(2)"
+              (click)="shareFaq(2)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 512 512"
+              >
+                <path d="M0 0h512v512H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  d="M503.691 189.836L327.687 37.851C312.281 24.546 288 35.347 288 56.015v80.053C127.371 137.907 0 170.1 0 322.326c0 61.441 39.581 122.309 83.333 154.132c13.653 9.931 33.111-2.533 28.077-18.631C66.066 312.814 132.917 274.316 288 272.085V360c0 20.7 24.3 31.453 39.687 18.164l176.004-152c11.071-9.562 11.086-26.753 0-36.328"
+                />
+              </svg>
+            </button>
+            <div class="sharedResp" [hidden]="!sharedFaqs().has(2)" role="status">
+              <span>shared</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48">
+                <path d="M0 0h48v48H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20m10.742-26.33a1 1 0 1 0-1.483-1.34L21.28 29.567l-6.59-6.291a1 1 0 0 0-1.382 1.446l7.334 7l.743.71l.689-.762z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="faqItem">
+      <h5>
+        <button
+          type="button"
+          (click)="toggleFaq(3)"
+          [attr.aria-expanded]="openFaqs().has(3)"
+          aria-controls="faq-answer-3"
+        >
+          How long does shipping take?<svg
+            class="faq-arrow"
+            [class.is-open]="openFaqs().has(3)"
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 17V7m0 0l-4 4m4-4l4 4"
+            />
+          </svg>
+        </button>
+      </h5>
+      <div class="resp" id="faq-answer-3" [hidden]="!openFaqs().has(3)">
+        <p>Shipping times vary by location, but typically range from 3-7 business days.</p>
+        <div class="socIcons">
+          <a href="#" aria-label="Facebook"
+            ><svg aria-hidden="true" focusable="false"
+              xmlns="http://www.w3.org/2000/svg"
+              width="0.49em"
+              height="1em"
+              viewBox="0 0 486.037 1000"
+            >
+              <path d="M0 0h486.037v1000H0z" fill="none" />
+              <path
+                fill="currentColor"
+                d="M124.074 1000V530.771H0V361.826h124.074V217.525C124.074 104.132 197.365 0 366.243 0C434.619 0 485.18 6.555 485.18 6.555l-3.984 157.766s-51.564-.502-107.833-.502c-60.9 0-70.657 28.065-70.657 74.646v123.361h183.331l-7.977 168.945H302.706V1000z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Twitter"
+            ><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 128 128">
+              <path d="M0 0h128v128H0z" fill="none" />
+              <path
+                d="M75.916 54.2L122.542 0h-11.05L71.008 47.06L38.672 0H1.376l48.898 71.164L1.376 128h11.05L55.18 78.303L89.328 128h37.296L75.913 54.2ZM60.782 71.79l-4.955-7.086l-39.42-56.386h16.972L65.19 53.824l4.954 7.086l41.353 59.15h-16.97L60.782 71.793Z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Instagram">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                d="M7.465 1.066C8.638 1.012 9.012 1 12 1s3.362.013 4.534.066s1.972.24 2.672.511c.733.277 1.398.71 1.948 1.27c.56.549.992 1.213 1.268 1.947c.272.7.458 1.5.512 2.67C22.988 8.639 23 9.013 23 12s-.013 3.362-.066 4.535c-.053 1.17-.24 1.97-.512 2.67a5.4 5.4 0 0 1-1.268 1.949c-.55.56-1.215.992-1.948 1.268c-.7.272-1.5.458-2.67.512c-1.174.054-1.548.066-4.536.066s-3.362-.013-4.535-.066c-1.17-.053-1.97-.24-2.67-.512a5.4 5.4 0 0 1-1.949-1.268a5.4 5.4 0 0 1-1.269-1.948c-.271-.7-.457-1.5-.511-2.67C1.012 15.361 1 14.987 1 12s.013-3.362.066-4.534s.24-1.972.511-2.672a5.4 5.4 0 0 1 1.27-1.948a5.4 5.4 0 0 1 1.947-1.269c.7-.271 1.5-.457 2.67-.511m8.98 1.98c-1.16-.053-1.508-.064-4.445-.064s-3.285.011-4.445.064c-1.073.049-1.655.228-2.043.379c-.513.2-.88.437-1.265.822a3.4 3.4 0 0 0-.822 1.265c-.151.388-.33.97-.379 2.043c-.053 1.16-.064 1.508-.064 4.445s.011 3.285.064 4.445c.049 1.073.228 1.655.379 2.043c.176.477.457.91.822 1.265c.355.365.788.646 1.265.822c.388.151.97.33 2.043.379c1.16.053 1.507.064 4.445.064s3.285-.011 4.445-.064c1.073-.049 1.655-.228 2.043-.379c.513-.2.88-.437 1.265-.822c.365-.355.646-.788.822-1.265c.151-.388.33-.97.379-2.043c.053-1.16.064-1.508.064-4.445s-.011-3.285-.064-4.445c-.049-1.073-.228-1.655-.379-2.043c-.2-.513-.437-.88-.822-1.265a3.4 3.4 0 0 0-1.265-.822c-.388-.151-.97-.33-2.043-.379m-5.85 12.345a3.669 3.669 0 0 0 4-5.986a3.67 3.67 0 1 0-4 5.986M8.002 8.002a5.654 5.654 0 1 1 7.996 7.996a5.654 5.654 0 0 1-7.996-7.996m10.906-.814a1.337 1.337 0 1 0-1.89-1.89a1.337 1.337 0 0 0 1.89 1.89"
+                clip-rule="evenodd"
+              />
+            </svg>
+            </a>
+          <div class="shareLink">
+            <button
+              class="share-button"
+              type="button"
+              aria-label="Copy page link"
+              [hidden]="sharedFaqs().has(3)"
+              (click)="shareFaq(3)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 512 512"
+              >
+                <path d="M0 0h512v512H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  d="M503.691 189.836L327.687 37.851C312.281 24.546 288 35.347 288 56.015v80.053C127.371 137.907 0 170.1 0 322.326c0 61.441 39.581 122.309 83.333 154.132c13.653 9.931 33.111-2.533 28.077-18.631C66.066 312.814 132.917 274.316 288 272.085V360c0 20.7 24.3 31.453 39.687 18.164l176.004-152c11.071-9.562 11.086-26.753 0-36.328"
+                />
+              </svg>
+            </button>
+            <div class="sharedResp" [hidden]="!sharedFaqs().has(3)" role="status">
+              <span>shared</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48">
+                <path d="M0 0h48v48H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20m10.742-26.33a1 1 0 1 0-1.483-1.34L21.28 29.567l-6.59-6.291a1 1 0 0 0-1.382 1.446l7.334 7l.743.71l.689-.762z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="faqItem">
+      <h5>
+        <button
+          type="button"
+          (click)="toggleFaq(4)"
+          [attr.aria-expanded]="openFaqs().has(4)"
+          aria-controls="faq-answer-4"
+        >
+          Can I change or cancel my order?<svg
+            class="faq-arrow"
+            [class.is-open]="openFaqs().has(4)"
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 17V7m0 0l-4 4m4-4l4 4"
+            />
+          </svg>
+        </button>
+      </h5>
+      <div class="resp" id="faq-answer-4" [hidden]="!openFaqs().has(4)">
+        <p>You can change or cancel your order within 24 hours of placing it.</p>
+        <div class="socIcons">
+          <a href="#" aria-label="Facebook"
+            ><svg aria-hidden="true" focusable="false"
+              xmlns="http://www.w3.org/2000/svg"
+              width="0.49em"
+              height="1em"
+              viewBox="0 0 486.037 1000"
+            >
+              <path d="M0 0h486.037v1000H0z" fill="none" />
+              <path
+                fill="currentColor"
+                d="M124.074 1000V530.771H0V361.826h124.074V217.525C124.074 104.132 197.365 0 366.243 0C434.619 0 485.18 6.555 485.18 6.555l-3.984 157.766s-51.564-.502-107.833-.502c-60.9 0-70.657 28.065-70.657 74.646v123.361h183.331l-7.977 168.945H302.706V1000z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Twitter"
+            ><svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 128 128">
+              <path d="M0 0h128v128H0z" fill="none" />
+              <path
+                d="M75.916 54.2L122.542 0h-11.05L71.008 47.06L38.672 0H1.376l48.898 71.164L1.376 128h11.05L55.18 78.303L89.328 128h37.296L75.913 54.2ZM60.782 71.79l-4.955-7.086l-39.42-56.386h16.972L65.19 53.824l4.954 7.086l41.353 59.15h-16.97L60.782 71.793Z"
+              />
+            </svg>
+            </a>
+          <a href="#" aria-label="Instagram">
+            <svg aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                fill="currentColor"
+                fill-rule="evenodd"
+                d="M7.465 1.066C8.638 1.012 9.012 1 12 1s3.362.013 4.534.066s1.972.24 2.672.511c.733.277 1.398.71 1.948 1.27c.56.549.992 1.213 1.268 1.947c.272.7.458 1.5.512 2.67C22.988 8.639 23 9.013 23 12s-.013 3.362-.066 4.535c-.053 1.17-.24 1.97-.512 2.67a5.4 5.4 0 0 1-1.268 1.949c-.55.56-1.215.992-1.948 1.268c-.7.272-1.5.458-2.67.512c-1.174.054-1.548.066-4.536.066s-3.362-.013-4.535-.066c-1.17-.053-1.97-.24-2.67-.512a5.4 5.4 0 0 1-1.949-1.268a5.4 5.4 0 0 1-1.269-1.948c-.271-.7-.457-1.5-.511-2.67C1.012 15.361 1 14.987 1 12s.013-3.362.066-4.534s.24-1.972.511-2.672a5.4 5.4 0 0 1 1.27-1.948a5.4 5.4 0 0 1 1.947-1.269c.7-.271 1.5-.457 2.67-.511m8.98 1.98c-1.16-.053-1.508-.064-4.445-.064s-3.285.011-4.445.064c-1.073.049-1.655.228-2.043.379c-.513.2-.88.437-1.265.822a3.4 3.4 0 0 0-.822 1.265c-.151.388-.33.97-.379 2.043c-.053 1.16-.064 1.508-.064 4.445s.011 3.285.064 4.445c.049 1.073.228 1.655.379 2.043c.176.477.457.91.822 1.265c.355.365.788.646 1.265.822c.388.151.97.33 2.043.379c1.16.053 1.507.064 4.445.064s3.285-.011 4.445-.064c1.073-.049 1.655-.228 2.043-.379c.513-.2.88-.437 1.265-.822c.365-.355.646-.788.822-1.265c.151-.388.33-.97.379-2.043c.053-1.16.064-1.508.064-4.445s-.011-3.285-.064-4.445c-.049-1.073-.228-1.655-.379-2.043c-.2-.513-.437-.88-.822-1.265a3.4 3.4 0 0 0-1.265-.822c-.388-.151-.97-.33-2.043-.379m-5.85 12.345a3.669 3.669 0 0 0 4-5.986a3.67 3.67 0 1 0-4 5.986M8.002 8.002a5.654 5.654 0 1 1 7.996 7.996a5.654 5.654 0 0 1-7.996-7.996m10.906-.814a1.337 1.337 0 1 0-1.89-1.89a1.337 1.337 0 0 0 1.89 1.89"
+                clip-rule="evenodd"
+              />
+            </svg>
+            </a>
+          <div class="shareLink">
+            <button
+              class="share-button"
+              type="button"
+              aria-label="Copy page link"
+              [hidden]="sharedFaqs().has(4)"
+              (click)="shareFaq(4)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 512 512"
+              >
+                <path d="M0 0h512v512H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  d="M503.691 189.836L327.687 37.851C312.281 24.546 288 35.347 288 56.015v80.053C127.371 137.907 0 170.1 0 322.326c0 61.441 39.581 122.309 83.333 154.132c13.653 9.931 33.111-2.533 28.077-18.631C66.066 312.814 132.917 274.316 288 272.085V360c0 20.7 24.3 31.453 39.687 18.164l176.004-152c11.071-9.562 11.086-26.753 0-36.328"
+                />
+              </svg>
+            </button>
+            <div class="sharedResp" [hidden]="!sharedFaqs().has(4)" role="status">
+              <span>shared</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48">
+                <path d="M0 0h48v48H0z" fill="none" />
+                <path
+                  fill="currentColor"
+                  fill-rule="evenodd"
+                  d="M24 44c11.046 0 20-8.954 20-20S35.046 4 24 4S4 12.954 4 24s8.954 20 20 20m10.742-26.33a1 1 0 1 0-1.483-1.34L21.28 29.567l-6.59-6.291a1 1 0 0 0-1.382 1.446l7.334 7l.743.71l.689-.762z"
+                  clip-rule="evenodd"
+                />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

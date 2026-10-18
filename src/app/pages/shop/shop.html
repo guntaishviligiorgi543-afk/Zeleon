@@ -1,0 +1,119 @@
+<section class="shop-section">
+  <div class="navigationInfo">
+    <p class="breadcrumb">
+      <a routerLink="/">Home</a> / <a routerLink="/shop">Shop</a>
+      @if (selectedCategory !== 'all') {
+        / <span>{{ selectedCategoryName }}</span>
+      }
+    </p>
+
+    <p class="filterdCategoryTagName">
+      {{ selectedCategoryName }}
+    </p>
+  </div>
+
+  <div class="filters">
+    <button
+      type="button"
+      class="allProducts"
+      [class.active]="selectedCategory === 'all'"
+      (click)="selectCategory('all')"
+    >
+      All Products
+    </button>
+
+    <button
+      type="button"
+      class="classic"
+      [class.active]="selectedCategory === 'classic'"
+      (click)="selectCategory('classic')"
+    >
+      Classic
+    </button>
+
+    <button
+      type="button"
+      class="boostBlends"
+      [class.active]="selectedCategory === 'boost-blends'"
+      (click)="selectCategory('boost-blends')"
+    >
+      Boost Blends
+    </button>
+
+    <button
+      type="button"
+      class="zeroSugar"
+      [class.active]="selectedCategory === 'zero-sugar'"
+      (click)="selectCategory('zero-sugar')"
+    >
+      Zero Sugar
+    </button>
+  </div>
+
+  <div class="filterdsQuantity-sort">
+    <p class="filteredQuantity">{{ displayedProducts.length }} Products</p>
+
+    <div class="sort" (focusout)="sortFocusOut($event)">
+      <p id="sort-label">Sort By</p>
+      <button
+        #sortToggle
+        id="sort"
+        class="sort-toggle"
+        type="button"
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-labelledby="sort-label sort-value"
+        aria-controls="sort-options"
+        [attr.aria-expanded]="sortOpen()"
+        [attr.aria-activedescendant]="sortOpen() ? 'sort-option-' + activeSort() : null"
+        (click)="toggleSort()"
+        (keydown)="sortKeydown($event)"
+      >
+        <span id="sort-value">{{ sortLabel }}</span>
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      @if (sortOpen()) {
+        <div id="sort-options" class="sort-options" role="listbox" aria-labelledby="sort-label">
+          @for (option of sortOptions; track option.value; let index = $index) {
+            <button
+              type="button"
+              role="option"
+              tabindex="-1"
+              [id]="'sort-option-' + index"
+              [attr.aria-selected]="selectedSort === option.value"
+              [class.keyboard-active]="activeSort() === index"
+              (mousedown)="$event.preventDefault()"
+              (click)="chooseSort(option.value); sortToggle.focus()"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      }
+      d
+    </div>
+  </div>
+
+  @if (loading()) {
+    <p role="status">Loading products…</p>
+  } @else if (error()) {
+    <p role="alert">{{ error() }} <button type="button" (click)="loadProducts()">Try again</button></p>
+  } @else if (displayedProducts.length === 0) {
+    <p role="status">No products found in this category.</p>
+  }
+  <div class="productsContainer" [attr.aria-busy]="loading()">
+    @for (product of displayedProducts; track product.id) {
+      <div class="productCard" appProductCard [product]="product" [routerLink]="['/product', product.id]"
+        tabindex="0" role="link" (keydown.enter)="navigateToProduct(product.id)"></div>
+    }
+  </div>
+</section>

@@ -1,0 +1,243 @@
+<section class="hero">
+  <div class="hero-content">
+    <h1>
+      born to <br />
+      move
+    </h1>
+    <div class="heroImages">
+      <img src="./images/leftone.avif" alt="redZeleon" />
+      <img src="./images/middleone.avif" alt="yellowZeleon" />
+      <img src="./images/rightone.avif" alt="greenZeleon" />
+    </div>
+    <div class="heroBox">
+      <h3>bold energy</h3>
+      <h4>for every move you make</h4>
+      <p>
+        Clean energy formulas engineered to sustain your performance and amplify your daily output
+        without the crash
+      </p>
+      <div class="heroBtns">
+        <button routerLink="/shop" class="shopBtn">Shop Now</button>
+        <button routerLink="/our-story" class="learnMoreBtn">Learn More</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="features">
+  <div class="featuresCont">
+    <h2 class="features-title">explore <br />our formulas</h2>
+    <div class="productCategories">
+      <a class="boostBlends" routerLink="/shop" [queryParams]="{ category: 'boost-blends' }">
+        <img src="./images/boosts.avif" alt="boostBlends" />
+        <div class="productCategoriesText">
+          <h4>boost blends</h4>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M18.22 7.21v7c0 1.9 0 2.84-.58 3.42s-1.53.59-3.41.59H7.2M5.78 5.78L17.5 17.5"
+            />
+          </svg>
+        </div>
+      </a>
+      <a class="zeroSugar" routerLink="/shop" [queryParams]="{ category: 'zero-sugar' }">
+        <img src="./images/zeroSugar.avif" alt="zeroSugar" />
+        <div class="productCategoriesText">
+          <h4>zero sugar</h4>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M18.22 7.21v7c0 1.9 0 2.84-.58 3.42s-1.53.59-3.41.59H7.2M5.78 5.78L17.5 17.5"
+            />
+          </svg>
+        </div>
+      </a>
+      <a class="classic" routerLink="/shop" [queryParams]="{ category: 'classic' }">
+        <img src="./images/classics.avif" alt="classic" />
+        <div class="productCategoriesText">
+          <h4>classic</h4>
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              fill="none"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.5"
+              d="M18.22 7.21v7c0 1.9 0 2.84-.58 3.42s-1.53.59-3.41.59H7.2M5.78 5.78L17.5 17.5"
+            />
+          </svg>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+<section class="sec3">
+  <div class="sec3-content">
+    <div
+      class="sec3box"
+      data-aos="flip-left"
+      data-aos-duration="400"
+      data-aos-easing="ease-in-out"
+      data-aos-offset="100"
+      data-aos-once="false"
+      data-aos-mirror="true"
+    >
+      <h3>
+        most <br />
+        <span> wanted energy</span>
+      </h3>
+      <p>The highest-rated formulas chosen by our active community daily</p>
+      <button routerLink="/shop" class="viewallBtn">view all products</button>
+    </div>
+    <div class="sec3-carousel" role="region" aria-label="Featured products">
+      <button
+        class="slider-arrow slider-prev"
+        type="button"
+        aria-label="Previous products"
+        aria-controls="featured-products"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6" /></svg>
+      </button>
+      <div
+        class="sec3Slider"
+        id="featured-products"
+        tabindex="0"
+        aria-label="Scroll featured products"
+      >
+        @if (productsLoading()) {
+          <p role="status">Loading products…</p>
+        } @else if (productsError()) {
+          <div role="alert">
+            Products could not be loaded.
+            <button type="button" (click)="loadProducts()">Try again</button>
+          </div>
+        } @else {
+          @for (product of products(); track product.id) {
+            <a class="card" [routerLink]="['/product', product.id]">
+              @if (product.image) {
+                <img [src]="product.image" [alt]="product.name" loading="lazy" />
+              }
+              <p class="prodNam">{{ product.name }}</p>
+              <p class="prodPrice">{{ product.price | currency: product.currency }}</p>
+            </a>
+          } @empty {
+            <p>No products available.</p>
+          }
+        }
+      </div>
+      <button
+        class="slider-arrow slider-next"
+        type="button"
+        aria-label="Next products"
+        aria-controls="featured-products"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6" /></svg>
+      </button>
+    </div>
+  </div>
+</section>
+
+<section class="sec4">
+  <div class="sec4content">
+    <div class="sec4text">
+      <p>power up more</p>
+      <h1 data-aos="fade-up">
+        Power Up More Spend $80 On Your Entire Order Of Boost Blends And Save 25% Off
+      </h1>
+      <button routerLink="/shop" class="saveNowBtn">save now</button>
+    </div>
+    <img class="sec4img1" src="./images/classics.avif" alt="image1" />
+    <img class="sec4img2" src="./images/zeroSugar.avif" alt="image2" />
+  </div>
+</section>
+<section class="sec5">
+  <div class="sec5content">
+    <img
+      class="sec5img1"
+      src="https://static.wixstatic.com/media/c837a6_1f1c0802a9df4e209652443f1964fff3~mv2.jpg/v1/crop/x_557,y_4,w_828,h_1054/fill/w_828,h_1054,al_c,q_85,enc_avif,quality_auto/Energy-Drink_Gemini-3-(Nano-Banana-Pro)_2026-06-24_08-27-40.jpg"
+      alt=""
+    />
+    <img
+      class="sec5img2"
+      src="https://static.wixstatic.com/media/c837a6_a02439f6c4f14c5683c6a439f6d57c3b~mv2.jpg/v1/crop/x_193,y_55,w_771,h_982/fill/w_771,h_981,al_c,q_85,enc_avif,quality_auto/Energy-Drink_Gemini-3-(Nano-Banana-Pro)_2026-06-24_09-28-57.jpg"
+      alt=""
+    />
+    <div class="reviewBox">
+      <div class="stars">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+          <path d="M0 0h32v32H0z" fill="none" />
+          <path
+            fill="gold"
+            d="m16 2l-4.55 9.22l-10.17 1.47l7.36 7.18L6.9 30l9.1-4.78L25.1 30l-1.74-10.13l7.36-7.17l-10.17-1.48Z"
+          />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+          <path d="M0 0h32v32H0z" fill="none" />
+          <path
+            fill="gold"
+            d="m16 2l-4.55 9.22l-10.17 1.47l7.36 7.18L6.9 30l9.1-4.78L25.1 30l-1.74-10.13l7.36-7.17l-10.17-1.48Z"
+          />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+          <path d="M0 0h32v32H0z" fill="none" />
+          <path
+            fill="gold"
+            d="m16 2l-4.55 9.22l-10.17 1.47l7.36 7.18L6.9 30l9.1-4.78L25.1 30l-1.74-10.13l7.36-7.17l-10.17-1.48Z"
+          />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+          <path d="M0 0h32v32H0z" fill="none" />
+          <path
+            fill="gold"
+            d="m16 2l-4.55 9.22l-10.17 1.47l7.36 7.18L6.9 30l9.1-4.78L25.1 30l-1.74-10.13l7.36-7.17l-10.17-1.48Z"
+          />
+        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 32 32">
+          <path d="M0 0h32v32H0z" fill="none" />
+          <path
+            fill="gold"
+            d="m16 2l-4.55 9.22l-10.17 1.47l7.36 7.18L6.9 30l9.1-4.78L25.1 30l-1.74-10.13l7.36-7.17l-10.17-1.48Z"
+          />
+        </svg>
+
+        <p>5.0</p>
+      </div>
+      <h4>trusted by <br /><span>thousands</span></h4>
+      <p class="firstp">
+        Over ten thousand high-performers power their days with Zeleon Energy every single morning
+      </p>
+      <p class="lastp"><span class="reviewQuantity"></span> reviews</p>
+    </div>
+  </div>
+</section>
+<section class="sec6">
+  <img
+    src="https://static.wixstatic.com/media/c837a6_21c306169a1443cf86a55f3417342dac~mv2.jpg/v1/fill/w_1901,h_1286,fp_0.50_0.50,q_90,usm_0.66_1.00_0.01,enc_auto/Energy-Drink_Gemini-3-(Nano-Banana-Pro)_2026-06-30_09-39-24.jpg"
+    alt=""
+  />
+  <div class="subscriptionForm">
+    <h4><span>unlock </span> exclusive access</h4>
+    <p>The highest-rated formulas chosen by our active community daily</p>
+    <form action="">
+      <div class="mailInp">
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required />
+      </div>
+      <div class="chekbox">
+        <input type="checkbox" id="checkbox" name="checkbox" required />
+        <label for="checkbox">I agree to receive marketing emails</label>
+      </div>
+      <button type="submit">Subscribe</button>
+    </form>
+  </div>
+</section>

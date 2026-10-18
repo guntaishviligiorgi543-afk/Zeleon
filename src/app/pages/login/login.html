@@ -1,0 +1,45 @@
+<section class="auth-page" aria-labelledby="login-title">
+  <div class="brand-panel">
+    <h2>Fuel your<br />ambition.</h2>
+    <div class="login-images">
+      <img src="./images/boosts.avif" alt="ZELEON Boost Blends energy drinks" />
+      <img src="./images/classics.avif" alt="ZELEON Classic energy drinks" />
+      <img src="./images/zeroSugar.avif" alt="ZELEON Zero Sugar energy drinks" />
+    </div>
+    <p>Bold energy. For every move you make.</p>
+  </div>
+  <div class="form-panel">
+    <p class="eyebrow">Your ZELEON account</p>
+    <h1 id="login-title">Welcome back.</h1>
+    <p class="intro">Log in to keep your momentum going.</p>
+    <form [formGroup]="form" (ngSubmit)="submit()" (input)="status.set('')" novalidate>
+      <div class="form-group">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" formControlName="email" autocomplete="username" maxlength="254"
+          required [attr.aria-invalid]="form.controls.email.invalid && (form.controls.email.touched || submitted())"
+          aria-describedby="login-email-error" />
+        <p id="login-email-error" class="field-error" aria-live="polite">
+          @if (form.controls.email.invalid && (form.controls.email.touched || submitted())) { Enter a valid email address. }
+        </p>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" formControlName="password" autocomplete="current-password"
+          required minlength="8" maxlength="128"
+          [attr.aria-invalid]="form.controls.password.invalid && (form.controls.password.touched || submitted())"
+          aria-describedby="login-password-hint login-password-error" />
+        <p id="login-password-hint" class="field-hint">Use 8–128 characters.</p>
+        <p id="login-password-error" class="field-error" aria-live="polite">
+          @if (form.controls.password.invalid && (form.controls.password.touched || submitted())) {
+            Enter a password between 8 and 128 characters.
+          }
+        </p>
+      </div>
+      <a class="forgot-link" routerLink="/forgot-password">Forgot your password?</a>
+      <button type="submit" [disabled]="pending()" [attr.aria-busy]="pending()">{{ pending() ? 'Signing in…' : 'Login' }}</button>
+      <p class="form-status" role="status">{{ status() }}</p>
+    </form>
+    <app-confirmation-resend [email]="form.controls.email.value" />
+    <p class="account-link">Don't have an account? <a routerLink="/signup">Sign up</a></p>
+  </div>
+</section>

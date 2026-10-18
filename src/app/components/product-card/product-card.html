@@ -1,0 +1,7 @@
+@if (product().image) {
+  <img [src]="product().image" [alt]="product().name" />
+} @else {
+  <p>Image unavailable</p>
+}
+<p class="prodNam">{{ product().name }}</p>
+<p class="prodPrice">{{ product().price | currency: product().currency }}</p>

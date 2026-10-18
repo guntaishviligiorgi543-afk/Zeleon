@@ -1,0 +1,95 @@
+:host { display: none; }
+:host, :host * { box-sizing: border-box; }
+
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+.menu-toggle, .menu-close {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  padding: 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #fff;
+}
+svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
+.menu-toggle { animation: toggle-blur-reveal 900ms ease-out 200ms backwards; }
+@keyframes toggle-blur-reveal {
+  from { opacity: 0; filter: blur(8px); }
+  to { opacity: 1; filter: blur(0); }
+}
+.menu-toggle svg, .menu-close svg { width: 40px; height: 40px; }
+.menu-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  height: 100dvh;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+  color: #fff;
+  font-family: 'Montserrat', Arial, sans-serif;
+}
+.menu-dialog[open] { display: flex; justify-content: flex-end; }
+.menu-dialog::backdrop { background: #000b; }
+.menu-panel {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: min(420px, 100%);
+  height: 100%;
+  padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
+  border-radius: 0;
+  border-left: 1px solid #00bfff55;
+  background: #06090f;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.menu-dialog[open] .menu-panel { animation: menu-enter 240ms ease-out; }
+.menu-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.menu-heading span { font-family: 'Climate Crisis', sans-serif; font-size: clamp(18px, 5vw, 26px); }
+.menu-close { flex-shrink: 0; background: transparent; }
+nav { padding: 36px 0; }
+a { text-decoration: none; color: inherit; }
+nav a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 22px 0;
+  border-bottom: 1px solid #ffffff26;
+  font-size: clamp(22px, 6vw, 30px);
+  font-weight: 600;
+}
+nav a span { color: #00bfff; }
+nav a:hover, nav a.current { color: #f68458; }
+.menu-actions { display: grid; gap: 14px; margin-top: auto; }
+.menu-actions a, .menu-actions button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border: 1px solid #ffffff66;
+  border-radius: 0;
+  font-size: 16px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.menu-actions .cart-link { color: #06090f; background: #00bfff; border-color: #00bfff; }
+.login-link:hover { background: #ffffff15; }
+.logout-link { background: transparent; color: inherit; cursor: pointer; }
+.logout-link:hover { background: #ffffff15; }
+.logout-link:disabled { opacity: .5; cursor: wait; }
+.menu-actions .cart-link:hover { background: #f68458; border-color: #f68458; }
+a:focus-visible, button:focus-visible { outline: 2px solid #00bfff; outline-offset: 4px; }
+@keyframes menu-enter { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@media (max-width: 900px) { :host { display: block; } }
+@media (prefers-reduced-motion: reduce) { .menu-toggle, .menu-dialog[open] .menu-panel { animation: none; } }

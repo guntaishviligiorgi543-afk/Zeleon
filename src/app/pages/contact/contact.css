@@ -1,0 +1,223 @@
+:host { display: block; }
+:host, :host * { box-sizing: border-box; }
+
+img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero {
+  min-height: 120vh;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(80px, 12vh, 160px);
+  padding: 130px 30px 60px;
+}
+
+.hero h1 {
+  font-family: 'Climate Crisis', sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  text-align: center;
+  font-size: clamp(2.5rem, 7vw, 6rem);
+  text-transform: capitalize;
+  margin: 0;
+  font-style: normal;
+  font-variation-settings: 'YEAR' 1979;
+}
+
+.heroText {
+  width: 100%;
+  max-width: 1380px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.heroText p {
+  text-transform: uppercase;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 24px;
+}
+
+.heroText h5 {
+  font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+  font-size: clamp(1.8rem, 4vw, 4rem);
+  font-weight: 400;
+  line-height: 1.25;
+  margin: 0;
+}
+
+.faqItem h5 button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.contact-scene,
+.sec3 {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0 20px;
+  border-radius: 60px;
+  overflow: clip;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.contact-scene { padding: 6vh clamp(24px, 6vw, 90px) 14vh; }
+.sec3 { padding: 14vh clamp(24px, 6vw, 90px) 6vh; margin-bottom: 60px; }
+
+.contact-scene > img,
+.sec3 > img {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+}
+
+.contactUsForm,
+.faqAcordion {
+  position: relative;
+  width: min(640px, 100%);
+  padding: clamp(24px, 4vw, 52px);
+  border-radius: 30px;
+  background: #fff;
+  color: #000;
+}
+
+.contactUsForm { margin-left: auto; }
+.faqAcordion { margin-right: auto; }
+
+.contactUsForm > h4,
+.faqAcordion > h4 {
+  margin: 0 0 32px;
+  font-family: 'Climate Crisis', sans-serif;
+  font-variation-settings: 'YEAR' 1979;
+  font-size: clamp(1.4rem, 2.5vw, 2.2rem);
+  font-weight: 400;
+  line-height: 1.4;
+  text-transform: capitalize;
+  overflow-wrap: anywhere;
+}
+
+.contactUsForm form { display: grid; gap: 24px; }
+.firstnam-lastNam { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.fNam, .lNam, .mailInp, .messageInp { display: grid; gap: 10px; min-width: 0; }
+.contactUsForm label { font-size: 1rem; line-height: 1.5; }
+.contactUsForm input,
+.contactUsForm textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid #000;
+  border-radius: 0;
+  background: transparent;
+  color: #000;
+  font: inherit;
+}
+.contactUsForm textarea { min-height: 100px; height: 120px; resize: vertical; }
+.contactUsForm input:focus,
+.contactUsForm textarea:focus { outline: none; border-bottom-color: #007bff; box-shadow: 0 1px #007bff; }
+.contactUsForm button[type='submit'] {
+  justify-self: end;
+  padding: 14px 40px;
+  border: 1px solid #000;
+  border-radius: 50px;
+  background: transparent;
+  color: #000;
+  font: inherit;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+.contactUsForm button[type='submit']:hover { background: #000; color: #fff; }
+.contactUsForm button:focus-visible, .socIcons a:focus-visible { outline: 2px solid #007bff; outline-offset: 4px; }
+
+.contacInfo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 40px;
+  padding: clamp(40px, 6vw, 90px) 30px;
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+.contacInfo .leftSide p { margin: 0; font-size: clamp(1.5rem, 2.5vw, 2rem); text-transform: capitalize; }
+.contacInfo h5 { margin: 0 0 16px; font-size: 1.5rem; text-transform: capitalize; }
+.contacInfo .rightSide p { margin: 0; font-size: 1.1rem; line-height: 1.7; }
+.contacInfo .rightSide > div + div { margin-top: 28px; padding-top: 28px; border-top: 1px solid #ffffff59; }
+
+.faqItem { border-bottom: 1px solid #0003; }
+.faqItem:last-child { border-bottom: 0; }
+.faqItem h5 { margin: 0; padding: 22px 0; font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.5; }
+.faqItem .resp { padding-bottom: 24px; font-size: 1rem; line-height: 1.7; }
+.faqItem .resp p { margin: 0 0 16px; }
+.socIcons { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.socIcons > a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 36px;
+  height: 36px;
+  color: #000;
+  border-radius: 50%;
+}
+.socIcons > a svg { display: block; width: 20px; height: 20px; fill: currentColor; }
+.socIcons > a:hover { color: #007bff; background: #007bff0d; }
+.shareLink { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+.sharedResp { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.sharedResp[hidden] { display: none; }
+.share-button[hidden] { display: none; }
+.share-button { display: grid; place-items: center; padding: 6px; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.share-button svg { width: 20px; height: 20px; }
+.share-button:focus-visible { outline: 2px solid #007bff; outline-offset: 4px; }
+.share-error:empty { display: none; }
+
+@media (max-width: 650px) {
+  .hero { padding: 130px 20px 48px; }
+  .contact-scene, .sec3 { margin-left: 10px; margin-right: 10px; border-radius: 30px; padding: 40px 16px; min-height: 85vh; }
+  .contactUsForm, .faqAcordion { margin-left: auto; margin-right: auto; border-radius: 24px; }
+  .firstnam-lastNam, .contacInfo { grid-template-columns: minmax(0, 1fr); }
+  .firstnam-lastNam { gap: 24px; }
+  .contacInfo { padding: 48px 20px; }
+}
+
+.faq-arrow {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  transform: rotate(180deg);
+  transition: transform 0.2s ease;
+}
+
+.faq-arrow.is-open {
+  transform: rotate(0);
+}
+
+.faqItem .resp[hidden] {
+  display: none;
+}
+
+.faqItem h5 button:focus-visible {
+  outline: 2px solid #007bff;
+  outline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-arrow {
+    transition: none;
+  }
+}
