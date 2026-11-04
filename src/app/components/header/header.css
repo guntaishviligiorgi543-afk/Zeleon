@@ -133,17 +133,20 @@ header {
   font-family: Helvetica, Arial, sans-serif;
 }
 
-.headerIcons a, .headerIcons .cart-toggle {
+.headerIcons a, .headerIcons .auth-session-button, .headerIcons .cart-toggle {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
 }
+.headerIcons .profile-link { color: #fefefe; font: 600 1rem Helvetica, Arial, sans-serif; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); padding: 8px 10px; border-radius: 8px; }
+.headerIcons .profile-link:hover, .headerIcons .profile-link.active { color: #f68458; background-color: rgba(255, 255, 255, 0.1); }
+.headerIcons .profile-link:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 
 .cart-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
-.logout-button { padding: 0; border: 0; background: transparent; color: #fefefe; font: inherit; font-family: Helvetica, Arial, sans-serif; cursor: pointer; }
-.logout-button:disabled { opacity: .5; cursor: wait; }
-.logout-button:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
+.auth-session-button { color: #fefefe; cursor: pointer; }
+.auth-session-button:disabled { opacity: .5; cursor: wait; }
+.auth-session-button:focus-visible, .auth-session-link:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
 .headerIcons .auth-error { font-size: 12px; max-width: 180px; }
 
 @media (max-width: 900px) {
@@ -156,6 +159,7 @@ header {
 .logo,
 .navbar > a,
 .headerIcons > a,
+.headerIcons > .auth-session-button,
 .headerIcons > .cart-toggle {
   animation: header-blur-reveal 900ms ease-out backwards;
 }
@@ -163,7 +167,7 @@ header {
 .navbar > a:nth-child(1) { animation-delay: 200ms; }
 .navbar > a:nth-child(2) { animation-delay: 300ms; }
 .navbar > a:nth-child(3) { animation-delay: 400ms; }
-.headerIcons > a { animation-delay: 450ms; }
+.headerIcons > a, .headerIcons > .auth-session-button { animation-delay: 450ms; }
 .headerIcons > .cart-toggle { animation-delay: 550ms; }
 
 @keyframes header-blur-reveal {
@@ -172,7 +176,7 @@ header {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .infoslideWrapper, .logo, .navbar > a, .headerIcons > a, .headerIcons > .cart-toggle { animation: none; }
+  .infoslideWrapper, .logo, .navbar > a, .headerIcons > a, .headerIcons > .auth-session-button, .headerIcons > .cart-toggle { animation: none; }
 }
 
 @keyframes slideInfinite {

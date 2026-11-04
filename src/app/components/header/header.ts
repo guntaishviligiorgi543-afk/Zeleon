@@ -22,10 +22,12 @@ export class Header {
     this.authError.set('');
     try {
       await this.auth.signOut();
-      await this.router.navigateByUrl('/');
     } catch (error) {
       this.authError.set(authErrorMessage(error));
-    } finally { this.signingOut.set(false); }
+    } finally {
+      await this.router.navigateByUrl('/');
+      this.signingOut.set(false);
+    }
   }
   readonly navigationLinks = [
     { path: '/our-story', label: 'our-story' },

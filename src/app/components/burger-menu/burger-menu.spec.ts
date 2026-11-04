@@ -111,6 +111,9 @@ describe('BurgerMenu', () => {
     expect(anchors.map((anchor) => anchor.getAttribute('href'))).toEqual([
       ...links.map((link) => link.path), '/login',
     ]);
+    expect(Array.from(dialog.querySelectorAll('nav a')).map((anchor) => anchor.textContent?.trim())).toEqual(
+      links.map((link) => link.label),
+    );
     expect(dialog.textContent).not.toContain('Logout');
     for (const anchor of anchors) {
       component.open();

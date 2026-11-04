@@ -14,11 +14,31 @@
     <p class="intro">Create your account and keep the energy going.</p>
     <form [formGroup]="form" (ngSubmit)="submit()" (input)="status.set('')" novalidate>
       <div class="form-group">
-        <label for="signup-name">Full name</label>
-        <input id="signup-name" type="text" formControlName="name" autocomplete="name" required maxlength="80"
-          [attr.aria-invalid]="form.controls.name.invalid && (form.controls.name.touched || submitted())" aria-describedby="signup-name-error" />
-        <p id="signup-name-error" class="field-error" aria-live="polite">
-          @if (form.controls.name.invalid && (form.controls.name.touched || submitted())) { Enter your name (up to 80 characters). }
+        <label for="signup-first-name">First name</label>
+        <input id="signup-first-name" type="text" formControlName="firstName" autocomplete="given-name" required maxlength="80"
+          [attr.aria-invalid]="form.controls.firstName.invalid && (form.controls.firstName.touched || submitted())" aria-describedby="signup-first-name-error" />
+        <p id="signup-first-name-error" class="field-error" aria-live="polite">
+          @if (form.controls.firstName.invalid && (form.controls.firstName.touched || submitted())) { Enter your first name (up to 80 characters). }
+        </p>
+      </div>
+      <div class="form-group">
+        <label for="signup-last-name">Last name</label>
+        <input id="signup-last-name" type="text" formControlName="lastName" autocomplete="family-name" required maxlength="80"
+          [attr.aria-invalid]="form.controls.lastName.invalid && (form.controls.lastName.touched || submitted())" aria-describedby="signup-last-name-error" />
+        <p id="signup-last-name-error" class="field-error" aria-live="polite">
+          @if (form.controls.lastName.invalid && (form.controls.lastName.touched || submitted())) { Enter your last name (up to 80 characters). }
+        </p>
+      </div>
+      <div class="form-group">
+        <label for="signup-preferred-name">Preferred Name <span>(optional)</span></label>
+        <input id="signup-preferred-name" type="text" formControlName="preferredName" autocomplete="nickname" maxlength="80" />
+      </div>
+      <div class="form-group">
+        <label for="signup-phone">Phone number</label>
+        <input id="signup-phone" type="tel" formControlName="phoneNumber" autocomplete="tel" required maxlength="20"
+          [attr.aria-invalid]="form.controls.phoneNumber.invalid && (form.controls.phoneNumber.touched || submitted())" aria-describedby="signup-phone-error" />
+        <p id="signup-phone-error" class="field-error" aria-live="polite">
+          @if (form.controls.phoneNumber.invalid && (form.controls.phoneNumber.touched || submitted())) { Enter a valid phone number. }
         </p>
       </div>
       <div class="form-group">
@@ -31,7 +51,7 @@
       </div>
       <div class="form-group">
         <label for="signup-password">Password</label>
-        <input id="signup-password" type="password" formControlName="password" autocomplete="new-password" required minlength="8" maxlength="128"
+        <input id="signup-password" type="password" appPasswordToggle formControlName="password" autocomplete="new-password" required minlength="8" maxlength="128"
           [attr.aria-invalid]="form.controls.password.invalid && (form.controls.password.touched || submitted())" aria-describedby="signup-password-hint signup-password-error" />
         <p id="signup-password-hint" class="field-hint">Use 8–128 characters.</p>
         <p id="signup-password-error" class="field-error" aria-live="polite">
@@ -40,7 +60,7 @@
       </div>
       <div class="form-group">
         <label for="signup-confirm">Confirm password</label>
-        <input id="signup-confirm" type="password" formControlName="confirmPassword" autocomplete="new-password" required maxlength="128"
+        <input id="signup-confirm" type="password" appPasswordToggle formControlName="confirmPassword" autocomplete="new-password" required maxlength="128"
           [attr.aria-invalid]="(form.controls.confirmPassword.invalid || form.hasError('passwordMismatch')) && (form.controls.confirmPassword.touched || submitted())" aria-describedby="signup-confirm-error" />
         <p id="signup-confirm-error" class="field-error" aria-live="polite">
           @if ((form.controls.confirmPassword.invalid || form.hasError('passwordMismatch')) && (form.controls.confirmPassword.touched || submitted())) { Passwords must match. }
@@ -49,8 +69,48 @@
       <button type="submit" [disabled]="pending()" [attr.aria-busy]="pending()">{{ pending() ? 'Creating account…' : 'Create account' }}</button>
       <p class="form-status" role="status">{{ status() }}</p>
     </form>
-    @if (confirmationSent()) { <app-confirmation-resend [email]="form.controls.email.value" /> }
-    @if (authUser()) { <p class="account-link"><a routerLink="/profile">Open Profile</a></p> }
     <p class="account-link">Already have an account? <a routerLink="/login">Login</a></p>
   </div>
 </section>
+@if (verificationOpen()) {
+  <div class="registration-overlay">
+    <section class="registration-dialog" role="dialog" aria-modal="true" aria-labelledby="signup-otp-title"
+      aria-describedby="signup-otp-message" tabindex="-1">
+      <div class="registration-indicator" aria-hidden="true"><span>01</span></div>
+      <h2 id="signup-otp-title">Verify your email</h2>
+      <p id="signup-otp-message">Enter the 6-digit code from your inbox for {{ verificationEmail() }}. If it does not arrive, check your spam folder or request another code.</p>
+      <form class="verification-form" (ngSubmit)="verifyEmail()" novalidate>
+        <label for="signup-otp">Verification code</label>
+        <input #otpInput id="signup-otp" class="verification-code" type="text" inputmode="numeric" autocomplete="one-time-code"
+          maxlength="6" pattern="[0-9]{6}" [value]="verificationCode()" (input)="onVerificationInput($event)"
+          [attr.aria-invalid]="verificationInvalid()" aria-describedby="signup-otp-status" />
+        <p id="signup-otp-status" class="verification-status" role="status" aria-live="polite">{{ verificationStatus() }}</p>
+        <button type="submit" class="registration-action" [disabled]="verificationPending()" [attr.aria-busy]="verificationPending()">
+          {{ verificationPending() ? 'Verifying…' : 'Verify' }}
+        </button>
+      </form>
+      <button type="button" class="registration-resend" [disabled]="resendPending() || resendCooldown() > 0"
+        [attr.aria-busy]="resendPending()" (click)="resendCode()">
+        @if (resendPending()) { Sending… } @else if (resendCooldown() > 0) { Resend code in {{ resendCooldown() }}s } @else { Resend Code }
+      </button>
+      <button type="button" class="registration-cancel" [disabled]="verificationPending() || resendPending()" (click)="cancelVerification()">Cancel</button>
+    </section>
+  </div>
+}
+@if (result(); as outcome) {
+  <div class="registration-overlay" (click)="$event.target === $event.currentTarget && closeResult()">
+    <section class="registration-dialog" role="dialog" aria-modal="true" aria-labelledby="registration-result-title"
+      aria-describedby="registration-result-message" tabindex="-1">
+      <div class="registration-indicator" [class.is-error]="!outcome.success" aria-hidden="true">
+        @if (outcome.success) { <span>✓</span> } @else { <span>!</span> }
+      </div>
+      <h2 id="registration-result-title">{{ outcome.title }}</h2>
+      <p id="registration-result-message">{{ outcome.message }}</p>
+      @if (outcome.success) {
+        <button #resultAction type="button" class="registration-action" (click)="goHome()">Go to Home</button>
+      } @else {
+        <button #resultAction type="button" class="registration-action" (click)="closeResult()">Try Again</button>
+      }
+    </section>
+  </div>
+}

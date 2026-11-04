@@ -1,1 +1,13 @@
-<p>your-info works!</p>
+<section aria-labelledby="profile-info-title">
+  <p class="eyebrow">YOUR ACCOUNT</p><h2 id="profile-info-title">Profile</h2>
+  @if (auth.user(); as user) {
+    <dl>
+      <dt>First name</dt><dd>{{ user.firstName || 'Not provided' }}</dd>
+      <dt>Last name</dt><dd>{{ user.lastName || 'Not provided' }}</dd>
+      <dt>Email</dt><dd>{{ user.email || 'Not provided' }}</dd>
+      <dt>Phone</dt><dd>{{ user.phoneNumber || 'Not provided' }}</dd>
+    </dl>
+  } @else {
+    <p>Sign in to view your account information.</p>
+  }
+</section>

@@ -1,11 +1,13 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { inject, signal } from '@angular/core';
 import { Auth, authErrorMessage } from '../../services/auth';
+import { PasswordToggle } from '../../directives/password-toggle.directive';
 
 @Component({
   selector: 'app-reset-password',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [RouterLink, ReactiveFormsModule, PasswordToggle],
   styleUrl: '../auth-form.css',
   templateUrl: './reset-password.html',
 })
@@ -29,8 +31,9 @@ export class ResetPassword {
     this.status.set('');
     try {
       await this.auth.ready;
-      if (!this.auth.user()) throw { code: 'session_not_found' };
+      if (!this.auth.recovering() || !this.auth.user()) throw { code: 'session_not_found' };
       await this.auth.updatePassword(this.form.controls.password.value);
+      try { await this.auth.signOut(); } catch { /* Password update succeeded; local auth state is cleared in signOut's finally block. */ }
       this.done.set(true);
       this.form.reset();
       this.status.set('Your password has been updated successfully.');

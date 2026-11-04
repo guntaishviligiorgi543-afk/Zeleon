@@ -26,7 +26,7 @@ describe('Login', () => {
     expect(component).toBeTruthy();
   });
 
-  it('validates input and signs in through Auth before navigating to Profile', async () => {
+  it('validates input and signs in through Auth before navigating to Home', async () => {
     component.submit();
     await fixture.whenStable();
     expect(component.form.invalid).toBe(true);
@@ -34,12 +34,12 @@ describe('Login', () => {
     expect(component.status()).toBe('');
     component.form.setValue({ email: 'invalid', password: 'short' });
     expect(component.form.invalid).toBe(true);
-    component.form.setValue({ email: 'person+test@example.com', password: 'valid passphrase' });
+    component.form.setValue({ email: 'person@example.com', password: 'valid passphrase' });
     expect(component.form.valid).toBe(true);
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     await component.submit();
-    expect(auth.signIn).toHaveBeenCalledWith('person+test@example.com', 'valid passphrase');
-    expect(navigate).toHaveBeenCalledWith('/profile');
+    expect(auth.signIn).toHaveBeenCalledWith('person@example.com', 'valid passphrase');
+    expect(navigate).toHaveBeenCalledWith('/');
     const links = Array.from(fixture.nativeElement.querySelectorAll('a')) as HTMLAnchorElement[];
     expect(links.map((link) => link.getAttribute('href'))).toContain('/forgot-password');
     expect(links.map((link) => link.getAttribute('href'))).toContain('/signup');

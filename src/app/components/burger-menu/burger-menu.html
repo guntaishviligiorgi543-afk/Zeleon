@@ -15,7 +15,7 @@
     <nav aria-label="Mobile navigation">
       @for (link of links(); track link.path) {
         <a [routerLink]="link.path" routerLinkActive="current" [routerLinkActiveOptions]="{ exact: true }"
-          ariaCurrentWhenActive="page" (click)="close()">{{ link.label }}<span aria-hidden="true">↗</span></a>
+          ariaCurrentWhenActive="page" (click)="close()">{{ link.label }}</a>
       }
     </nav>
     <div class="menu-actions">

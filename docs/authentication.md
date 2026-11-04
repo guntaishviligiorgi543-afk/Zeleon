@@ -22,6 +22,8 @@ user metadata, never an authorization claim.
   session as authenticated. Signup/recovery feedback avoids unnecessary account
   existence disclosure. Forms prevent repeated pending submissions and translate
   SDK errors without rendering raw server details.
+- Signup email OTPs are verified with Supabase `verifyOtp` type `email`;
+  recovery OTPs use type `recovery`.
 - Confirmation resend is available on Login and after unconfirmed signup; a
   60-second UI cooldown complements server rate limits and is cleaned up when
   the component is destroyed. Rate-limit errors show a retry-later message.

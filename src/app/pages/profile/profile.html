@@ -1,1 +1,18 @@
-<p>profile works!</p>
+<section class="dashboard" aria-label="User dashboard">
+  <header class="dashboard-heading"><h1>User Dashboard</h1><span>{{ selectedSection }}</span></header>
+  <div class="dashboard-layout">
+    <aside class="dashboard-sidebar">
+      <p class="sidebar-label">ACCOUNT</p>
+      <nav aria-label="Profile sections">
+        @for (section of sections; track section.path) {
+          <a [routerLink]="section.path" routerLinkActive="selected" ariaCurrentWhenActive="page">{{ section.label }}</a>
+        }
+      </nav>
+      <div class="sidebar-bottom">
+        @if (logoutError()) { <p role="alert">{{ logoutError() }}</p> }
+        <button type="button" (click)="logout()" [disabled]="logoutBusy()">{{ logoutBusy() ? 'Signing out…' : 'Logout' }}</button>
+      </div>
+    </aside>
+    <main class="dashboard-content"><router-outlet /></main>
+  </div>
+</section>

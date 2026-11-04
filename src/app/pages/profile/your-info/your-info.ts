@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
+import { Auth } from '../../../services/auth';
 
 @Component({
   imports: [],
@@ -6,4 +7,7 @@ import { Component } from '@angular/core';
   styleUrl: './your-info.css',
   templateUrl: './your-info.html',
 })
-export class YourInfo {}
+export class YourInfo implements OnInit {
+  readonly auth = inject(Auth);
+  async ngOnInit(): Promise<void> { try { await this.auth.loadPreferredName(); } catch { /* Profile details remain available if the optional table is not deployed. */ } }
+}

@@ -1,0 +1,90 @@
+.shop-info {
+    max-width: 780px;
+    margin: 0 auto;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: #c6ff47;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+}
+
+h2 {
+    margin: 0 0 28px;
+    font-size: clamp(1.7rem, 4vw, 2.3rem);
+}
+
+h3 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 26px 0 14px;
+    font-size: 1.15rem;
+}
+
+h3 span {
+    color: #c6ff47;
+    font-size: 0.9rem;
+}
+
+.empty-state {
+    display: grid;
+    gap: 8px;
+    padding: 26px;
+    border: 1px dashed #c6ff4755;
+    color: #a9c7dd;
+    text-align: center;
+}
+
+.empty-state p {
+    margin: 0;
+    color: #fff;
+}
+
+.empty-state a {
+    width: max-content;
+    margin: 8px auto 0;
+    padding: 10px 16px;
+    background: #c6ff47;
+    color: #10120b;
+    text-decoration: none;
+    font-weight: 650;
+}
+
+.purchases {
+    margin-top: 36px;
+    padding-top: 8px;
+    border-top: 1px solid #c6ff4740;
+}
+
+.product-list {
+    display: grid;
+    gap: 10px;
+}
+
+.product-line {
+    display: grid;
+    grid-template-columns: 76px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border: 1px solid #c6ff4740;
+    background: #002d52;
+}
+
+.product-line img {
+    width: 76px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.product-line h4 {
+    margin: 0 0 7px;
+}
+
+.product-line p {
+    margin: 0;
+    color: #a9c7dd;
+    font-size: 0.9rem;
+}

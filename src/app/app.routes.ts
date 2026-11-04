@@ -13,6 +13,7 @@ import { Checkout } from './pages/checkout/checkout';
 import { Profile } from './pages/profile/profile';
 import { YourInfo } from './pages/profile/your-info/your-info';
 import { Security } from './pages/profile/security/security';
+import { ShopInfo } from './pages/profile/shop-info/shop-info';
 import { authGuard, guestGuard } from './guards/auth.guard';
 import { AuthCallback } from './pages/auth-callback/auth-callback';
 import { ResetPassword } from './pages/reset-password/reset-password';
@@ -86,6 +87,10 @@ export const routes: Routes = [
       {
         path: 'security',
         component: Security,
+      },
+      {
+        path: 'shop-info',
+        component: ShopInfo,
       },
     ],
   },

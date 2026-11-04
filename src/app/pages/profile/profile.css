@@ -1,0 +1,17 @@
+.dashboard { width: min(1280px, calc(100% - 48px)); margin: 170px auto 88px; color: #fff; font-family: Helvetica, Arial, sans-serif; }
+.dashboard-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 24px; padding: 0 0 24px; border-bottom: 1px solid #ffffff30; }
+.dashboard-heading h1 { margin: 0; font-family: 'Climate Crisis', Helvetica, Arial, sans-serif; font-size: clamp(1.65rem, 4vw, 2.6rem); font-weight: 400; text-transform: uppercase; }
+.dashboard-heading span { color: #c6ff47; font-size: 1rem; }
+.dashboard-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); min-height: 540px; margin-top: 26px; border: 1px solid #00bfff55; background: #001f3f; overflow: hidden; }
+.dashboard-sidebar { display: flex; flex-direction: column; padding: 26px 18px; border-right: 1px solid #00bfff40; background: rgba(0,123,255,.08); }
+.sidebar-label { margin: 2px 12px 16px; color: #a9c7dd; font-size: .72rem; letter-spacing: .16em; }
+.dashboard-sidebar nav { display: grid; gap: 6px; }
+.dashboard-sidebar nav a { padding: 13px 14px; color: #fff; text-decoration: none; transition: background .2s,color .2s; }
+.dashboard-sidebar nav a:hover,.dashboard-sidebar nav a.selected { background: rgba(198,255,71,.14); color: #fff; box-shadow: inset 3px 0 #c6ff47; }
+.sidebar-bottom { margin-top: auto; padding-top: 28px; }
+.sidebar-bottom button { width: 100%; padding: 13px 14px; border: 1px solid #c6ff4770; color: #c6ff47; background: transparent; cursor: pointer; }
+.sidebar-bottom button:hover { background: rgba(198,255,71,.12); }
+.sidebar-bottom p { font-size: .82rem; color: #c6ff47; }
+.dashboard-content { min-width: 0; padding: clamp(24px, 5vw, 52px); }
+@media(max-width:900px) { .dashboard { width: min(100% - 28px, 700px); margin: 150px auto 56px; } }
+@media(max-width:700px) { .dashboard { width: min(100% - 28px, 560px); margin: 136px auto 56px; } .dashboard-heading { align-items: flex-start; flex-direction: column; gap: 8px; } .dashboard-layout { display: block; min-height: 0; } .dashboard-sidebar { padding: 14px; border-right: 0; border-bottom: 1px solid #00bfff40; } .sidebar-label { display:none; } .dashboard-sidebar nav { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 4px; } .dashboard-sidebar nav a { padding: 11px 6px; text-align: center; font-size: .82rem; } .sidebar-bottom { margin-top: 10px; padding-top: 0; } .sidebar-bottom button { padding: 9px; } .dashboard-content { padding: 22px 18px; } }

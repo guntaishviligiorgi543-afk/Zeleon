@@ -1,0 +1,25 @@
+.security-page { max-width: 760px; margin: 0 auto; }
+.eyebrow { margin: 0 0 8px; color: #c6ff47; font-size: .72rem; letter-spacing: .15em; }
+h2 { margin: 0 0 28px; font-size: clamp(1.7rem,4vw,2.3rem); }
+.security-row,.danger-row { display:flex; align-items:center; justify-content:space-between; gap:20px; padding:20px 0; border-bottom:1px solid #ffffff20; }
+.row-title,.preferred label { font-weight:650; }
+.security-row p,.danger-row p,.preferred p { margin:7px 0 0; color:#a9c7dd; font-size:.9rem; line-height:1.5; }
+button { border:0; padding:11px 16px; background:#c6ff47; color:#10120b; font-weight:650; cursor:pointer; }
+button:disabled { opacity:.55; cursor:wait; }
+.preferred { padding:24px 0; border-bottom:1px solid #ffffff20; }
+.inline-form { display:flex; gap:10px; margin-top:14px; }
+input { width:100%; min-width:0; padding:13px 14px; border:1px solid #c6ff4755; background:#001f3f; color:#fff; font:inherit; }
+.danger-row { margin-top:18px; padding:20px; border:1px solid #c6ff4755; }
+.danger { color:#10120b; background:#c6ff47; }
+.action-form { max-width:440px; margin:20px auto; }
+.action-form form { display:grid; gap:10px; }
+.action-form label { margin-top:10px; font-size:.92rem; }
+.action-form p:not(.eyebrow) { color:#bdbdbd; line-height:1.55; }
+.action-form small { color:#a9c7dd; }
+.form-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:16px; }
+.secondary { border:1px solid #ffffff35; color:#fff; background:transparent; }
+.feedback { line-height:1.5; }.success,.error { color:#c6ff47; }
+.modal-backdrop { position:fixed; z-index:1000; inset:0; display:grid; place-items:center; padding:20px; background:#000b; backdrop-filter:blur(8px); }
+.delete-modal { width:min(100%,460px); padding:30px; border:1px solid #c6ff4755; background:#001f3f; box-shadow:0 25px 90px #000b; }
+.delete-modal p:not(.eyebrow) { color:#a9c7dd; line-height:1.6; }
+@media(max-width:520px) { .security-row,.danger-row { align-items:flex-start; flex-direction:column; } .inline-form { align-items:stretch; } .delete-modal { padding:24px; } }

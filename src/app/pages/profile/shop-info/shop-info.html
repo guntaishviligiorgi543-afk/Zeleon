@@ -1,0 +1,7 @@
+<section class="shop-info" aria-labelledby="shop-info-title">
+  <p class="eyebrow">YOUR ZELEON SHOP</p><h2 id="shop-info-title">Shop Info</h2>
+  <section aria-labelledby="cart-title"><h3 id="cart-title">Cart Products <span>{{ cart.items().length }}</span></h3>
+    @if (cart.items().length) { <div class="product-list">@for (line of cart.items(); track line.product.id) {<article class="product-line"><img [src]="line.product.image" [alt]="line.product.name"/><div><h4>{{ line.product.name }}</h4><p>{{ line.product.price | currency:line.product.currency }} · Quantity {{ line.quantity }}</p></div></article>}</div> } @else {<div class="empty-state"><p>Your cart is currently empty.</p><a routerLink="/shop">Return to Shop</a></div>}
+  </section>
+  <section class="purchases" aria-labelledby="purchases-title"><h3 id="purchases-title">Purchased Products</h3><div class="empty-state"><p>Purchase history is not available yet.</p><span>Completed orders will appear here once order storage is connected.</span></div></section>
+</section>

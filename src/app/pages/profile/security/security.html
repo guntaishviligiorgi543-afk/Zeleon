@@ -1,1 +1,26 @@
-<p>security works!</p>
+<section aria-labelledby="security-title" class="security-page">
+  @if (action() === 'overview') {
+    <p class="eyebrow">ACCOUNT CONTROLS</p><h2 id="security-title">Security</h2>
+    <div class="security-row"><div><span class="row-title">Email address</span><p>{{ auth.user()?.email || 'Not available' }}</p></div><button type="button" (click)="start('email')">Change Email</button></div>
+    <div class="security-row"><div><span class="row-title">Password</span><p>Keep your account secure with a strong password.</p></div><button type="button" (click)="start('password')">Change Password</button></div>
+    <form class="preferred" (ngSubmit)="saveName()"><label for="preferred-name">Preferred Name</label><p>Used to display your name around ZELEON. Your registration name stays unchanged.</p><div class="inline-form"><input id="preferred-name" [formControl]="preferredName" maxlength="80" autocomplete="nickname"/><button type="submit" [disabled]="pending()">Save</button></div></form>
+    <div class="danger-row"><div><span class="row-title">Delete account</span><p>Permanently delete your account and associated personal data.</p></div><button type="button" class="danger" (click)="deleteOpen.set(true)">Delete Account</button></div>
+  } @else if (action() === 'email') {
+    <div class="action-form"><p class="eyebrow">ACCOUNT CONTROLS</p><h2>Change Email</h2><p>Current email: <strong>{{ auth.user()?.email }}</strong></p>
+      <form (ngSubmit)="emailCodeSent() ? verifyEmail() : requestEmail()"><label for="new-email">New email address</label><input id="new-email" type="email" autocomplete="email" [formControl]="newEmail" required />
+        @if (emailCodeSent()) {<label for="email-code">Verification code</label><input id="email-code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" [formControl]="code" required />}
+        <div class="form-actions"><button type="button" class="secondary" (click)="cancel()">Cancel</button><button type="submit" [disabled]="pending()">{{ pending() ? 'Please wait…' : (emailCodeSent() ? 'Verify Code' : 'Send Code') }}</button></div>
+      </form>
+    </div>
+  } @else {
+    <div class="action-form"><p class="eyebrow">ACCOUNT CONTROLS</p><h2>Change Password</h2>
+      <form (ngSubmit)="changePassword()"><label for="current-password">Current Password</label><input id="current-password" type="password" appPasswordToggle autocomplete="current-password" [formControl]="currentPassword" required />
+        <label for="new-password">New Password</label><input id="new-password" type="password" appPasswordToggle autocomplete="new-password" minlength="8" maxlength="128" [formControl]="newPassword" required /><small>Use 8–128 characters.</small>
+        <label for="confirm-password">Confirm New Password</label><input id="confirm-password" type="password" appPasswordToggle autocomplete="new-password" maxlength="128" [formControl]="confirmPassword" required />
+        <div class="form-actions"><button type="button" class="secondary" (click)="cancel()">Cancel</button><button type="submit" [disabled]="pending()">{{ pending() ? 'Updating…' : 'Change Password' }}</button></div>
+      </form>
+    </div>
+  }
+  @if (message()) { <p class="feedback success" role="status">{{ message() }}</p> } @if (error()) { <p class="feedback error" role="alert">{{ error() }}</p> }
+</section>
+@if (deleteOpen()) {<div class="modal-backdrop"><section class="delete-modal" role="alertdialog" aria-modal="true" aria-labelledby="delete-title" aria-describedby="delete-warning"><p class="eyebrow">PERMANENT ACTION</p><h2 id="delete-title">Delete Account</h2><p id="delete-warning">This action is permanent. Your account and associated personal information may be removed and cannot be restored.</p>@if(error()){<p class="feedback error" role="alert">{{ error() }}</p>}<div class="form-actions"><button type="button" class="secondary" [disabled]="pending()" (click)="cancelDelete()">Cancel</button><button type="button" class="danger" [disabled]="pending()" [attr.aria-busy]="pending()" (click)="confirmDelete()">{{pending() ? 'Deleting…' : 'Delete Account'}}</button></div></section></div>}

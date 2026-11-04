@@ -47,8 +47,9 @@ svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width:
   height: 100%;
   padding: max(28px, env(safe-area-inset-top)) 24px max(28px, env(safe-area-inset-bottom));
   border-radius: 0;
-  border-left: 1px solid #00bfff55;
-  background: #06090f;
+  border-left: 1px solid #fff;
+  background: #000;
+  color: #fff;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -64,12 +65,11 @@ nav a {
   align-items: center;
   gap: 16px;
   padding: 22px 0;
-  border-bottom: 1px solid #ffffff26;
+  border-bottom: 1px solid #ffffff66;
   font-size: clamp(22px, 6vw, 30px);
   font-weight: 600;
 }
-nav a span { color: #00bfff; }
-nav a:hover, nav a.current { color: #f68458; }
+nav a:hover, nav a.current { color: #000; background: #fff; padding-inline: 12px; }
 .menu-actions { display: grid; gap: 14px; margin-top: auto; }
 .menu-actions a, .menu-actions button {
   display: flex;
@@ -77,19 +77,20 @@ nav a:hover, nav a.current { color: #f68458; }
   justify-content: center;
   gap: 12px;
   padding: 16px 20px;
-  border: 1px solid #ffffff66;
+  border: 1px solid #fff;
   border-radius: 0;
   font-size: 16px;
   font-weight: 600;
   font-family: inherit;
 }
-.menu-actions .cart-link { color: #06090f; background: #00bfff; border-color: #00bfff; }
-.login-link:hover { background: #ffffff15; }
-.logout-link { background: transparent; color: inherit; cursor: pointer; }
-.logout-link:hover { background: #ffffff15; }
+.menu-actions .cart-link { color: #000; background: #fff; border-color: #fff; }
+.login-link { color: #fff; background: #000; }
+.login-link:hover { color: #000; background: #fff; }
+.logout-link { background: #000; color: #fff; cursor: pointer; }
+.logout-link:hover { background: #fff; color: #000; }
 .logout-link:disabled { opacity: .5; cursor: wait; }
-.menu-actions .cart-link:hover { background: #f68458; border-color: #f68458; }
-a:focus-visible, button:focus-visible { outline: 2px solid #00bfff; outline-offset: 4px; }
+.menu-actions .cart-link:hover { color: #fff; background: #000; border-color: #fff; }
+a:focus-visible, button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
 @keyframes menu-enter { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @media (max-width: 900px) { :host { display: block; } }
 @media (prefers-reduced-motion: reduce) { .menu-toggle, .menu-dialog[open] .menu-panel { animation: none; } }

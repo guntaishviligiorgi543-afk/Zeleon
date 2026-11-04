@@ -1,0 +1,6 @@
+section { max-width: 600px; }
+.eyebrow { margin: 0 0 8px; color: #c6ff47; letter-spacing: .15em; font-size: .72rem; }
+h2 { margin: 0 0 30px; font-size: clamp(1.7rem, 4vw, 2.4rem); }
+dl { display: grid; grid-template-columns: minmax(110px, .7fr) 1.3fr; margin: 0; }
+dt,dd { margin: 0; padding: 17px 0; border-bottom: 1px solid #ffffff20; }
+dt { color: #a9c7dd; } dd { overflow-wrap: anywhere; }

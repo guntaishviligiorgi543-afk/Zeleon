@@ -7,7 +7,7 @@ export const authGuard: CanActivateFn = async (_route, state) => {
   const router = inject(Router);
   await auth.ready;
   if (auth.recovering()) return router.createUrlTree(['/reset-password']);
-  return auth.user() ? true : router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+  return auth.isAuthenticated() ? true : router.createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
 };
 
 export const guestGuard: CanActivateFn = async () => {
@@ -15,5 +15,5 @@ export const guestGuard: CanActivateFn = async () => {
   const router = inject(Router);
   await auth.ready;
   if (auth.recovering()) return router.createUrlTree(['/reset-password']);
-  return auth.user() ? router.createUrlTree(['/profile']) : true;
+  return auth.isAuthenticated() ? router.createUrlTree(['/profile']) : true;
 };

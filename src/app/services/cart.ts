@@ -23,4 +23,6 @@ export class Cart {
   remove(id: string | number): void {
     this.lines.update((items) => items.filter((item) => item.product.id !== id));
   }
+
+  clear(): void { this.lines.set([]); }
 }
