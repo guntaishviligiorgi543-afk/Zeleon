@@ -78,11 +78,11 @@
       aria-describedby="signup-otp-message" tabindex="-1">
       <div class="registration-indicator" aria-hidden="true"><span>01</span></div>
       <h2 id="signup-otp-title">Verify your email</h2>
-      <p id="signup-otp-message">Enter the 6-digit code from your inbox for {{ verificationEmail() }}. If it does not arrive, check your spam folder or request another code.</p>
+      <p id="signup-otp-message">Enter the 8-digit code from your inbox for {{ verificationEmail() }}. If it does not arrive, check your spam folder or request another code.</p>
       <form class="verification-form" (ngSubmit)="verifyEmail()" novalidate>
         <label for="signup-otp">Verification code</label>
         <input #otpInput id="signup-otp" class="verification-code" type="text" inputmode="numeric" autocomplete="one-time-code"
-          maxlength="6" pattern="[0-9]{6}" [value]="verificationCode()" (input)="onVerificationInput($event)"
+          minlength="8" maxlength="8" pattern="[0-9]{8}" [value]="verificationCode()" (input)="onVerificationInput($event)"
           [attr.aria-invalid]="verificationInvalid()" aria-describedby="signup-otp-status" />
         <p id="signup-otp-status" class="verification-status" role="status" aria-live="polite">{{ verificationStatus() }}</p>
         <button type="submit" class="registration-action" [disabled]="verificationPending()" [attr.aria-busy]="verificationPending()">

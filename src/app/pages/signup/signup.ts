@@ -80,7 +80,7 @@ export class Signup {
 
   onVerificationInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const code = input.value.replace(/\D/g, '').slice(0, 6);
+    const code = input.value.replace(/\D/g, '').slice(0, 8);
     if (input.value !== code) input.value = code;
     this.verificationCode.set(code);
     this.verificationStatus.set('');
@@ -90,8 +90,8 @@ export class Signup {
   async verifyEmail(): Promise<void> {
     if (this.verificationPending()) return;
     const code = this.verificationCode();
-    if (!/^\d{6}$/.test(code)) {
-      this.verificationStatus.set('Enter the 6-digit code from your email.');
+    if (!/^\d{8}$/.test(code)) {
+      this.verificationStatus.set('Enter the 8-digit code from your email.');
       this.verificationInvalid.set(true);
       return;
     }
@@ -101,7 +101,7 @@ export class Signup {
     try {
       await this.auth.verifyEmailOtp(this.verificationEmail(), code, 'email');
       this.closeVerification(false);
-      this.showResult({ success: true, title: 'Registration Successful', message: 'Your account has been created successfully.' });
+      await this.router.navigateByUrl('/login');
     } catch (error) {
       this.verificationStatus.set(authErrorMessage(error));
       this.verificationInvalid.set(true);

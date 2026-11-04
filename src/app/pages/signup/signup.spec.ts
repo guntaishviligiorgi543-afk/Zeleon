@@ -82,7 +82,7 @@ describe('Signup', () => {
     expect(component.pending()).toBe(false);
   });
 
-  it('verifies a six-digit signup code before showing the success dialog', async () => {
+  it('verifies an eight-digit signup code before navigating to login', async () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
     component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: 'Nini', phoneNumber: '+995555123456', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
@@ -91,20 +91,22 @@ describe('Signup', () => {
     expect(auth.user()).toBeNull();
 
     const input = document.createElement('input');
-    input.value = '12a3456';
+    input.value = '12a345678';
     component.onVerificationInput({ target: input } as unknown as Event);
-    expect(input.value).toBe('123456');
+    expect(input.value).toBe('12345678');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     await component.verifyEmail();
-    expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '123456', 'email');
+    expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '12345678', 'email');
+    expect(navigate).toHaveBeenCalledWith('/login');
     expect(component.verificationOpen()).toBe(false);
-    expect(component.result()?.success).toBe(true);
+    expect(component.result()).toBeNull();
   });
 
   it('keeps the code dialog open and shows a safe message for an invalid code', async () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
     component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', phoneNumber: '+995555123456', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
-    component.verificationCode.set('000000');
+    component.verificationCode.set('00000000');
     auth.verifyEmailOtp.mockRejectedValueOnce({ code: 'otp_expired' });
     await component.verifyEmail();
     expect(component.verificationOpen()).toBe(true);

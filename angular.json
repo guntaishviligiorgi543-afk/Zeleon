@@ -22,6 +22,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "favicon.ico-Photoroom.png",
+                "input": "src/app/images",
+                "output": "/"
               }
             ],
             "styles": ["src/styles.css"]
