@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { Component, DestroyRef, ElementRef, HostListener, inject, signal, viewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, ValidatorFn, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { PasswordToggle } from '../../directives/password-toggle.directive';
@@ -9,7 +9,7 @@ const passwordsMatch: ValidatorFn = (form) =>
   form.get('password')?.value === form.get('confirmPassword')?.value ? null : { passwordMismatch: true };
 
 @Component({
-  imports: [ReactiveFormsModule, RouterLink, PasswordToggle],
+  imports: [FormsModule, ReactiveFormsModule, RouterLink, PasswordToggle],
   selector: 'app-signup',
   styleUrls: ['../auth-form.css', './signup.css'],
   templateUrl: './signup.html',

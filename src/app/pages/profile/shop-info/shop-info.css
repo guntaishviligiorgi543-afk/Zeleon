@@ -5,7 +5,7 @@
 
 .eyebrow {
     margin: 0 0 8px;
-    color: #c6ff47;
+    color: #aaa;
     font-size: 0.72rem;
     letter-spacing: 0.15em;
 }
@@ -24,7 +24,7 @@ h3 {
 }
 
 h3 span {
-    color: #c6ff47;
+    color: #aaa;
     font-size: 0.9rem;
 }
 
@@ -32,8 +32,9 @@ h3 span {
     display: grid;
     gap: 8px;
     padding: 26px;
-    border: 1px dashed #c6ff4755;
-    color: #a9c7dd;
+    border: 1px dashed #ffffff45;
+    border-radius: 12px;
+    color: #aaa;
     text-align: center;
 }
 
@@ -46,8 +47,9 @@ h3 span {
     width: max-content;
     margin: 8px auto 0;
     padding: 10px 16px;
-    background: #c6ff47;
-    color: #10120b;
+    border-radius: 8px;
+    background: #fff;
+    color: #111;
     text-decoration: none;
     font-weight: 650;
 }
@@ -55,7 +57,7 @@ h3 span {
 .purchases {
     margin-top: 36px;
     padding-top: 8px;
-    border-top: 1px solid #c6ff4740;
+    border-top: 1px solid #ffffff25;
 }
 
 .product-list {
@@ -69,8 +71,9 @@ h3 span {
     align-items: center;
     gap: 16px;
     padding: 12px;
-    border: 1px solid #c6ff4740;
-    background: #002d52;
+    border: 1px solid #ffffff25;
+    border-radius: 12px;
+    background: #181818;
 }
 
 .product-line img {
@@ -85,6 +88,6 @@ h3 span {
 
 .product-line p {
     margin: 0;
-    color: #a9c7dd;
+    color: #aaa;
     font-size: 0.9rem;
 }

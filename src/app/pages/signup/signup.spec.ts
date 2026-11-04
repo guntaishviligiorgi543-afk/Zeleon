@@ -95,7 +95,10 @@ describe('Signup', () => {
     component.onVerificationInput({ target: input } as unknown as Event);
     expect(input.value).toBe('12345678');
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
-    await component.verifyEmail();
+    fixture.detectChanges();
+    const otpForm = fixture.nativeElement.querySelector('.verification-form') as HTMLFormElement;
+    otpForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await fixture.whenStable();
     expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '12345678', 'email');
     expect(navigate).toHaveBeenCalledWith('/login');
     expect(component.verificationOpen()).toBe(false);
