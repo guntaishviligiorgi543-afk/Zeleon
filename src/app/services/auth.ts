@@ -11,7 +11,7 @@ export interface AuthUser {
   phoneNumber: string;
 }
 
-interface SignupProfile { firstName: string; lastName: string; phoneNumber: string; preferredName?: string; }
+interface SignupProfile { firstName: string; lastName: string; preferredName?: string; }
 
 export function authErrorMessage(error: unknown): string {
   const value = error as { code?: string; status?: number } | null;
@@ -111,7 +111,6 @@ export class Auth {
         data: {
           first_name: profile.firstName.trim(),
           last_name: profile.lastName.trim(),
-          phone_number: profile.phoneNumber.trim(),
           preferred_name: profile.preferredName?.trim() ?? '',
         },
       },
@@ -227,9 +226,20 @@ export class Auth {
 
   async updatePassword(password: string): Promise<void> {
     await this.ready;
+    const before = await this.client.auth.getUser();
+    if (before.error) throw before.error;
+    if (!before.data.user) throw new Error('The authenticated account could not be confirmed.');
     const { data, error } = await this.client.auth.updateUser({ password });
     if (error) throw error;
-    this.sessionState.update((session) => session ? { ...session, user: data.user } : null);
+    if (!data.user || data.user.id !== before.data.user.id || data.user.email !== before.data.user.email) {
+      throw new Error('The password update was not confirmed for the authenticated account.');
+    }
+    const after = await this.client.auth.getUser();
+    if (after.error) throw after.error;
+    if (!after.data.user || after.data.user.id !== before.data.user.id || after.data.user.email !== before.data.user.email) {
+      throw new Error('The password update session could not be confirmed.');
+    }
+    this.sessionState.update((session) => session ? { ...session, user: after.data.user } : null);
     this.recovering.set(false);
   }
 

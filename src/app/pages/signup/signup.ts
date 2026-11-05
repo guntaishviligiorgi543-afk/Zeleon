@@ -40,7 +40,6 @@ export class Signup {
     firstName: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(80)]],
     lastName: ['', [Validators.required, Validators.pattern(/\S/), Validators.maxLength(80)]],
     preferredName: ['', [Validators.pattern(/\S/), Validators.maxLength(80)]],
-    phoneNumber: ['', [Validators.required, Validators.pattern(/^\+?[0-9 ()-]{7,20}$/)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
     password: ['', [Validators.required, Validators.pattern(/^[\s\S]{8,128}$/)]],
     confirmPassword: ['', Validators.required],
@@ -58,8 +57,8 @@ export class Signup {
     if (this.form.invalid) return;
     this.pending.set(true);
     try {
-      const { firstName, lastName, preferredName, phoneNumber, email, password } = this.form.getRawValue();
-      const registration = await this.auth.signUp(email, password, { firstName, lastName, preferredName, phoneNumber });
+      const { firstName, lastName, preferredName, email, password } = this.form.getRawValue();
+      const registration = await this.auth.signUp(email, password, { firstName, lastName, preferredName });
       this.form.controls.password.reset();
       this.form.controls.confirmPassword.reset();
       this.submitted.set(false);

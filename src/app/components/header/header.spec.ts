@@ -54,6 +54,22 @@ describe('Header', () => {
     expect(component).toBeTruthy();
   });
 
+  it('adds the floating glass state after scrolling past the threshold', () => {
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 25 });
+    window.dispatchEvent(new Event('scroll'));
+    fixture.detectChanges();
+    expect(component.isScrolled()).toBe(true);
+    expect(fixture.nativeElement.querySelector('.headerContainer').classList.contains('is-scrolled')).toBe(true);
+  });
+
+  it('removes the floating glass state near the top of the page', () => {
+    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
+    window.dispatchEvent(new Event('scroll'));
+    fixture.detectChanges();
+    expect(component.isScrolled()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.headerContainer').classList.contains('is-scrolled')).toBe(false);
+  });
+
   it('shows the supplied sign-in icon and Login route without a session', () => {
     const loginLink = fixture.nativeElement.querySelector('.auth-session-link') as HTMLAnchorElement;
     expect(loginLink.getAttribute('href')).toBe('/login');

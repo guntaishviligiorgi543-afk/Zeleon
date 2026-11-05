@@ -34,14 +34,6 @@
         <input id="signup-preferred-name" type="text" formControlName="preferredName" autocomplete="nickname" maxlength="80" />
       </div>
       <div class="form-group">
-        <label for="signup-phone">Phone number</label>
-        <input id="signup-phone" type="tel" formControlName="phoneNumber" autocomplete="tel" required maxlength="20"
-          [attr.aria-invalid]="form.controls.phoneNumber.invalid && (form.controls.phoneNumber.touched || submitted())" aria-describedby="signup-phone-error" />
-        <p id="signup-phone-error" class="field-error" aria-live="polite">
-          @if (form.controls.phoneNumber.invalid && (form.controls.phoneNumber.touched || submitted())) { Enter a valid phone number. }
-        </p>
-      </div>
-      <div class="form-group">
         <label for="signup-email">Email</label>
         <input id="signup-email" type="email" formControlName="email" autocomplete="email" required maxlength="254"
           [attr.aria-invalid]="form.controls.email.invalid && (form.controls.email.touched || submitted())" aria-describedby="signup-email-error" />

@@ -30,6 +30,7 @@ describe('ForgotPassword', () => {
     expect(component.otpRequested()).toBe(true);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('#recovery-otp')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#recovery-otp').getAttribute('maxlength')).toBe('8');
   });
 
   it('verifies the recovery code before navigating to password change', async () => {
@@ -37,11 +38,28 @@ describe('ForgotPassword', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     component.form.controls.email.setValue('person@example.com');
     await component.submit();
-    component.code.set('123456');
-    await component.verifyCode();
-    expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '123456', 'recovery');
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector('#recovery-otp') as HTMLInputElement;
+    input.value = '12345678';
+    component.onCodeInput({ target: input } as unknown as Event);
+    const otpForm = fixture.nativeElement.querySelector('.otp-form') as HTMLFormElement;
+    otpForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await fixture.whenStable();
+    expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '12345678', 'recovery');
     expect(auth.recovering()).toBe(true);
     expect(navigate).toHaveBeenCalledWith('/reset-password');
+  });
+
+  it('keeps recovery open when the code is invalid or expired', async () => {
+    const component = fixture.componentInstance;
+    component.form.controls.email.setValue('person@example.com');
+    await component.submit();
+    component.code.set('00000000');
+    auth.verifyEmailOtp.mockRejectedValueOnce({ code: 'otp_expired' });
+    await component.verifyCode();
+    expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '00000000', 'recovery');
+    expect(component.otpRequested()).toBe(true);
+    expect(component.status()).toContain('invalid or expired');
   });
 
   it('does not navigate when the recovery code is rejected', async () => {
@@ -49,7 +67,7 @@ describe('ForgotPassword', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     component.form.controls.email.setValue('person@example.com');
     await component.submit();
-    component.code.set('123456');
+    component.code.set('12345678');
     auth.verifyEmailOtp.mockRejectedValueOnce({ code: 'otp_expired' });
     await component.verifyCode();
     expect(navigate).not.toHaveBeenCalled();

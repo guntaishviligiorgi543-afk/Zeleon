@@ -1,4 +1,5 @@
-import { Component, inject, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { BurgerMenu } from '../burger-menu/burger-menu';
@@ -14,7 +15,14 @@ export class Header {
   readonly auth = inject(Auth);
   readonly signingOut = signal(false);
   readonly authError = signal('');
+  readonly isScrolled = signal(false);
+  private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    this.isScrolled.set((this.document.defaultView?.scrollY ?? 0) > 24);
+  }
 
   async logout(): Promise<void> {
     if (this.signingOut()) return;

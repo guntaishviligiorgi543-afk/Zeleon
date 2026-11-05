@@ -32,18 +32,17 @@ describe('Signup', () => {
     expect(component.form.invalid).toBe(true);
     expect(component.status()).toBe('');
     expect(fixture.nativeElement.querySelector('#signup-email').getAttribute('aria-invalid')).toBe('true');
-    component.form.setValue({ firstName: '   ', lastName: 'Example', preferredName: '', phoneNumber: 'bad', email: 'invalid', password: 'short', confirmPassword: 'short' });
+    component.form.setValue({ firstName: '   ', lastName: 'Example', preferredName: '', email: 'invalid', password: 'short', confirmPassword: 'short' });
     expect(component.form.controls.firstName.invalid).toBe(true);
-    expect(component.form.controls.phoneNumber.invalid).toBe(true);
     expect(component.form.controls.email.invalid).toBe(true);
     expect(component.form.controls.password.invalid).toBe(true);
-    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: 'Nini', phoneNumber: '+995555123456', email: 'person+test@example.com', password: 'valid passphrase', confirmPassword: 'different' });
+    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: 'Nini', email: 'person+test@example.com', password: 'valid passphrase', confirmPassword: 'different' });
     expect(component.form.hasError('passwordMismatch')).toBe(true);
     component.form.controls.confirmPassword.setValue('valid passphrase');
     expect(component.form.valid).toBe(true);
     await component.submit();
     expect(auth.signUp).toHaveBeenCalledExactlyOnceWith('person+test@example.com', 'valid passphrase', {
-      firstName: 'Nino', lastName: 'Example', preferredName: 'Nini', phoneNumber: '+995555123456',
+      firstName: 'Nino', lastName: 'Example', preferredName: 'Nini',
     });
     expect(component.result()?.success).toBe(true);
     fixture.detectChanges();
@@ -60,7 +59,7 @@ describe('Signup', () => {
   });
 
   it('prevents duplicate submissions and handles rate limits', async () => {
-    component.form.setValue({ firstName: 'Test', lastName: 'Person', preferredName: '', phoneNumber: '+995555123456', email: 'test@example.com', password: 'longpassword', confirmPassword: 'longpassword' });
+    component.form.setValue({ firstName: 'Test', lastName: 'Person', preferredName: '', email: 'test@example.com', password: 'longpassword', confirmPassword: 'longpassword' });
     let finish!: (value: any) => void;
     auth.signUp.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
     const request = component.submit();
@@ -75,16 +74,14 @@ describe('Signup', () => {
     expect(component.result()?.success).toBe(false);
     expect(component.result()?.message).toContain('Too many attempts');
     fixture.detectChanges();
-    const phone = component.form.controls.phoneNumber.value;
     fixture.nativeElement.querySelector('.registration-action').click();
     expect(component.result()).toBeNull();
-    expect(component.form.controls.phoneNumber.value).toBe(phone);
     expect(component.pending()).toBe(false);
   });
 
   it('verifies an eight-digit signup code before navigating to login', async () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
-    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: 'Nini', phoneNumber: '+995555123456', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
+    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: 'Nini', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
     expect(component.verificationOpen()).toBe(true);
     expect(component.result()).toBeNull();
@@ -107,7 +104,7 @@ describe('Signup', () => {
 
   it('keeps the code dialog open and shows a safe message for an invalid code', async () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
-    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', phoneNumber: '+995555123456', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
+    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
     component.verificationCode.set('00000000');
     auth.verifyEmailOtp.mockRejectedValueOnce({ code: 'otp_expired' });
@@ -120,7 +117,7 @@ describe('Signup', () => {
 
   it('cancels signup verification and restores page state', async () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
-    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', phoneNumber: '+995555123456', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
+    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
     expect(component.verificationOpen()).toBe(true);
     fixture.detectChanges();

@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { inject, signal } from '@angular/core';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { PasswordToggle } from '../../directives/password-toggle.directive';
@@ -13,6 +13,7 @@ import { PasswordToggle } from '../../directives/password-toggle.directive';
 })
 export class ResetPassword {
   readonly auth = inject(Auth);
+  private readonly router = inject(Router);
   readonly pending = signal(false);
   readonly submitted = signal(false);
   readonly done = signal(false);
@@ -37,6 +38,7 @@ export class ResetPassword {
       this.done.set(true);
       this.form.reset();
       this.status.set('Your password has been updated successfully.');
+      await this.router.navigateByUrl('/login');
     } catch (error) {
       this.status.set(authErrorMessage(error));
     } finally { this.pending.set(false); }

@@ -1,12 +1,12 @@
 import { Component } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { DestroyRef, signal, inject } from '@angular/core';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { EMAIL_PATTERN } from '../auth-validation';
 
 @Component({
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [FormsModule, RouterLink, ReactiveFormsModule],
   selector: 'app-forgot-password',
   styleUrls: ['../auth-form.css', './forgot-password.css'],
   templateUrl: './forgot-password.html',
@@ -42,7 +42,7 @@ export class ForgotPassword {
       await this.auth.resetPassword(this.form.controls.email.value);
       this.otpRequested.set(true);
       this.code.set('');
-      this.status.set('If an account exists for this email, a recovery code will be sent. Check your inbox and spam folder.');
+      this.status.set('If an account exists for this email, a recovery code has been sent.');
       this.startResendCooldown();
     } catch (error) {
       this.status.set(authErrorMessage(error));
@@ -51,7 +51,7 @@ export class ForgotPassword {
 
   onCodeInput(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const code = input.value.replace(/\D/g, '').slice(0, 6);
+    const code = input.value.replace(/\D/g, '').slice(0, 8);
     if (input.value !== code) input.value = code;
     this.code.set(code);
     this.status.set('');
@@ -61,8 +61,8 @@ export class ForgotPassword {
   async verifyCode(): Promise<void> {
     if (this.verifyPending()) return;
     const code = this.code();
-    if (!/^\d{6}$/.test(code)) {
-      this.status.set('Enter the 6-digit code from your email.');
+    if (!/^\d{8}$/.test(code)) {
+      this.status.set('Enter the 8-digit code from your email.');
       this.codeInvalid.set(true);
       return;
     }

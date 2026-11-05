@@ -44,12 +44,12 @@ describe('Auth', () => {
     const auth = TestBed.inject(Auth);
     await auth.ready;
     await expect(auth.signUp(' person@example.com ', 'test-password', {
-      firstName: ' Nino ', lastName: ' Example ', phoneNumber: ' +995555123456 ',
+      firstName: ' Nino ', lastName: ' Example ',
     })).resolves.toEqual({ hasSession: true });
     expect(supabase.auth.signUp).toHaveBeenCalledWith(expect.objectContaining({
       email: 'person@example.com', password: 'test-password',
       options: expect.objectContaining({ data: {
-        first_name: 'Nino', last_name: 'Example', phone_number: '+995555123456',
+        first_name: 'Nino', last_name: 'Example', preferred_name: '',
       } }),
     }));
     expect(auth.user()?.email).toBe('person@example.com');
@@ -69,8 +69,37 @@ describe('Auth', () => {
     const auth = TestBed.inject(Auth);
     await auth.resetPassword('person@example.com');
     expect(supabase.auth.resetPasswordForEmail).toHaveBeenCalledWith('person@example.com');
+    await auth.verifyEmailOtp('person@example.com', '12345678', 'recovery');
     await auth.updatePassword('new-test-password');
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'new-test-password' });
+    expect(supabase.auth.getUser).toHaveBeenCalled();
+    expect(auth.user()?.id).toBe('user-1');
+    expect(auth.user()?.email).toBe('person@example.com');
+  });
+
+  it('does not report success when Supabase rejects the password update', async () => {
+    const auth = TestBed.inject(Auth);
+    supabase.auth.updateUser.mockResolvedValueOnce({ data: { user: null }, error: { code: 'weak_password' } });
+    await expect(auth.updatePassword('short')).rejects.toEqual({ code: 'weak_password' });
+    expect(auth.recovering()).toBe(false);
+  });
+
+  it('rejects a password update returned for a different user', async () => {
+    const auth = TestBed.inject(Auth);
+    supabase.auth.updateUser.mockResolvedValueOnce({
+      data: { user: { ...user, id: 'different-user' } },
+      error: null,
+    });
+    await expect(auth.updatePassword('new-test-password')).rejects.toThrow('authenticated account');
+  });
+
+  it('passes the unchanged new password to a subsequent login', async () => {
+    const auth = TestBed.inject(Auth);
+    await auth.signIn('person@example.com', 'new-test-password');
+    expect(supabase.auth.signInWithPassword).toHaveBeenLastCalledWith({
+      email: 'person@example.com',
+      password: 'new-test-password',
+    });
   });
 
   it('verifies email and recovery codes with the matching OTP types', async () => {
