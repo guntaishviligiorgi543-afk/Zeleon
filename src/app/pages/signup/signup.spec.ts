@@ -97,7 +97,7 @@ describe('Signup', () => {
     otpForm.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
     await fixture.whenStable();
     expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '12345678', 'email');
-    expect(navigate).toHaveBeenCalledWith('/login');
+    expect(navigate).toHaveBeenCalledWith('/');
     expect(component.verificationOpen()).toBe(false);
     expect(component.result()).toBeNull();
   });
