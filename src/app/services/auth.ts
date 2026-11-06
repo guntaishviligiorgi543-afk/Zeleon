@@ -120,6 +120,7 @@ export class Auth {
     this.sessionState.set(data.session);
     this.preferredName.set(profile.preferredName?.trim() ?? '');
     this.recovering.set(false);
+    if (data.session && (data.user.email_confirmed_at || data.user.confirmed_at)) await this.requestWelcomeEmail();
     return { hasSession: !!data.session };
   }
 
@@ -164,6 +165,7 @@ export class Auth {
     if (!data.user || !data.session) throw new Error('The verification did not return an authenticated session.');
     this.sessionState.set({ ...data.session, user: data.user });
     this.recovering.set(type === 'recovery');
+    if (type === 'email') await this.requestWelcomeEmail();
   }
 
   async requestEmailChange(email: string): Promise<void> {
@@ -241,6 +243,15 @@ export class Auth {
     }
     this.sessionState.update((session) => session ? { ...session, user: after.data.user } : null);
     this.recovering.set(false);
+  }
+
+  private async requestWelcomeEmail(): Promise<void> {
+    try {
+      const { error } = await this.client.functions.invoke('send-welcome-email');
+      if (error) console.error('Welcome email could not be requested:', error.message);
+    } catch (error) {
+      console.error('Welcome email request failed:', error);
+    }
   }
 
   async resendConfirmationEmail(email: string): Promise<void> {
