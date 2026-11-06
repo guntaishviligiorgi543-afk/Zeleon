@@ -6,7 +6,7 @@ import { Cart } from '../../../services/cart';
 import { PasswordToggle } from '../../../directives/password-toggle.directive';
 
 type SecurityAction = 'overview' | 'email' | 'password';
-type FeedbackDialog = { kind: 'success' | 'error'; title: string; message: string };
+type FeedbackDialog = { kind: 'success' | 'error'; title: string; message: string; buttonLabel?: string };
 
 @Component({ imports: [FormsModule, ReactiveFormsModule, PasswordToggle], selector: 'app-security', styleUrl: './security.css', templateUrl: './security.html' })
 export class Security {
@@ -37,6 +37,22 @@ export class Security {
   closeFeedbackDialog(): void { this.feedbackDialog.set(null); }
   private showSuccess(message: string): void { this.feedbackDialog.set({ kind: 'success', title: 'Completed', message }); }
   private showError(message: string): void { this.feedbackDialog.set({ kind: 'error', title: 'Could not complete', message }); }
+  private showPasswordSuccess(): void {
+    this.feedbackDialog.set({
+      kind: 'success',
+      title: 'Password Changed Successfully',
+      message: 'Your password has been updated successfully. You can now sign in using your new password.',
+      buttonLabel: 'Continue',
+    });
+  }
+  private showPasswordError(error: unknown): void {
+    this.feedbackDialog.set({
+      kind: 'error',
+      title: 'Password Change Failed',
+      message: passwordChangeErrorMessage(error),
+      buttonLabel: 'Try Again',
+    });
+  }
   cancel(): void { this.start('overview'); this.clearPasswords(); this.code.reset(); }
   async saveName(): Promise<void> {
     if (this.pending() || this.preferredName.invalid) return;
@@ -73,8 +89,8 @@ export class Security {
     this.currentPassword.markAsTouched(); this.newPassword.markAsTouched(); this.confirmPassword.markAsTouched();
     if (this.currentPassword.invalid || this.newPassword.invalid || this.confirmPassword.invalid || this.newPassword.value !== this.confirmPassword.value) { const reason = 'Enter a valid new password and make sure both new password fields match.'; this.error.set(reason); this.showError(reason); return; }
     this.pending.set(true); this.error.set(''); this.message.set('');
-    try { await this.auth.changePasswordWithReauthentication(this.currentPassword.value, this.newPassword.value); this.clearPasswords(); this.action.set('overview'); this.message.set('Password changed successfully.'); this.showSuccess('Your password was changed successfully.'); }
-    catch (error) { const reason = authErrorMessage(error); this.error.set(reason); this.showError(`The password was not changed. ${reason}`); }
+    try { await this.auth.changePasswordWithReauthentication(this.currentPassword.value, this.newPassword.value); this.clearPasswords(); this.action.set('overview'); this.message.set('Password changed successfully.'); this.showPasswordSuccess(); }
+    catch (error) { const reason = passwordChangeErrorMessage(error); this.error.set(reason); this.showPasswordError(error); }
     finally { this.pending.set(false); }
   }
   cancelDelete(): void { if (!this.pending()) this.deleteOpen.set(false); }
@@ -109,4 +125,42 @@ export class Security {
     void this.router.navigate(['/forgot-password'], { queryParams: { returnToDelete: '1' } });
   }
   private clearPasswords(): void { this.currentPassword.reset(); this.newPassword.reset(); this.confirmPassword.reset(); }
+}
+
+function passwordChangeErrorMessage(error: unknown): string {
+  const value = error as { code?: unknown; message?: unknown; status?: unknown; statusCode?: unknown } | null;
+  const code = typeof value?.code === 'string' ? value.code : '';
+  const status = typeof value?.status === 'number' || typeof value?.status === 'string' ? value.status : value?.statusCode;
+  const details = sanitizeErrorMessage(typeof value?.message === 'string' ? value.message : '');
+  const metadata = [code && `code: ${code}`, status !== undefined && `HTTP status: ${status}`].filter(Boolean).join('; ');
+  let reason: string;
+
+  if (status === 429 || code === 'over_request_rate_limit' || code === 'over_email_send_rate_limit') {
+    reason = 'Rate limit exceeded. Please wait a few minutes before trying again.';
+  } else if (code === 'invalid_credentials') {
+    reason = 'Incorrect current password.';
+  } else if (code === 'weak_password') {
+    reason = 'The new password is too weak. Choose a stronger password with at least 8 characters.';
+  } else if (code === 'same_password') {
+    reason = 'The new password must be different from your current password.';
+  } else if (['session_not_found', 'refresh_token_not_found', 'invalid_jwt', 'session_expired'].includes(code)) {
+    reason = 'Your session has expired or is invalid. Sign in again and retry.';
+  } else if (isNetworkError(details)) {
+    reason = 'A network or connectivity error prevented the password change. Check your connection and try again.';
+  } else {
+    reason = details || 'Supabase returned an unknown password-change error.';
+  }
+
+  return [reason, details && details !== reason ? `Supabase message: ${details}` : '', metadata].filter(Boolean).join(' ');
+}
+
+function sanitizeErrorMessage(message: string): string {
+  return message
+    .replace(/\b(eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+)\b/g, '[redacted token]')
+    .replace(/\b(access[_ -]?token|refresh[_ -]?token|password)\s*[:=]\s*[^,\s;]+/gi, '$1: [redacted]')
+    .trim();
+}
+
+function isNetworkError(message: string): boolean {
+  return /network|connectivity|failed to fetch|fetch failed|offline|connection/i.test(message);
 }

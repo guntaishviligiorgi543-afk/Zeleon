@@ -75,6 +75,61 @@ describe('Security', () => {
     expect(component.feedbackDialog()?.message).toContain('different from your current password');
   });
 
+  it('shows the exact success dialog after Supabase confirms a password change', async () => {
+    component.start('password');
+    component.currentPassword.setValue('old-password');
+    component.newPassword.setValue('new-password');
+    component.confirmPassword.setValue('new-password');
+
+    await component.changePassword();
+
+    expect(component.feedbackDialog()).toEqual({
+      kind: 'success',
+      title: 'Password Changed Successfully',
+      message: 'Your password has been updated successfully. You can now sign in using your new password.',
+      buttonLabel: 'Continue',
+    });
+  });
+
+  it.each([
+    [{ code: 'invalid_credentials', message: 'Invalid login credentials', status: 400 }, 'Incorrect current password.'],
+    [{ code: 'weak_password', message: 'Password should be at least 8 characters', status: 422 }, 'new password is too weak'],
+    [{ code: 'same_password', message: 'New password should be different', status: 422 }, 'must be different'],
+    [{ code: 'session_expired', message: 'Session expired', status: 401 }, 'session has expired'],
+    [{ message: 'Failed to fetch', status: 0 }, 'network or connectivity'],
+  ] as const)('shows a meaningful password error for %s', async (supabaseError, expected) => {
+    component.start('password');
+    component.currentPassword.setValue('old-password');
+    component.newPassword.setValue('new-password');
+    component.confirmPassword.setValue('new-password');
+    auth.changePasswordWithReauthentication.mockRejectedValueOnce(supabaseError);
+
+    await component.changePassword();
+
+    expect(component.feedbackDialog()?.title).toBe('Password Change Failed');
+    expect(component.feedbackDialog()?.buttonLabel).toBe('Try Again');
+    expect(component.feedbackDialog()?.message.toLowerCase()).toContain(expected.toLowerCase());
+  });
+
+  it('preserves safe Supabase error details without exposing token values', async () => {
+    component.start('password');
+    component.currentPassword.setValue('old-password');
+    component.newPassword.setValue('new-password');
+    component.confirmPassword.setValue('new-password');
+    auth.changePasswordWithReauthentication.mockRejectedValueOnce({
+      code: 'unknown_error',
+      message: 'Request failed with access_token=secret-value',
+      status: 500,
+    });
+
+    await component.changePassword();
+
+    const message = component.feedbackDialog()?.message ?? '';
+    expect(message).toContain('code: unknown_error');
+    expect(message).toContain('HTTP status: 500');
+    expect(message).not.toContain('secret-value');
+  });
+
   it('shows the reason when an email change request fails', async () => {
     component.start('email');
     component.newEmail.setValue('new@example.com');
