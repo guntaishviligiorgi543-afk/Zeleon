@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Auth, authErrorMessage } from '../../../services/auth';
 import { Cart } from '../../../services/cart';
@@ -8,7 +8,7 @@ import { PasswordToggle } from '../../../directives/password-toggle.directive';
 type SecurityAction = 'overview' | 'email' | 'password';
 type FeedbackDialog = { kind: 'success' | 'error'; title: string; message: string };
 
-@Component({ imports: [ReactiveFormsModule, PasswordToggle], selector: 'app-security', styleUrl: './security.css', templateUrl: './security.html' })
+@Component({ imports: [FormsModule, ReactiveFormsModule, PasswordToggle], selector: 'app-security', styleUrl: './security.css', templateUrl: './security.html' })
 export class Security {
   readonly auth = inject(Auth);
   private readonly router = inject(Router);
@@ -49,7 +49,7 @@ export class Security {
     if (this.pending()) return;
     this.newEmail.markAsTouched(); if (this.newEmail.invalid) { this.showError('Enter a valid email address before requesting a change.'); return; }
     this.pending.set(true); this.error.set(''); this.message.set('');
-    try { await this.auth.requestEmailChange(this.newEmail.value); this.emailCodeSent.set(true); this.message.set('Check the new address for a verification code. If your project requires confirmation of both addresses, check the current address too.'); this.showSuccess('The verification code was sent successfully.'); }
+    try { await this.auth.requestEmailChange(this.newEmail.value); this.emailCodeSent.set(true); this.message.set('Check the new address for a verification code. If your project requires confirmation of both addresses, check the current address too.'); }
     catch (error) { const reason = authErrorMessage(error); this.error.set(reason); this.showError(`The verification code could not be sent. ${reason}`); }
     finally { this.pending.set(false); }
   }
