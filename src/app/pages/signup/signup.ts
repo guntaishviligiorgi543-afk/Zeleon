@@ -100,7 +100,7 @@ export class Signup {
     try {
       await this.auth.verifyEmailOtp(this.verificationEmail(), code, 'email');
       this.closeVerification(false);
-      await this.router.navigateByUrl('/login');
+      await this.router.navigateByUrl('/');
     } catch (error) {
       this.verificationStatus.set(authErrorMessage(error));
       this.verificationInvalid.set(true);
