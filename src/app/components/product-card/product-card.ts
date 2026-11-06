@@ -1,6 +1,7 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { Product } from '../../models/product';
+import { Cart } from '../../services/cart';
 
 @Component({
   imports: [CurrencyPipe],
@@ -10,4 +11,21 @@ import { Product } from '../../models/product';
 })
 export class ProductCard {
   readonly product = input.required<Product>();
+  private readonly cart = inject(Cart);
+  readonly cartBusy = signal(false);
+  readonly inCart = computed(() => this.cart.items().some((line) => line.product.id === this.product().id));
+
+  async toggleCart(event: Event): Promise<void> {
+    event.stopPropagation();
+    if (this.cartBusy()) return;
+
+    this.cartBusy.set(true);
+    try {
+      await Promise.resolve(this.inCart()
+        ? this.cart.remove(this.product().id)
+        : this.cart.add(this.product(), 1));
+    } finally {
+      this.cartBusy.set(false);
+    }
+  }
 }

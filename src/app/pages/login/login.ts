@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { Auth, authErrorMessage } from '../../services/auth';
+import { Auth, authErrorMessage, profileDestination } from '../../services/auth';
 import { EMAIL_PATTERN } from '../auth-validation';
 import { PasswordToggle } from '../../directives/password-toggle.directive';
 
@@ -33,7 +33,8 @@ export class Login {
       const { email, password } = this.form.getRawValue();
       await this.auth.signIn(email, password);
       this.form.controls.password.reset();
-      await this.router.navigateByUrl('/');
+      const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
+      await this.router.navigateByUrl(typeof returnUrl === 'string' ? profileDestination(returnUrl) : '/');
     } catch (error) {
       this.status.set(authErrorMessage(error));
     } finally { this.pending.set(false); }

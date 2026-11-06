@@ -116,10 +116,35 @@ describe('Auth', () => {
 
   it('requests and verifies email changes using the email_change OTP type', async () => {
     const auth = TestBed.inject(Auth);
+    const updatedUser = { ...user, email: 'new@example.com' };
+    supabase.auth.verifyOtp.mockResolvedValueOnce({ data: { user: updatedUser, session: { user: updatedUser } }, error: null });
+    supabase.auth.getUser
+      .mockResolvedValueOnce({ data: { user }, error: null })
+      .mockResolvedValueOnce({ data: { user: updatedUser }, error: null });
     await auth.requestEmailChange('new@example.com');
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({ email: 'new@example.com' });
-    await auth.verifyEmailChangeOtp('new@example.com', '123456');
-    expect(supabase.auth.verifyOtp).toHaveBeenCalledWith({ email: 'new@example.com', token: '123456', type: 'email_change' });
+    await auth.verifyEmailChangeOtp('new@example.com', '12345678');
+    expect(supabase.auth.verifyOtp).toHaveBeenCalledWith({ email: 'new@example.com', token: '12345678', type: 'email_change' });
+  });
+
+  it('synchronizes the authenticated user after an email change', async () => {
+    const auth = TestBed.inject(Auth);
+    const updatedUser = { ...user, email: 'new@example.com' };
+    supabase.auth.verifyOtp.mockResolvedValueOnce({ data: { user: updatedUser, session: { user: updatedUser } }, error: null });
+    supabase.auth.getUser
+      .mockResolvedValueOnce({ data: { user }, error: null })
+      .mockResolvedValueOnce({ data: { user: updatedUser }, error: null });
+    await auth.verifyEmailChangeOtp(' new@example.com ', '12345678');
+    expect(supabase.auth.verifyOtp).toHaveBeenLastCalledWith({
+      email: 'new@example.com', token: '12345678', type: 'email_change',
+    });
+    expect(auth.user()?.email).toBe('new@example.com');
+  });
+
+  it('rejects an email change when Supabase reports an invalid or expired code', async () => {
+    const auth = TestBed.inject(Auth);
+    supabase.auth.verifyOtp.mockResolvedValueOnce({ data: { user: null, session: null }, error: { code: 'otp_expired' } });
+    await expect(auth.verifyEmailChangeOtp('new@example.com', '12345678')).rejects.toEqual({ code: 'otp_expired' });
   });
 
   it('reauthenticates with current email before updating password', async () => {
@@ -128,6 +153,17 @@ describe('Auth', () => {
     await auth.changePasswordWithReauthentication('old-password', 'new-password');
     expect(supabase.auth.signInWithPassword).toHaveBeenCalledWith({ email: 'person@example.com', password: 'old-password' });
     expect(supabase.auth.updateUser).toHaveBeenCalledWith({ password: 'new-password' });
+  });
+
+  it('reauthenticates before deleting the authenticated account', async () => {
+    const auth = TestBed.inject(Auth);
+    await auth.signIn('person@example.com', 'current-password');
+    supabase.auth.getUser.mockResolvedValueOnce({ data: { user: null }, error: null });
+    await auth.deleteAccount('current-password');
+    expect(supabase.auth.signInWithPassword).toHaveBeenLastCalledWith({
+      email: 'person@example.com', password: 'current-password',
+    });
+    expect(supabase.functions.invoke).toHaveBeenCalledWith('delete-account');
   });
 
   it('persists preferred names to the dedicated table', async () => {

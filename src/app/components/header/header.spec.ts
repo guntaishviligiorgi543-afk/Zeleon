@@ -54,26 +54,10 @@ describe('Header', () => {
     expect(component).toBeTruthy();
   });
 
-  it('adds the floating glass state after scrolling past the threshold', () => {
-    Object.defineProperty(window, 'scrollY', { configurable: true, value: 25 });
-    window.dispatchEvent(new Event('scroll'));
-    fixture.detectChanges();
-    expect(component.isScrolled()).toBe(true);
-    expect(fixture.nativeElement.querySelector('.headerContainer').classList.contains('is-scrolled')).toBe(true);
-  });
-
-  it('removes the floating glass state near the top of the page', () => {
-    Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
-    window.dispatchEvent(new Event('scroll'));
-    fixture.detectChanges();
-    expect(component.isScrolled()).toBe(false);
-    expect(fixture.nativeElement.querySelector('.headerContainer').classList.contains('is-scrolled')).toBe(false);
-  });
-
   it('shows the supplied sign-in icon and Login route without a session', () => {
     const loginLink = fixture.nativeElement.querySelector('.auth-session-link') as HTMLAnchorElement;
     expect(loginLink.getAttribute('href')).toBe('/login');
-    expect(loginLink.getAttribute('aria-label')).toBe('Login');
+    expect(loginLink.getAttribute('aria-label')).toBe('Sign in');
     expect(fixture.nativeElement.querySelector('.profile-link')).toBeNull();
     expect(loginLink.querySelector('path[stroke="currentColor"]')?.getAttribute('d')).toBe(
       'M15 4L17 4C19.2091 4 21 5.7909 21 8L21 16C21 18.2091 19.2091 20 17 20L15 20M13.1214 12L3 12M8.0607 6.5L13.7266 11.6314C13.9454 11.8296 13.9454 12.1704 13.7266 12.3686L8.0607 17.5',

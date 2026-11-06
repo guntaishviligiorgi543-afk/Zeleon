@@ -20,8 +20,14 @@ body {
   padding-right: 44px;
 }
 
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
 .password-toggle {
   position: absolute;
+  top: 50%;
   right: 0;
   display: grid;
   width: 40px;
@@ -29,9 +35,10 @@ body {
   padding: 0;
   place-items: center;
   border: 0;
-  background: transparent;
-  color: currentColor;
+  background: #fff;
+  color: #000;
   cursor: pointer;
+  transform: translateY(-50%);
 }
 
 .password-toggle:hover { opacity: .65; }

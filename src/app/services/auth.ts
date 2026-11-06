@@ -23,6 +23,8 @@ export function authErrorMessage(error: unknown): string {
     case 'email_not_confirmed': return 'Please verify your email with the code in your inbox before signing in.';
     case 'weak_password': return 'Choose a stronger password with at least 8 characters.';
     case 'same_password': return 'Choose a password different from your current password.';
+    case 'email_exists':
+    case 'user_already_exists': return 'That email address cannot be used. Try a different address.';
     case 'signup_disabled': return 'Registration is currently unavailable. Please try again later.';
     case 'session_not_found':
     case 'refresh_token_not_found':
@@ -176,10 +178,22 @@ export class Auth {
 
   async verifyEmailChangeOtp(email: string, token: string): Promise<void> {
     await this.ready;
-    const { data, error } = await this.client.auth.verifyOtp({ email: email.trim(), token, type: 'email_change' });
+    const requestedEmail = email.trim();
+    const currentUser = await this.client.auth.getUser();
+    if (currentUser.error) throw currentUser.error;
+    if (!currentUser.data.user) throw new Error('The authenticated account could not be confirmed.');
+    const { data, error } = await this.client.auth.verifyOtp({ email: requestedEmail, token, type: 'email_change' });
     if (error) throw error;
     if (!data.user || !data.session) throw new Error('Email verification did not return an authenticated session.');
-    this.sessionState.set({ ...data.session, user: data.user });
+    if (data.user.id !== currentUser.data.user.id || data.user.email !== requestedEmail) {
+      throw new Error('Email verification did not update the authenticated account.');
+    }
+    const refreshed = await this.client.auth.getUser();
+    if (refreshed.error) throw refreshed.error;
+    if (!refreshed.data.user || refreshed.data.user.id !== currentUser.data.user.id || refreshed.data.user.email !== requestedEmail) {
+      throw new Error('The updated email could not be confirmed.');
+    }
+    this.sessionState.set({ ...data.session, user: refreshed.data.user });
   }
 
   async changePasswordWithReauthentication(currentPassword: string, newPassword: string): Promise<void> {
@@ -214,8 +228,19 @@ export class Auth {
     this.preferredName.set(typeof data?.preferred_name === 'string' ? data.preferred_name : '');
   }
 
-  async deleteAccount(): Promise<void> {
+  async deleteAccount(currentPassword: string): Promise<void> {
     await this.ready;
+    const email = this.user()?.email;
+    if (!email) throw new Error('The authenticated account does not have an email address.');
+    const { data: session, error: reauthenticationError } = await this.client.auth.signInWithPassword({
+      email,
+      password: currentPassword,
+    });
+    if (reauthenticationError) throw reauthenticationError;
+    if (!session.user || !session.session || session.user.id !== this.user()?.id) {
+      throw new Error('Password verification did not return the authenticated account.');
+    }
+    this.sessionState.set({ ...session.session, user: session.user });
     const { error } = await this.client.functions.invoke('delete-account');
     if (error) throw error;
     const { data: { user } } = await this.client.auth.getUser();

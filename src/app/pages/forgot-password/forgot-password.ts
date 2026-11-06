@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DestroyRef, signal, inject } from '@angular/core';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { EMAIL_PATTERN } from '../auth-validation';
@@ -23,6 +23,7 @@ export class ForgotPassword {
   readonly status = signal('');
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private cooldownTimer?: ReturnType<typeof setInterval>;
   readonly form = inject(FormBuilder).nonNullable.group({
@@ -71,7 +72,9 @@ export class ForgotPassword {
     this.codeInvalid.set(false);
     try {
       await this.auth.verifyEmailOtp(this.form.controls.email.value, code, 'recovery');
-      await this.router.navigateByUrl('/reset-password');
+      await this.router.navigate(['/reset-password'], {
+        queryParams: this.route.snapshot.queryParamMap.get('returnToDelete') === '1' ? { returnToDelete: '1' } : {},
+      });
     } catch (error) {
       this.status.set(authErrorMessage(error));
       this.codeInvalid.set(true);

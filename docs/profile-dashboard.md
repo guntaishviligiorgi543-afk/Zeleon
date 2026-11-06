@@ -7,7 +7,7 @@
 - `user_preferred_names` has owner-only RLS select/insert/update policies. The frontend uses only the existing publishable Supabase client.
 - Email changes request through `auth.updateUser({ email })` and use `verifyOtp({ email, token, type: 'email_change' })`. The email shown by the app remains the confirmed Supabase user email.
 - Password changes reauthenticate using the current account email and current password before calling `updateUser({ password })`.
-- The account deletion UI calls a trusted Edge Function; the service-role credential is read only from Edge Function environment variables. On successful deletion the client clears its local auth and in-memory cart state.
+- The account deletion UI requires current-password reauthentication before calling a trusted Edge Function; users without the password can use the existing recovery-code flow and return to the deletion dialog after signing in. The service-role credential is read only from Edge Function environment variables. On successful deletion the client clears its local auth and in-memory cart state.
 - Cart products use the existing in-memory Cart service. Purchased products report that history is unavailable; checkout and Orders are currently placeholders and there is no persistence source.
 
 ## Manual Supabase setup

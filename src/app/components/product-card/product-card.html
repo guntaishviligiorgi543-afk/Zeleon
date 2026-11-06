@@ -1,7 +1,45 @@
 @if (product().image) {
-  <img [src]="product().image" [alt]="product().name" />
+  <div class="product-image">
+    <img [src]="product().image" [alt]="product().name" />
+    <button
+      class="cart-action"
+      type="button"
+      [disabled]="cartBusy()"
+      [attr.aria-busy]="cartBusy()"
+      [attr.aria-label]="inCart() ? 'Remove ' + product().name + ' from cart' : 'Add ' + product().name + ' to cart'"
+      (click)="toggleCart($event)"
+    >
+      <span class="cart-action-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6" />
+          <circle cx="10" cy="20" r="1" />
+          <circle cx="18" cy="20" r="1" />
+        </svg>
+      </span>
+      <span class="cart-action-label">{{ inCart() ? 'Added to Cart' : 'Add to Cart' }}</span>
+    </button>
+  </div>
 } @else {
-  <p>Image unavailable</p>
+  <div class="product-image product-image-empty">
+    <p>Image unavailable</p>
+    <button
+      class="cart-action"
+      type="button"
+      [disabled]="cartBusy()"
+      [attr.aria-busy]="cartBusy()"
+      [attr.aria-label]="inCart() ? 'Remove ' + product().name + ' from cart' : 'Add ' + product().name + ' to cart'"
+      (click)="toggleCart($event)"
+    >
+      <span class="cart-action-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" focusable="false">
+          <path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 1.9-1.4L21 8H6" />
+          <circle cx="10" cy="20" r="1" />
+          <circle cx="18" cy="20" r="1" />
+        </svg>
+      </span>
+      <span class="cart-action-label">{{ inCart() ? 'Added to Cart' : 'Add to Cart' }}</span>
+    </button>
+  </div>
 }
 <p class="prodNam">{{ product().name }}</p>
 <p class="prodPrice">{{ product().price | currency: product().currency }}</p>

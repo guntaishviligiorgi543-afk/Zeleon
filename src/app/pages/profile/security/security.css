@@ -22,4 +22,11 @@ input { width:100%; min-width:0; padding:13px 14px; border:1px solid #ffffff45; 
 .modal-backdrop { position:fixed; z-index:1000; inset:0; display:grid; place-items:center; padding:20px; background:#000b; backdrop-filter:blur(8px); }
 .delete-modal { width:min(100%,460px); padding:30px; border:1px solid #ffffff45; border-radius:16px; background:#181818; box-shadow:0 25px 90px #000b; }
 .delete-modal p:not(.eyebrow) { color:#aaa; line-height:1.6; }
+.delete-modal label { display:block; margin-top:20px; font-size:.92rem; }
+.delete-modal input { margin-top:8px; }
+.reset-delete-link { margin-top:10px; padding:0; color:#d5b9ff; background:transparent; font-size:.85rem; text-decoration:underline; }
+.feedback-modal { width:min(100%,420px); padding:30px; border:1px solid #ffffff45; border-radius:16px; background:#181818; box-shadow:0 25px 90px #000b; text-align:center; }
+.feedback-modal p:not(.eyebrow) { color:#aaa; line-height:1.6; }
+.feedback-modal button { margin-top:14px; min-width:110px; }
+.error-modal { border-color:#d97878; }
 @media(max-width:520px) { .security-row,.danger-row { align-items:flex-start; flex-direction:column; } .inline-form { align-items:stretch; } .delete-modal { padding:24px; } }

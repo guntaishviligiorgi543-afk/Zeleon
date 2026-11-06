@@ -13,7 +13,13 @@ export function createAuthStub() {
     }),
     signIn: vi.fn().mockImplementation(async () => { user.set({ id: 'user-1' }); }),
     signOut: vi.fn().mockImplementation(async () => { user.set(null); }),
+    changePasswordWithReauthentication: vi.fn().mockResolvedValue(undefined),
     resetPassword: vi.fn().mockResolvedValue(undefined), updatePassword: vi.fn().mockResolvedValue(undefined),
+    requestEmailChange: vi.fn().mockResolvedValue(undefined),
+    verifyEmailChangeOtp: vi.fn().mockImplementation(async (email: string) => { user.set({ id: 'user-1', email }); }),
+    loadPreferredName: vi.fn().mockResolvedValue(undefined),
+    savePreferredName: vi.fn().mockResolvedValue(undefined),
+    deleteAccount: vi.fn().mockResolvedValue(undefined),
     resendConfirmationEmail: vi.fn().mockResolvedValue(undefined),
     verifyEmailOtp: vi.fn().mockImplementation(async (_email: string, _token: string, type: 'email' | 'recovery') => {
       user.set({ id: 'user-1', email: 'person@example.com' });
