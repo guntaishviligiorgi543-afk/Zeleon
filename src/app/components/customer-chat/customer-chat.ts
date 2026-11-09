@@ -118,6 +118,11 @@ export class CustomerChat {
       subjectInput.value = ''; messageInput.value = '';
       await this.load();
       await this.select(conversation as Conversation);
+      // Acknowledgement is sent only for the customer's first request; failure must not block chat.
+      void this.client.functions.invoke('support-request-acknowledgement', {
+        body: { conversationId: conversation.id },
+      }).then(({ error }) => { if (error) console.warn('Support acknowledgement email unavailable'); })
+        .catch(() => console.warn('Support acknowledgement email unavailable'));
     } catch (e) { this.error.set(this.message(e)); }
     finally { this.sending.set(false); }
   }
