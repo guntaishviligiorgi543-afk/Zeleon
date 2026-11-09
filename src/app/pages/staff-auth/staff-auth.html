@@ -9,6 +9,25 @@
       <p class="intro">A quick security check before you enter your workspace.</p>
     </header>
 
+    @if (enrollmentNeeded()) {
+      <div class="enrollment-section">
+        <h2>Set up your authenticator</h2>
+        <p class="field-hint">Scan the QR code using Google Authenticator, Microsoft Authenticator, or another TOTP app. Each staff account needs its own setup.</p>
+        @if (qrUrl()) {
+          <div class="qr-frame"><img [src]="qrUrl()" alt="Private ZELEON authenticator enrollment QR code" /></div>
+          <form novalidate (ngSubmit)="confirmEnrollment()">
+            <div class="form-field">
+              <label for="enroll-code">6-digit code from your app</label>
+              <input id="enroll-code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" [formControl]="code" [readOnly]="pending()" />
+            </div>
+            <button type="submit" [disabled]="pending() || code.invalid">{{ pending() ? 'Verifying…' : 'Confirm authenticator' }}</button>
+          </form>
+        } @else {
+          <button type="button" (click)="startEnrollment()" [disabled]="pending()">{{ pending() ? 'Preparing…' : 'Generate QR code' }}</button>
+        }
+        <p class="field-hint">Keep this QR code private. After confirmation, enter your password and a fresh authenticator code below to open your dashboard.</p>
+      </div>
+    } @else {
     <form novalidate (ngSubmit)="submit()" (input)="error.set('')" [attr.aria-busy]="pending()">
       <div class="form-field">
         <label for="staff-current-password">Current password</label>
@@ -30,7 +49,6 @@
         <div id="staff-code-error" class="field-error" aria-live="polite" aria-atomic="true">{{ codeError }}</div>
       </div>
 
-      @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
       <div class="actions">
         <button type="submit" [disabled]="pending() || currentPassword.invalid || code.invalid" [attr.aria-busy]="pending()">
           {{ pending() ? 'Verifying…' : 'Verify and continue' }}
@@ -39,6 +57,8 @@
         <button type="button" class="secondary" [disabled]="pending()" (click)="cancel()">Back to profile</button>
       </div>
     </form>
+    }
+    @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
     <p class="security-note">Protected with password &amp; two-factor authentication.</p>
   </div>
 </section>
