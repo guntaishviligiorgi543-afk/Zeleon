@@ -25,21 +25,21 @@
       <div class="surface-heading">
         <div>
           <h2>Assign a verified account</h2>
-          <p>Use the account UUID from Supabase Auth. Manager roles cannot be created here.</p>
+          <p>Enter the email address of an existing verified account. Manager roles cannot be created here.</p>
         </div>
       </div>
       <form class="assign-form" (ngSubmit)="assign()">
         <div class="field">
-          <label for="staff-user-id">Account user ID</label
+          <label for="staff-email">Account email</label
           ><input
-            id="staff-user-id"
-            formControlName="targetUserId"
-            placeholder="00000000-0000-0000-0000-000000000000"
+            id="staff-email"
+            formControlName="email"
+            placeholder="employee@example.com" type="email" autocomplete="email"
           /><small
             [class.field-error]="
-              form.controls.targetUserId.touched && form.controls.targetUserId.invalid
+              form.controls.email.touched && form.controls.email.invalid
             "
-            >Enter a valid Supabase Auth user UUID.</small
+            >Enter a valid email address.</small
           >
         </div>
         <div class="field">
