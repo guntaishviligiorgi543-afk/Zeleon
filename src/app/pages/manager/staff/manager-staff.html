@@ -133,6 +133,9 @@
                         Reactivate
                       </button>
                     }
+                    @if (entry.role !== 'manager') {
+                      <button type="button" class="button danger" (click)="removeRole(entry)" [disabled]="!!pendingId()">Remove role</button>
+                    }
                   </div>
                 </td>
               </tr>
