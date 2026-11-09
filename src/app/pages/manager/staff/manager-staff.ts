@@ -6,7 +6,7 @@ import {
   StaffDirectoryEntry,
   StaffManagementError,
 } from '../../../services/manager-dashboard';
-import { StaffStatus } from '../../../services/staff-access';
+import { StaffAccess, StaffStatus } from '../../../services/staff-access';
 
 @Component({
   selector: 'app-manager-staff',
@@ -16,6 +16,8 @@ import { StaffStatus } from '../../../services/staff-access';
 })
 export class ManagerStaff implements OnInit {
   private readonly dashboard = inject(ManagerDashboard);
+  readonly access = inject(StaffAccess);
+  readonly isAdmin = this.access.role() === 'admin';
   readonly staff = signal<StaffDirectoryEntry[]>([]);
   readonly loading = signal(true);
   readonly pendingId = signal<string | null>(null);
@@ -54,6 +56,7 @@ export class ManagerStaff implements OnInit {
     this.form.controls.email.setValue(this.form.controls.email.value.trim().toLowerCase());
     this.form.markAllAsTouched();
     if (this.form.invalid || this.pendingId()) return;
+    if (this.isAdmin && this.form.controls.role.value !== 'support') return;
     this.pendingId.set('new');
     this.error.set('');
     this.success.set('');
@@ -75,7 +78,7 @@ export class ManagerStaff implements OnInit {
   }
 
   async removeRole(entry: StaffDirectoryEntry): Promise<void> {
-    if (this.pendingId() || entry.role === 'manager') return;
+    if (this.pendingId() || entry.role === 'manager' || (this.isAdmin && entry.role !== 'support')) return;
     if (!confirm(`Permanently remove ${entry.role} access for ${entry.email}? Their customer account will remain active.`)) return;
     this.pendingId.set(entry.user_id);
     this.error.set('');
@@ -90,7 +93,7 @@ export class ManagerStaff implements OnInit {
   }
 
   async setStatus(entry: StaffDirectoryEntry, status: StaffStatus): Promise<void> {
-    if (this.pendingId()) return;
+    if (this.pendingId() || (this.isAdmin && entry.role !== 'support')) return;
     const verb =
       status === 'suspended' ? 'Suspend' : status === 'active' ? 'Reactivate' : 'Place on leave';
     if (!confirm(`${verb} ${entry.email}?`)) return;
