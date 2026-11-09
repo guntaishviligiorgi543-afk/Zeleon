@@ -396,16 +396,22 @@ export class ManagerDashboard {
     return data === true;
   }
 
-  async sendSupportReply(conversationId: string, body: string): Promise<void> {
+  async sendSupportReply(conversationId: string, body: string): Promise<{ emailNotification: 'sent' | 'failed' }> {
     const { data: userData, error: userError } = await this.client.auth.getUser();
     if (userError || !userData.user) throw userError ?? new Error('Sign in required');
-    const { error } = await this.client.from('support_messages').insert({
+    const { data: reply, error } = await this.client.from('support_messages').insert({
       conversation_id: conversationId,
       sender_type: 'support',
       sender_user_id: userData.user.id,
       body: body.trim(),
-    });
+    }).select('id').single();
     if (error) throw error;
+    try {
+      const { data, error: notificationError } = await this.client.functions.invoke('support-reply-notification', { body: { messageId: reply.id } });
+      return { emailNotification: notificationError || data?.error ? 'failed' : 'sent' };
+    } catch {
+      return { emailNotification: 'failed' };
+    }
   }
 
   async getSupportMessages(conversationId: string): Promise<SupportMessage[]> {
