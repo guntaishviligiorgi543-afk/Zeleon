@@ -27,17 +27,18 @@ export class ManagerNavigation {
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly pendingTasks = inject(PendingTasks);
   private readonly router = inject(Router);
-  private readonly verifiedManagerId = signal<string | null>(null);
-  private readonly insideManager = signal(this.router.url.startsWith('/manager'));
+  private readonly verifiedAssignment = signal<{ userId: string; role: 'manager' | 'admin' | 'support' } | null>(null);
+  private readonly insideWorkspace = signal(/^\/(manager|admin|support)(\/|$)/.test(this.router.url));
+  readonly destination = computed(() => '/' + (this.verifiedAssignment()?.role ?? 'manager'));
+  readonly label = computed(() => { const role = this.verifiedAssignment()?.role; return role ? role.charAt(0).toUpperCase() + role.slice(1) + ' Dashboard' : 'Staff Dashboard'; });
   private requestVersion = 0;
 
   readonly visible = computed(
     () =>
       this.auth.initialized() &&
       this.auth.isAuthenticated() &&
-      !this.insideManager() &&
-      this.verifiedManagerId() !== null &&
-      this.verifiedManagerId() === this.auth.user()?.id,
+      !this.insideWorkspace() &&
+      this.verifiedAssignment()?.userId === this.auth.user()?.id,
   );
 
   constructor() {
@@ -45,13 +46,13 @@ export class ManagerNavigation {
     effect(() => {
       const userId =
         this.auth.initialized() && this.auth.isAuthenticated() ? this.auth.user()?.id : null;
-      this.verifiedManagerId.set(null);
+      this.verifiedAssignment.set(null);
       this.requestVersion++;
       if (this.browser && userId) this.pendingTasks.run(() => this.refresh(userId));
     });
     this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationEnd) {
-        this.insideManager.set(event.urlAfterRedirects.startsWith('/manager'));
+        this.insideWorkspace.set(/^\/(manager|admin|support)(\/|$)/.test(event.urlAfterRedirects));
         this.recheck();
       }
     });
@@ -101,13 +102,14 @@ export class ManagerNavigation {
         .maybeSingle();
       if (error) throw error;
       if (version !== this.requestVersion || this.auth.user()?.id !== expectedUserId) return;
-      this.verifiedManagerId.set(
-        data?.user_id === expectedUserId && data.role === 'manager' && data.status === 'active'
-          ? expectedUserId
+      this.verifiedAssignment.set(
+        data?.user_id === expectedUserId &&
+        ['manager', 'admin', 'support'].includes(data.role) && data.status === 'active'
+          ? { userId: expectedUserId, role: data.role as 'manager' | 'admin' | 'support' }
           : null,
       );
     } catch {
-      if (version === this.requestVersion) this.verifiedManagerId.set(null);
+      if (version === this.requestVersion) this.verifiedAssignment.set(null);
     }
   }
 }
