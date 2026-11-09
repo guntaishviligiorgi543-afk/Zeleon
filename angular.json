@@ -24,7 +24,7 @@
                 "input": "public"
               },
               {
-                "glob": "favicon.ico-Photoroom.png",
+                "glob": "zeeleon favicon.png",
                 "input": "src/app/images",
                 "output": "/"
               }
