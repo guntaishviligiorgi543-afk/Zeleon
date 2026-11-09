@@ -98,13 +98,13 @@ export class ManagerStaff implements OnInit {
     this.error.set('');
     this.success.set('');
     try {
-      await this.dashboard.manageStaff({
+      const result = await this.dashboard.manageStaff({
         action: 'set_status',
         targetUserId: entry.user_id,
         status,
       });
       await this.load();
-      this.success.set(`Staff status changed to ${status.replace('_', ' ')}.`);
+      this.success.set(result.notificationSent ? `Staff status changed to ${status.replace('_', ' ')}. Notification email sent.` : `Staff status changed to ${status.replace('_', ' ')}, but the notification email could not be sent.`);
     } catch {
       this.error.set(
         'The staff status could not be changed. Manager accounts and your own assignment are protected.',
