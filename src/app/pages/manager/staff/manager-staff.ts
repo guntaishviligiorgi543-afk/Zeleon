@@ -58,11 +58,11 @@ export class ManagerStaff implements OnInit {
     this.error.set('');
     this.success.set('');
     try {
-      await this.dashboard.manageStaff({ action: 'assign', ...this.form.getRawValue() });
+      const result = await this.dashboard.manageStaff({ action: 'assign', ...this.form.getRawValue() });
       await this.load();
       this.assignOpen.set(false);
       this.form.reset({ email: '', role: 'support' });
-      this.success.set('Staff role assigned.');
+      this.success.set(result.notificationSent ? 'Staff role assigned. A welcome email was sent.' : 'Staff role assigned, but the notification email could not be sent.');
     } catch (error) {
       this.error.set(
         error instanceof StaffManagementError
@@ -72,6 +72,21 @@ export class ManagerStaff implements OnInit {
     } finally {
       this.pendingId.set(null);
     }
+  }
+
+  async removeRole(entry: StaffDirectoryEntry): Promise<void> {
+    if (this.pendingId() || entry.role === 'manager') return;
+    if (!confirm(`Permanently remove ${entry.role} access for ${entry.email}? Their customer account will remain active.`)) return;
+    this.pendingId.set(entry.user_id);
+    this.error.set('');
+    this.success.set('');
+    try {
+      const result = await this.dashboard.manageStaff({action:'remove',targetUserId:entry.user_id});
+      await this.load();
+      this.success.set(result.notificationSent ? 'Staff role removed. Notification email sent.' : 'Staff role removed, but the notification email could not be sent.');
+    } catch (error) {
+      this.error.set(error instanceof StaffManagementError ? error.message : 'Unable to remove staff access. Please try again.');
+    } finally { this.pendingId.set(null); }
   }
 
   async setStatus(entry: StaffDirectoryEntry, status: StaffStatus): Promise<void> {
