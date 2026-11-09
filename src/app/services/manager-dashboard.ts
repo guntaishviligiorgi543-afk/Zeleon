@@ -312,7 +312,8 @@ export class ManagerDashboard {
 
   async manageStaff(body: {
     action: 'assign' | 'set_status';
-    targetUserId: string;
+    targetUserId?: string;
+    email?: string;
     role?: 'admin' | 'support';
     status?: StaffStatus;
   }): Promise<void> {
