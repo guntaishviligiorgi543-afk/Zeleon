@@ -1,0 +1,80 @@
+<section class="page settings-page" aria-labelledby="settings-title">
+  <header class="page-header">
+    <div>
+      <h1 id="settings-title">Manager settings</h1>
+      <p>Review the authenticated account and control the short-lived Manager workspace session.</p>
+    </div>
+  </header>
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+  <div class="settings-grid">
+    <article class="surface settings-card">
+      <div class="card-icon blue" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-3-10 2 2 4-5" />
+        </svg>
+      </div>
+      <div>
+        <h2>Verified Manager session</h2>
+        <p>
+          Access requires an active Manager assignment, Supabase AAL2, and a live server-side staff
+          grant.
+        </p>
+        <dl>
+          <div>
+            <dt>Account</dt>
+            <dd>{{ auth.user()?.email }}</dd>
+          </div>
+          <div>
+            <dt>Role</dt>
+            <dd>{{ staff.role() }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>{{ staff.status() }}</dd>
+          </div>
+          <div>
+            <dt>Verification</dt>
+            <dd>{{ staff.isVerified() ? 'AAL2 + staff grant' : 'Verification required' }}</dd>
+          </div>
+        </dl>
+        <button type="button" class="button" (click)="refresh()" [disabled]="pending()">
+          Refresh verification
+        </button>
+      </div>
+    </article>
+    <article class="surface settings-card">
+      <div class="card-icon purple" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path
+            d="M12 2v6m0 8v6M4.9 4.9l4.2 4.2m5.8 5.8 4.2 4.2M2 12h6m8 0h6M4.9 19.1l4.2-4.2m5.8-5.8 4.2-4.2"
+          />
+        </svg>
+      </div>
+      <div>
+        <h2>Security controls</h2>
+        <p>
+          The Manager grant expires after 15 minutes and is refreshed only while the protected
+          workspace is active.
+        </p>
+        <button type="button" class="button danger" (click)="lock()" [disabled]="pending()">
+          Lock Manager dashboard
+        </button>
+      </div>
+    </article>
+    <article class="surface settings-card">
+      <div class="card-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4zM4 9h16M8 13h4" /></svg>
+      </div>
+      <div>
+        <h2>Account security</h2>
+        <p>
+          Password, authenticator enrollment, and account settings remain in the customer profile
+          security area.
+        </p>
+        <a routerLink="/profile/security" class="button">Open security settings</a>
+      </div>
+    </article>
+  </div>
+</section>

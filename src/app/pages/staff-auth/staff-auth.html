@@ -1,0 +1,44 @@
+<section class="staff-auth-page" aria-labelledby="staff-auth-title">
+  <div class="staff-auth-card">
+    <header class="staff-auth-heading">
+      <span class="access-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="m12 3 8 3v5c0 5-5 8.5-8 10-3-1.5-8-5-8-10V6l8-3Z" /><path d="m8.5 11.5 2.5 2.5 4.5-5" /></svg>
+      </span>
+      <p class="eyebrow">ZELEON · STAFF ACCESS</p>
+      <h1 id="staff-auth-title">Verify your access.</h1>
+      <p class="intro">A quick security check before you enter your workspace.</p>
+    </header>
+
+    <form novalidate (ngSubmit)="submit()" (input)="error.set('')" [attr.aria-busy]="pending()">
+      <div class="form-field">
+        <label for="staff-current-password">Current password</label>
+        <input id="staff-current-password" type="password" autocomplete="current-password"
+          placeholder="Enter your current password" minlength="8" maxlength="128"
+          [formControl]="currentPassword" [readOnly]="pending()" required
+          [attr.aria-invalid]="!!passwordError" aria-describedby="staff-password-hint staff-password-error" />
+        <p id="staff-password-hint" class="field-hint">Use your ZELEON password · 8–128 characters.</p>
+        <div id="staff-password-error" class="field-error" aria-live="polite" aria-atomic="true">{{ passwordError }}</div>
+      </div>
+
+      <div class="form-field">
+        <label for="staff-code">Authenticator code</label>
+        <input id="staff-code" class="code-input" type="text" inputmode="numeric" autocomplete="one-time-code"
+          placeholder="Enter 6-digit code" maxlength="6" pattern="[0-9]{6}"
+          [formControl]="code" [readOnly]="pending()" required
+          [attr.aria-invalid]="!!codeError" aria-describedby="staff-code-hint staff-code-error" />
+        <p id="staff-code-hint" class="field-hint">Open your authenticator app for the current code.</p>
+        <div id="staff-code-error" class="field-error" aria-live="polite" aria-atomic="true">{{ codeError }}</div>
+      </div>
+
+      @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+      <div class="actions">
+        <button type="submit" [disabled]="pending() || currentPassword.invalid || code.invalid" [attr.aria-busy]="pending()">
+          {{ pending() ? 'Verifying…' : 'Verify and continue' }}
+          @if (!pending()) { <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6" /></svg> }
+        </button>
+        <button type="button" class="secondary" [disabled]="pending()" (click)="cancel()">Back to profile</button>
+      </div>
+    </form>
+    <p class="security-note">Protected with password &amp; two-factor authentication.</p>
+  </div>
+</section>

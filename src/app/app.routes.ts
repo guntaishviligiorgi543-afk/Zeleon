@@ -17,6 +17,10 @@ import { ShopInfo } from './pages/profile/shop-info/shop-info';
 import { authGuard, guestGuard } from './guards/auth.guard';
 import { AuthCallback } from './pages/auth-callback/auth-callback';
 import { ResetPassword } from './pages/reset-password/reset-password';
+import { StaffWorkspace } from './pages/staff-workspace/staff-workspace';
+import { StaffAuth } from './pages/staff-auth/staff-auth';
+import { staffGuard } from './guards/staff.guard';
+import { managerChildGuard, managerGuard } from './guards/manager.guard';
 
 export const routes: Routes = [
   {
@@ -70,6 +74,11 @@ export const routes: Routes = [
     component: ResetPassword,
   },
   {
+    path: 'staff-auth',
+    canActivate: [authGuard],
+    component: StaffAuth,
+  },
+  {
     path: 'profile',
     canActivate: [authGuard],
     canActivateChild: [authGuard],
@@ -93,6 +102,25 @@ export const routes: Routes = [
         component: ShopInfo,
       },
     ],
+  },
+  {
+    path: 'manager',
+    canActivate: [managerGuard],
+    canActivateChild: [managerChildGuard],
+    loadComponent: () => import('./pages/manager/manager-shell').then((m) => m.ManagerShell),
+    loadChildren: () => import('./pages/manager/manager.routes').then((m) => m.MANAGER_ROUTES),
+  },
+  {
+    path: 'admin',
+    canActivate: [staffGuard],
+    data: { staffRole: 'admin' },
+    component: StaffWorkspace,
+  },
+  {
+    path: 'support',
+    canActivate: [staffGuard],
+    data: { staffRole: 'support' },
+    component: StaffWorkspace,
   },
   {
     path: '**',

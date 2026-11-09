@@ -1,0 +1,164 @@
+<section class="page" aria-labelledby="support-title">
+  <header class="page-header">
+    <div>
+      <h1 id="support-title">Support operations</h1>
+      <p>
+        Monitor customer conversations, assign active Support employees, and keep unresolved work
+        visible.
+      </p>
+    </div>
+    <div class="header-actions">
+      <button class="button" type="button" (click)="load()" [disabled]="loading()">
+        Refresh queue
+      </button>
+    </div>
+  </header>
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="notice success" role="status">{{ success() }}</div>
+  }
+
+  <div class="support-summary">
+    <article>
+      <span>Unresolved</span><strong>{{ unresolvedCount() }}</strong>
+    </article>
+    <article>
+      <span>Active support</span><strong>{{ supportStaff().length }}</strong>
+    </article>
+    <article>
+      <span>Resolved</span><strong>{{ conversations().length - unresolvedCount() }}</strong>
+    </article>
+  </div>
+  <article class="surface">
+    <div class="surface-heading">
+      <div>
+        <h2>Conversation queue</h2>
+        <p>Private conversation access remains enforced by RLS</p>
+      </div>
+      <select
+        class="filter-select"
+        aria-label="Filter conversation status"
+        [ngModel]="filter()"
+        (ngModelChange)="filter.set($event)"
+      >
+        <option value="all">All conversations</option>
+        <option value="open">Open</option>
+        <option value="waiting_customer">Waiting customer</option>
+        <option value="escalated">Escalated</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    </div>
+    @if (loading()) {
+      <div class="queue-loading">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+    } @else if (filtered().length) {
+      <div class="conversation-list">
+        @for (conversation of filtered(); track conversation.id) {
+          <article class="conversation-row">
+            <div class="customer">
+              <strong
+                >{{ conversation.customer_first_name }}
+                {{ conversation.customer_last_name }}</strong
+              ><span>{{ conversation.customer_email }}</span
+              ><small
+                >{{ conversation.subject || 'General support request' }} ·
+                {{ conversation.updated_at | date: 'MMM d, HH:mm' }}</small
+              >
+            </div>
+            <label
+              ><span>Assigned support</span
+              ><select
+                [disabled]="pendingId() === conversation.id"
+                [ngModel]="conversation.assigned_support_id || ''"
+                (ngModelChange)="assign(conversation, $event)"
+              >
+                <option value="">Unassigned</option>
+                @for (entry of supportStaff(); track entry.user_id) {
+                  <option [value]="entry.user_id">{{ entry.email }}</option>
+                }
+              </select></label
+            >
+            <label
+              ><span>Status</span
+              ><select
+                [disabled]="pendingId() === conversation.id"
+                [ngModel]="conversation.status"
+                (ngModelChange)="changeStatus(conversation, $event)"
+              >
+                <option value="open">Open</option>
+                <option value="waiting_customer">Waiting customer</option>
+                <option value="escalated">Escalated</option>
+                <option value="resolved">Resolved</option>
+              </select></label
+            >
+            <div class="rating">
+              @if (conversation.rating; as rating) {
+                <strong>{{ rating.rating }}/5</strong
+                ><span>{{ rating.feedback || 'No written feedback' }}</span>
+              } @else {
+                <span>No rating</span>
+              }
+            </div>
+            <button type="button" class="button thread-button" (click)="viewThread(conversation)">
+              View thread
+            </button>
+          </article>
+        }
+      </div>
+    } @else {
+      <div class="empty">
+        <p>
+          <strong>No conversations in this view</strong>New or reassigned conversations will appear
+          automatically.
+        </p>
+      </div>
+    }
+  </article>
+  @if (selected(); as conversation) {
+    <div
+      class="thread-backdrop"
+      (mousedown)="$event.target === $event.currentTarget && closeThread()"
+    >
+      <section
+        class="thread-panel surface"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="thread-title"
+      >
+        <header>
+          <div>
+            <h2 id="thread-title">{{ conversation.subject || 'Support conversation' }}</h2>
+            <p>
+              {{ conversation.customer_first_name }} {{ conversation.customer_last_name }} ·
+              {{ conversation.customer_email }}
+            </p>
+          </div>
+          <button type="button" aria-label="Close conversation" (click)="closeThread()">×</button>
+        </header>
+        <div class="thread-messages" aria-live="polite">
+          @if (messagesLoading()) {
+            <div class="skeleton"></div>
+          } @else {
+            @for (message of messages(); track message.id) {
+              <article [class.customer-message]="message.sender_type === 'customer'">
+                <div>
+                  <strong>{{ message.sender_type }}</strong>
+                  <time>{{ message.created_at | date: 'MMM d, y, HH:mm' }}</time>
+                </div>
+                <p>{{ message.body }}</p>
+              </article>
+            } @empty {
+              <div class="empty">
+                <p><strong>No messages</strong>This conversation does not contain any messages.</p>
+              </div>
+            }
+          }
+        </div>
+      </section>
+    </div>
+  }
+</section>

@@ -1,0 +1,94 @@
+import { DatePipe } from '@angular/common';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ManagerDashboard, StaffDirectoryEntry } from '../../../services/manager-dashboard';
+import { StaffStatus } from '../../../services/staff-access';
+
+@Component({
+  selector: 'app-manager-staff',
+  imports: [DatePipe, ReactiveFormsModule],
+  templateUrl: './manager-staff.html',
+  styleUrls: ['../manager-page.css', './manager-staff.css'],
+})
+export class ManagerStaff implements OnInit {
+  private readonly dashboard = inject(ManagerDashboard);
+  readonly staff = signal<StaffDirectoryEntry[]>([]);
+  readonly loading = signal(true);
+  readonly pendingId = signal<string | null>(null);
+  readonly error = signal('');
+  readonly success = signal('');
+  readonly assignOpen = signal(false);
+  readonly form = new FormGroup({
+    targetUserId: new FormControl('', {
+      nonNullable: true,
+      validators: [
+        Validators.required,
+        Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
+      ],
+    }),
+    role: new FormControl<'admin' | 'support'>('support', { nonNullable: true }),
+  });
+
+  ngOnInit(): void {
+    void this.load();
+  }
+
+  async load(): Promise<void> {
+    this.loading.set(true);
+    this.error.set('');
+    try {
+      this.staff.set(await this.dashboard.getStaffDirectory());
+    } catch {
+      this.error.set(
+        'The staff directory could not be loaded. Verify the Manager session and try again.',
+      );
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async assign(): Promise<void> {
+    this.form.markAllAsTouched();
+    if (this.form.invalid || this.pendingId()) return;
+    this.pendingId.set('new');
+    this.error.set('');
+    this.success.set('');
+    try {
+      await this.dashboard.manageStaff({ action: 'assign', ...this.form.getRawValue() });
+      await this.load();
+      this.assignOpen.set(false);
+      this.form.reset({ targetUserId: '', role: 'support' });
+      this.success.set('Staff role assigned.');
+    } catch {
+      this.error.set(
+        'The staff role could not be assigned. The account must be verified and the role hierarchy must allow the change.',
+      );
+    } finally {
+      this.pendingId.set(null);
+    }
+  }
+
+  async setStatus(entry: StaffDirectoryEntry, status: StaffStatus): Promise<void> {
+    const verb =
+      status === 'suspended' ? 'Suspend' : status === 'active' ? 'Reactivate' : 'Place on leave';
+    if (!confirm(`${verb} ${entry.email}?`)) return;
+    this.pendingId.set(entry.user_id);
+    this.error.set('');
+    this.success.set('');
+    try {
+      await this.dashboard.manageStaff({
+        action: 'set_status',
+        targetUserId: entry.user_id,
+        status,
+      });
+      await this.load();
+      this.success.set(`Staff status changed to ${status.replace('_', ' ')}.`);
+    } catch {
+      this.error.set(
+        'The staff status could not be changed. Manager accounts and your own assignment are protected.',
+      );
+    } finally {
+      this.pendingId.set(null);
+    }
+  }
+}

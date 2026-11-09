@@ -1,0 +1,93 @@
+<section class="manager-shell">
+  <header class="manager-mobile-bar">
+    <a routerLink="/manager" class="manager-wordmark" aria-label="ZELEON Manager overview">
+      <span class="wordmark-mark" aria-hidden="true"></span>
+      <span>ZELEON</span>
+    </a>
+    <button
+      type="button"
+      class="menu-toggle"
+      (click)="toggleMenu()"
+      [attr.aria-expanded]="menuOpen()"
+      aria-controls="manager-nav"
+    >
+      <span></span><span></span><span></span
+      ><span class="sr-only">Toggle dashboard navigation</span>
+    </button>
+  </header>
+
+  <aside id="manager-nav" class="manager-rail" [class.is-open]="menuOpen()">
+    <div class="rail-heading">
+      <a routerLink="/manager" class="manager-wordmark" aria-label="ZELEON Manager overview">
+        <span class="wordmark-mark" aria-hidden="true"></span>
+        <span>ZELEON</span>
+      </a>
+      <p>Manager operations</p>
+    </div>
+
+    <nav aria-label="Manager dashboard">
+      @for (item of navItems; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            @switch (item.icon) {
+              @case ('overview') {
+                <path d="M4 13h6V4H4v9Zm10 7h6v-9h-6v9ZM4 20h6v-3H4v3Zm10-13h6V4h-6v3Z" />
+              }
+              @case ('products') {
+                <path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Zm0 0v9m8-4.5-8 4.5-8-4.5" />
+              }
+              @case ('staff') {
+                <path
+                  d="M16 20v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2m6.5-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7.5 1 2 2 4-4"
+                />
+              }
+              @case ('support') {
+                <path d="M20 15a4 4 0 0 1-4 4H9l-5 3v-7a8 8 0 1 1 16 0Z" />
+              }
+              @case ('orders') {
+                <path d="M6 3h12l2 4-2 14H6L4 7l2-4Zm-2 4h16M9 11v5m6-5v5" />
+              }
+              @case ('analytics') {
+                <path d="M4 20V10m6 10V4m6 16v-7m4 7H2" />
+              }
+              @case ('settings') {
+                <path
+                  d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8-3.5 2-1-2-3-2 .5-1.5-1L16 5h-4l-.5 2.5-1.5 1L8 8 6 11l2 1v2l-2 1 2 3 2-.5 1.5 1L12 21h4l.5-2.5 1.5-1 2 .5 2-3-2-1v-2Z"
+                />
+              }
+            }
+          </svg>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="rail-account">
+      <span class="account-avatar" aria-hidden="true">{{
+        (auth.displayName() || 'M').charAt(0).toUpperCase()
+      }}</span>
+      <span
+        ><strong>{{ auth.displayName() || 'Manager' }}</strong
+        ><small>Verified session</small></span
+      >
+    </div>
+    <a class="store-link" routerLink="/">Return to storefront</a>
+  </aside>
+
+  @if (menuOpen()) {
+    <button
+      type="button"
+      class="rail-scrim"
+      aria-label="Close navigation"
+      (click)="menuOpen.set(false)"
+    ></button>
+  }
+
+  <main class="manager-content" id="manager-main">
+    <router-outlet></router-outlet>
+  </main>
+</section>

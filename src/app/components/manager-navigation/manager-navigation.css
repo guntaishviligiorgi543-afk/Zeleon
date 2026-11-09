@@ -1,0 +1,76 @@
+:host {
+  --manager-accent: #de1313;
+  position: fixed;
+  left: max(20px, env(safe-area-inset-left));
+  bottom: max(20px, env(safe-area-inset-bottom));
+  z-index: 30;
+  font-family: Helvetica, Arial, sans-serif;
+}
+
+.manager-launcher {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  box-sizing: border-box;
+  border: 1px solid #ffffff40;
+  border-radius: 16px;
+  background: #131313;
+  color: #fff;
+  box-shadow: 0 6px 20px #0005, inset 0 -2px var(--manager-accent);
+  text-decoration: none;
+  touch-action: manipulation;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.manager-launcher svg {
+  width: 23px;
+  height: 23px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+}
+
+.manager-launcher:hover { background: #292929; transform: translateY(-2px); }
+.manager-launcher:active { transform: translateY(0); }
+.manager-launcher:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+
+.manager-label {
+  position: absolute;
+  left: calc(100% + 10px);
+  padding: 10px 13px;
+  border: 1px solid #ffffff30;
+  border-radius: 10px;
+  background: #131313;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(-4px);
+  pointer-events: none;
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.manager-launcher:hover .manager-label,
+.manager-launcher:focus-visible .manager-label { opacity: 1; transform: translateX(0); }
+
+/* Existing dialogs and mobile keyboard/form controls take priority. */
+:host-context(body:has(dialog[open], [role="dialog"][aria-modal="true"])) { visibility: hidden; }
+:host-context(body:has(input:focus, textarea:focus, select:focus, [contenteditable="true"]:focus)) { visibility: hidden; }
+
+@media (max-width: 600px) {
+  :host { left: max(12px, env(safe-area-inset-left)); bottom: max(12px, env(safe-area-inset-bottom)); }
+  .manager-launcher { width: 48px; height: 48px; border-radius: 14px; }
+}
+
+@media (hover: none) {
+  .manager-label { left: 0; bottom: calc(100% + 8px); }
+  .manager-launcher:focus .manager-label { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .manager-launcher, .manager-label { transition: none; transform: none; }
+}

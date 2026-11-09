@@ -1,0 +1,169 @@
+<section class="page" aria-labelledby="overview-title">
+  <header class="page-header">
+    <div>
+      <h1 id="overview-title">Business overview</h1>
+      <p>A live view of commerce, staff coverage, and recent operating activity.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="button" (click)="load()" [disabled]="loading()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M20 6v6h-6M4 18v-6h6M6.5 8a7 7 0 0 1 12.2-1.5L20 12M4 12l1.3 5.5A7 7 0 0 0 17.5 16"
+          />
+        </svg>
+        Refresh data
+      </button>
+      <a routerLink="/manager/products" class="button primary">Manage products</a>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+  @if (loading()) {
+    <div class="loading-grid" aria-label="Loading overview">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  } @else if (snapshot(); as data) {
+    <div class="metrics" aria-label="Manager metrics">
+      <article class="metric metric-primary">
+        <span>Total revenue</span
+        ><strong>{{ data.revenue | currency: 'USD' : 'symbol' : '1.2-2' }}</strong
+        ><small>Verified paid orders</small>
+      </article>
+      <article class="metric">
+        <span>Orders</span><strong>{{ data.totalOrders | number }}</strong
+        ><small>All recorded orders</small>
+      </article>
+      <article class="metric">
+        <span>Customers</span><strong>{{ data.totalCustomers | number }}</strong
+        ><small>Registered accounts</small>
+      </article>
+      <article class="metric">
+        <span>Active products</span><strong>{{ data.activeProducts | number }}</strong
+        ><small>Visible in the shop</small>
+      </article>
+      <article class="metric">
+        <span>Admin coverage</span><strong>{{ data.activeAdmins | number }}</strong
+        ><small>Active administrators</small>
+      </article>
+      <article class="metric">
+        <span>Support coverage</span><strong>{{ data.activeSupport | number }}</strong
+        ><small>Active support staff</small>
+      </article>
+    </div>
+
+    <div class="overview-grid">
+      <article class="surface chart-surface">
+        <div class="surface-heading">
+          <div>
+            <h2>Paid sales performance</h2>
+            <p>Daily revenue over the past 30 days</p>
+          </div>
+          <a routerLink="/manager/analytics">Open analytics</a>
+        </div>
+        @if (data.salesSeries.length) {
+          <div class="mini-chart" role="img" aria-label="Daily paid revenue chart">
+            @for (point of data.salesSeries; track point.day) {
+              <div class="bar-column" [title]="point.day + ': $' + point.revenue">
+                <div class="bar" [style.height.%]="(point.revenue / maxRevenue()) * 100"></div>
+                <span>{{ point.day | date: 'MMM d' }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty">
+            <p>
+              <strong>No completed sales yet</strong>Paid orders will appear here automatically.
+            </p>
+          </div>
+        }
+      </article>
+
+      <article class="surface activity-surface">
+        <div class="surface-heading">
+          <div>
+            <h2>Recent staff activity</h2>
+            <p>Security-sensitive actions from the audit trail</p>
+          </div>
+        </div>
+        @if (data.recentActivity.length) {
+          <ol class="activity-list">
+            @for (activity of data.recentActivity; track activity.id) {
+              <li>
+                <span class="activity-mark" aria-hidden="true"></span>
+                <div>
+                  <strong>{{ activity.action.replaceAll('_', ' ') }}</strong>
+                  <p>
+                    {{ activity.actor_email || 'System' }} ·
+                    {{ activity.created_at | date: 'MMM d, HH:mm' }}
+                  </p>
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <div class="empty">
+            <p>
+              <strong>No recent staff changes</strong>Verified staff actions will be recorded here.
+            </p>
+          </div>
+        }
+      </article>
+    </div>
+
+    <article class="surface orders-surface">
+      <div class="surface-heading">
+        <div>
+          <h2>Recent orders</h2>
+          <p>Newest customer transactions</p>
+        </div>
+        <a routerLink="/manager/orders">View all orders</a>
+      </div>
+      @if (data.recentOrders.length) {
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (order of data.recentOrders; track order.id) {
+                <tr>
+                  <td>
+                    <strong>{{ order.order_number }}</strong>
+                  </td>
+                  <td>{{ order.customer_email }}</td>
+                  <td>{{ order.created_at | date: 'MMM d, y' }}</td>
+                  <td>
+                    <span class="status" [class]="'status ' + order.payment_status">{{
+                      order.payment_status
+                    }}</span>
+                  </td>
+                  <td>
+                    <span class="status" [class]="'status ' + order.order_status">{{
+                      order.order_status
+                    }}</span>
+                  </td>
+                  <td>{{ +order.total | currency: order.currency }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <div class="empty">
+          <p><strong>No orders yet</strong>New customer orders will appear here.</p>
+        </div>
+      }
+    </article>
+  }
+</section>

@@ -1,0 +1,142 @@
+<section class="page" aria-labelledby="analytics-title">
+  <header class="page-header">
+    <div>
+      <h1 id="analytics-title">Sales analytics</h1>
+      <p>
+        Revenue includes paid transactions only. Pending, failed, and cancelled payments are
+        excluded.
+      </p>
+    </div>
+    <div class="header-actions">
+      <label class="period-label"
+        >Period<select [ngModel]="days()" (ngModelChange)="days.set(+$event); load()">
+          <option [ngValue]="7">7 days</option>
+          <option [ngValue]="30">30 days</option>
+          <option [ngValue]="90">90 days</option>
+          <option [ngValue]="365">1 year</option>
+        </select></label
+      ><button
+        type="button"
+        class="button primary"
+        (click)="exportPdf()"
+        [disabled]="exporting() || loading()"
+      >
+        {{ exporting() ? 'Generating…' : 'Export protected PDF' }}
+      </button>
+    </div>
+  </header>
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+  @if (loading()) {
+    <div class="loading-grid">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  } @else if (snapshot(); as data) {
+    <div class="analytics-metrics">
+      <article>
+        <span>Paid revenue</span><strong>{{ data.revenue | currency: 'USD' }}</strong>
+      </article>
+      <article>
+        <span>Total orders</span><strong>{{ data.totalOrders | number }}</strong>
+      </article>
+      <article>
+        <span>Average order</span><strong>{{ averageOrder() | currency: 'USD' }}</strong>
+      </article>
+      <article>
+        <span>Customer base</span><strong>{{ data.totalCustomers | number }}</strong>
+      </article>
+    </div>
+    <article class="surface analytics-chart">
+      <div class="surface-heading">
+        <div>
+          <h2>Revenue trend</h2>
+          <p>Daily completed-payment revenue</p>
+        </div>
+      </div>
+      @if (data.salesSeries.length) {
+        <div class="chart" role="img" aria-label="Paid revenue by day">
+          @for (point of data.salesSeries; track point.day) {
+            <div class="chart-column">
+              <span class="chart-value">{{
+                point.revenue | currency: 'USD' : 'symbol' : '1.0-0'
+              }}</span>
+              <div class="chart-bar" [style.height.%]="(point.revenue / maxRevenue()) * 100"></div>
+              <span class="chart-date">{{ point.day | date: 'MMM d' }}</span>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <p>
+            <strong>No paid sales in this period</strong>Choose a wider period or return after
+            payments are completed.
+          </p>
+        </div>
+      }
+    </article>
+    <div class="analytics-detail-grid">
+      <article class="surface">
+        <div class="surface-heading">
+          <div>
+            <h2>Product performance</h2>
+            <p>Paid revenue and unit volume</p>
+          </div>
+        </div>
+        @if (data.productPerformance.length) {
+          <div class="performance-list">
+            @for (
+              product of data.productPerformance;
+              track product.product_id + product.product_name
+            ) {
+              <div>
+                <span
+                  ><strong>{{ product.product_name }}</strong
+                  ><small>{{ product.units }} unit(s)</small></span
+                ><strong>{{ product.revenue | currency: 'USD' }}</strong>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty">
+            <p>
+              <strong>No completed product sales</strong>Product rankings will appear after paid
+              orders.
+            </p>
+          </div>
+        }
+      </article>
+      <article class="surface">
+        <div class="surface-heading">
+          <div>
+            <h2>Customer growth</h2>
+            <p>New registered customers by day</p>
+          </div>
+        </div>
+        @if (data.customerGrowth.length) {
+          <div class="growth-list">
+            @for (point of data.customerGrowth; track point.day) {
+              <div [title]="(point.day | date: 'MMM d') + ': ' + point.customers">
+                <span [style.height.px]="4 + point.customers * 12"></span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="empty">
+            <p><strong>No customer growth data</strong>New registrations will appear here.</p>
+          </div>
+        }
+      </article>
+    </div>
+    <article class="surface payment-note">
+      <strong>Payment integrity</strong>
+      <p>
+        The dashboard reads payment state from the orders table and does not provide an operation
+        for marking an order paid. Payment confirmation must come from the verified payment
+        workflow.
+      </p>
+    </article>
+  }
+</section>

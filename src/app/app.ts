@@ -5,9 +5,10 @@ import AOS from 'aos';
 import { filter } from 'rxjs';
 import { Header } from './components/header/header';
 import { Footer } from './components/footer/footer';
+import { ManagerNavigation } from './components/manager-navigation/manager-navigation';
 
 @Component({
-  imports: [RouterOutlet, Header, Footer],
+  imports: [RouterOutlet, Header, Footer, ManagerNavigation],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

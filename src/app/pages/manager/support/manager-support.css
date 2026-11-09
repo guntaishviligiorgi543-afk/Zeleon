@@ -1,0 +1,218 @@
+.support-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px;
+  margin-bottom: 18px;
+}
+.support-summary article {
+  padding: 18px 20px;
+  border: 1px solid #dce5f2;
+  border-radius: 15px;
+  background: #fff;
+}
+.support-summary span {
+  display: block;
+  color: #6c788d;
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+.support-summary strong {
+  display: block;
+  margin-top: 10px;
+  color: #1d2b45;
+  font-size: 1.65rem;
+  font-weight: 650;
+}
+.filter-select {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d3deeb;
+  border-radius: 10px;
+  background: #fff;
+  font:
+    600 0.7rem 'Montserrat',
+    sans-serif;
+}
+.queue-loading {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  padding: 20px;
+}
+.conversation-list {
+  display: grid;
+}
+.conversation-row {
+  display: grid;
+  grid-template-columns:
+    minmax(220px, 1.5fr) minmax(190px, 1fr) minmax(150px, 0.75fr) minmax(110px, 0.55fr)
+    auto;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #e8edf5;
+}
+.conversation-row:last-child {
+  border-bottom: 0;
+}
+.customer {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+.customer strong {
+  color: #24334e;
+  font-size: 0.78rem;
+}
+.customer span {
+  overflow: hidden;
+  color: #68768d;
+  font-size: 0.67rem;
+  text-overflow: ellipsis;
+}
+.customer small {
+  color: #919cad;
+  font-size: 0.61rem;
+}
+.conversation-row label {
+  display: grid;
+  gap: 6px;
+  color: #7a8799;
+  font-size: 0.61rem;
+  font-weight: 650;
+}
+.conversation-row select {
+  min-width: 0;
+  min-height: 40px;
+  padding: 0 9px;
+  border: 1px solid #d5dfec;
+  border-radius: 9px;
+  background: #fff;
+  font:
+    500 0.67rem 'Montserrat',
+    sans-serif;
+}
+.rating {
+  display: grid;
+  gap: 5px;
+}
+.rating strong {
+  color: #7657e8;
+  font-size: 0.8rem;
+}
+.rating span {
+  color: #7d899b;
+  font-size: 0.61rem;
+  line-height: 1.4;
+}
+.thread-button {
+  min-height: 40px;
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+.thread-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: grid;
+  padding: 20px;
+  overflow-y: auto;
+  place-items: center;
+  background: rgba(17, 30, 53, 0.48);
+}
+.thread-panel {
+  width: min(720px, 100%);
+  max-height: min(760px, 90vh);
+  overflow: hidden;
+}
+.thread-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 20px 22px;
+  border-bottom: 1px solid #e2e9f3;
+}
+.thread-panel h2 {
+  margin: 0;
+  color: #23324c;
+  font-size: 1rem;
+}
+.thread-panel header p {
+  margin: 6px 0 0;
+  color: #778397;
+  font-size: 0.67rem;
+}
+.thread-panel header button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid #d8e1ed;
+  border-radius: 11px;
+  background: #fff;
+  color: #516078;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+.thread-messages {
+  display: grid;
+  gap: 12px;
+  max-height: calc(min(760px, 90vh) - 86px);
+  padding: 20px 22px;
+  overflow-y: auto;
+  background: #f7faff;
+}
+.thread-messages article {
+  width: min(86%, 540px);
+  padding: 13px 15px;
+  border: 1px solid #dce5f1;
+  border-radius: 6px 15px 15px;
+  background: #fff;
+}
+.thread-messages article.customer-message {
+  justify-self: end;
+  border-color: #cbdcff;
+  border-radius: 15px 6px 15px 15px;
+  background: #edf4ff;
+}
+.thread-messages article > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.thread-messages strong {
+  color: #3f506c;
+  font-size: 0.62rem;
+  text-transform: capitalize;
+}
+.thread-messages time {
+  color: #8b97a9;
+  font-size: 0.57rem;
+}
+.thread-messages article p {
+  margin: 9px 0 0;
+  color: #33425c;
+  font-size: 0.73rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+@media (max-width: 980px) {
+  .conversation-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .support-summary {
+    grid-template-columns: 1fr;
+  }
+  .conversation-row,
+  .queue-loading {
+    grid-template-columns: 1fr;
+  }
+  .filter-select {
+    max-width: 160px;
+  }
+}
