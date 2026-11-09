@@ -1,5 +1,5 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { SUPABASE_CLIENT } from '../../services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -17,6 +17,9 @@ type Message = { id: string; conversation_id: string; sender_type: string; body:
 export class CustomerChat {
   readonly auth = inject(Auth);
   private readonly client = inject(SUPABASE_CLIENT);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  readonly deepLink = signal<string | null>(null);
   readonly opened = signal(false);
   readonly busy = signal(false);
   readonly sending = signal(false);
@@ -31,6 +34,13 @@ export class CustomerChat {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
+    const querySubscription = this.route.queryParamMap.subscribe(params => {
+      const id = params.get('supportChat');
+      if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
+      this.deepLink.set(id);
+      this.opened.set(true);
+      void this.load();
+    });
     const { data: authSubscription } = this.client.auth.onAuthStateChange((_event, session) => {
       const next = session?.user?.id ?? null;
       if (next !== this.userId) {
@@ -42,7 +52,7 @@ export class CustomerChat {
         if (this.opened() && next) queueMicrotask(() => void this.load());
       }
     });
-    this.destroyRef.onDestroy(() => { authSubscription.subscription.unsubscribe(); this.disconnect(); });
+    this.destroyRef.onDestroy(() => { authSubscription.subscription.unsubscribe(); querySubscription.unsubscribe(); this.disconnect(); });
   }
 
   toggle(): void {
@@ -63,7 +73,8 @@ export class CustomerChat {
       if (id !== this.requestId) return;
       this.conversations.set((data ?? []) as Conversation[]);
       const current = this.active();
-      const chosen = (data ?? []).find(c => c.id === current?.id) ?? data?.[0] ?? null;
+      const chosen = (data ?? []).find(c => c.id === this.deepLink()) ?? (data ?? []).find(c => c.id === current?.id) ?? data?.[0] ?? null;
+      if (this.deepLink()) { this.deepLink.set(null); void this.router.navigate([], { relativeTo: this.route, queryParams: { supportChat: null }, queryParamsHandling: 'merge', replaceUrl: true }); }
       if (chosen) await this.select(chosen as Conversation);
       else { this.active.set(null); this.messages.set([]); this.disconnect(); }
     } catch (e) { if (id === this.requestId) this.error.set(this.message(e)); }
