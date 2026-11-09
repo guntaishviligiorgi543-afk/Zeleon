@@ -390,6 +390,17 @@ export class ManagerDashboard {
     if (error) throw error;
   }
 
+  async notifySupportResolved(conversationId: string): Promise<'sent' | 'failed'> {
+    try {
+      const { data, error } = await this.client.functions.invoke('support-resolution-notification', {
+        body: { conversationId },
+      });
+      return error || data?.error ? 'failed' : 'sent';
+    } catch {
+      return 'failed';
+    }
+  }
+
   async claimSupportConversation(conversationId: string): Promise<boolean> {
     const { data, error } = await this.client.rpc('support_claim_conversation', { p_conversation_id: conversationId });
     if (error) throw error;
