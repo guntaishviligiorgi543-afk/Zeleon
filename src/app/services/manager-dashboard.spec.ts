@@ -96,7 +96,7 @@ describe('ManagerDashboard', () => {
     const service = setup({ functions: { invoke } });
     await service.manageStaff({
       action: 'assign',
-      targetUserId: '00000000-0000-0000-0000-000000000001',
+      email: 'employee@example.com',
       role: 'admin',
     });
     await service.manageStaff({
@@ -105,11 +105,40 @@ describe('ManagerDashboard', () => {
       status: 'suspended',
     });
     expect(invoke).toHaveBeenNthCalledWith(1, 'staff-management', {
-      body: expect.objectContaining({ action: 'assign', role: 'admin' }),
+      body: { action: 'assign', email: 'employee@example.com', role: 'admin' },
     });
     expect(invoke).toHaveBeenNthCalledWith(2, 'staff-management', {
-      body: expect.objectContaining({ action: 'set_status', status: 'suspended' }),
+      body: {
+        action: 'set_status',
+        targetUserId: '00000000-0000-0000-0000-000000000001',
+        status: 'suspended',
+      },
     });
+  });
+
+  it('rejects an unconfirmed assignment response', async () => {
+    const service = setup({
+      functions: { invoke: vi.fn().mockResolvedValue({ data: {}, error: null }) },
+    });
+    await expect(
+      service.manageStaff({ action: 'assign', email: 'employee@example.com', role: 'support' }),
+    ).rejects.toThrow('could not complete');
+  });
+
+  it('does not expose backend details on assignment failure', async () => {
+    const service = setup({
+      functions: {
+        invoke: vi.fn().mockResolvedValue({
+          data: { error: 'Internal database failure: confidential details' },
+          error: null,
+        }),
+      },
+    });
+    await expect(
+      service.manageStaff({ action: 'assign', email: 'employee@example.com', role: 'support' }),
+    ).rejects.toThrow(
+      'The staff service could not complete the request. Check your connection and try again.',
+    );
   });
 
   it('updates support assignment through the RLS-protected conversation table', async () => {

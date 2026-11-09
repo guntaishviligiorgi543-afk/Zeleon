@@ -1,7 +1,11 @@
 import { DatePipe } from '@angular/common';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ManagerDashboard, StaffDirectoryEntry } from '../../../services/manager-dashboard';
+import {
+  ManagerDashboard,
+  StaffDirectoryEntry,
+  StaffManagementError,
+} from '../../../services/manager-dashboard';
 import { StaffStatus } from '../../../services/staff-access';
 
 @Component({
@@ -21,10 +25,7 @@ export class ManagerStaff implements OnInit {
   readonly form = new FormGroup({
     email: new FormControl('', {
       nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.email,
-      ],
+      validators: [Validators.required, Validators.email],
     }),
     role: new FormControl<'admin' | 'support'>('support', { nonNullable: true }),
   });
@@ -48,6 +49,9 @@ export class ManagerStaff implements OnInit {
   }
 
   async assign(): Promise<void> {
+    if (this.pendingId()) return;
+    this.success.set('');
+    this.form.controls.email.setValue(this.form.controls.email.value.trim().toLowerCase());
     this.form.markAllAsTouched();
     if (this.form.invalid || this.pendingId()) return;
     this.pendingId.set('new');
@@ -59,9 +63,11 @@ export class ManagerStaff implements OnInit {
       this.assignOpen.set(false);
       this.form.reset({ email: '', role: 'support' });
       this.success.set('Staff role assigned.');
-    } catch {
+    } catch (error) {
       this.error.set(
-        'The staff role could not be assigned. The account must be verified and the role hierarchy must allow the change.',
+        error instanceof StaffManagementError
+          ? error.message
+          : 'The staff service could not be reached. Check your connection and try again.',
       );
     } finally {
       this.pendingId.set(null);
@@ -69,6 +75,7 @@ export class ManagerStaff implements OnInit {
   }
 
   async setStatus(entry: StaffDirectoryEntry, status: StaffStatus): Promise<void> {
+    if (this.pendingId()) return;
     const verb =
       status === 'suspended' ? 'Suspend' : status === 'active' ? 'Reactivate' : 'Place on leave';
     if (!confirm(`${verb} ${entry.email}?`)) return;

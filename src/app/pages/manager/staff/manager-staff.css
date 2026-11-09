@@ -1,62 +1,70 @@
 .assign-panel {
-  margin-bottom: 18px;
+    margin-bottom: 18px;
 }
+
 .assign-form {
-  display: grid;
-  grid-template-columns: minmax(260px, 1.5fr) minmax(150px, 0.6fr) auto;
-  align-items: end;
-  gap: 14px;
-  padding: 20px 22px 24px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 40px;
+    padding: 20px 22px 24px;
 }
+
 .staff-loading {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 14px;
-  padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    padding: 20px;
 }
+
 td:first-child strong,
 td:first-child small {
-  display: block;
+    display: block;
 }
+
 td:first-child small {
-  max-width: 250px;
-  margin-top: 5px;
-  overflow: hidden;
-  color: #8793a5;
-  font-size: 0.61rem;
-  text-overflow: ellipsis;
+    max-width: 250px;
+    margin-top: 5px;
+    overflow: hidden;
+    color: #8793a5;
+    font-size: 0.61rem;
+    text-overflow: ellipsis;
 }
+
 .role-badge {
-  display: inline-flex;
-  min-height: 27px;
-  align-items: center;
-  padding: 0 9px;
-  border: 1px solid #d5dff0;
-  border-radius: 8px;
-  color: #43536d;
-  font-size: 0.67rem;
-  font-weight: 650;
-  text-transform: capitalize;
+    display: inline-flex;
+    min-height: 27px;
+    align-items: center;
+    padding: 0 9px;
+    border: 1px solid #d5dff0;
+    border-radius: 8px;
+    color: #43536d;
+    font-size: 0.67rem;
+    font-weight: 650;
+    text-transform: capitalize;
 }
+
 .staff-actions {
-  display: flex;
-  gap: 7px;
+    display: flex;
+    gap: 7px;
 }
+
 .staff-actions .button {
-  min-height: 36px;
-  padding-inline: 11px;
-  font-size: 0.66rem;
+    min-height: 36px;
+    padding-inline: 11px;
+    font-size: 0.66rem;
 }
+
 .protected-label {
-  color: #7657e8;
-  font-size: 0.68rem;
-  font-weight: 650;
+    color: #7657e8;
+    font-size: 0.68rem;
+    font-weight: 650;
 }
+
 @media (max-width: 760px) {
-  .assign-form {
-    grid-template-columns: 1fr;
-  }
-  .staff-loading {
-    grid-template-columns: 1fr;
-  }
+    .assign-form {
+        grid-template-columns: 1fr;
+    }
+    .staff-loading {
+        grid-template-columns: 1fr;
+    }
 }

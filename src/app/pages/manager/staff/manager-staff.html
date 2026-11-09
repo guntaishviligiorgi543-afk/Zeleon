@@ -25,20 +25,26 @@
       <div class="surface-heading">
         <div>
           <h2>Assign a verified account</h2>
-          <p>Enter the email address of an existing verified account. Manager roles cannot be created here.</p>
+          <p>
+            Enter the email address of an existing verified account. Manager roles cannot be created
+            here.
+          </p>
         </div>
       </div>
-      <form class="assign-form" (ngSubmit)="assign()">
+      <form [formGroup]="form" class="assign-form" (ngSubmit)="assign()">
         <div class="field">
           <label for="staff-email">Account email</label
           ><input
             id="staff-email"
+            type="email"
             formControlName="email"
-            placeholder="employee@example.com" type="email" autocomplete="email"
+            autocomplete="email"
+            aria-describedby="staff-email-help"
+            [attr.aria-invalid]="form.controls.email.touched && form.controls.email.invalid"
+            placeholder="employee@example.com"
           /><small
-            [class.field-error]="
-              form.controls.email.touched && form.controls.email.invalid
-            "
+            id="staff-email-help"
+            [class.field-error]="form.controls.email.touched && form.controls.email.invalid"
             >Enter a valid email address.</small
           >
         </div>

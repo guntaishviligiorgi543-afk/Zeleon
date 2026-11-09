@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { SupabaseClient } from '@supabase/supabase-js';
+import { FunctionsHttpError, SupabaseClient } from '@supabase/supabase-js';
 import { environment } from '../../environments/environment';
 import { StaffRole, StaffStatus } from './staff-access';
 import { SUPABASE_CLIENT } from './supabase';
@@ -144,6 +144,13 @@ export interface SupportMessage {
   body: string;
   created_at: string;
 }
+
+export type StaffManagementRequest =
+  | { action: 'assign'; email: string; role: 'admin' | 'support' }
+  | { action: 'set_status'; targetUserId: string; status: StaffStatus };
+
+// Only these curated messages may be shown; never surface raw backend errors.
+export class StaffManagementError extends Error {}
 
 @Injectable({ providedIn: 'root' })
 export class ManagerDashboard {
@@ -310,15 +317,41 @@ export class ManagerDashboard {
     return (data ?? []) as StaffDirectoryEntry[];
   }
 
-  async manageStaff(body: {
-    action: 'assign' | 'set_status';
-    targetUserId?: string;
-    email?: string;
-    role?: 'admin' | 'support';
-    status?: StaffStatus;
-  }): Promise<void> {
-    const { error } = await this.client.functions.invoke('staff-management', { body });
-    if (error) throw error;
+  async manageStaff(body: StaffManagementRequest): Promise<void> {
+    const { data, error } = await this.client.functions.invoke('staff-management', { body });
+    if (error || data?.ok !== true) {
+      let status = 0;
+      let details: unknown = data;
+      if (error instanceof FunctionsHttpError) {
+        status = error.context.status;
+        try {
+          details = await error.context.json();
+        } catch {
+          // A non-JSON response still receives a safe status-based message.
+        }
+      }
+      const reason = JSON.stringify(details ?? {}).toLowerCase();
+      let message =
+        'The staff service could not complete the request. Check your connection and try again.';
+      if (status === 401 || /session|expired|jwt|unauthorized|mfa/.test(reason)) {
+        message =
+          'Your staff session has expired or needs verification. Sign in to the staff workspace again.';
+      } else if (status === 403 || /permission|forbidden|hierarchy/.test(reason)) {
+        message = 'You do not have permission to make this staff change.';
+      } else if (
+        body.action === 'assign' &&
+        (status === 404 || /not.found|not.verified|unverified|not.confirmed/.test(reason))
+      ) {
+        message =
+          'No existing verified account was found for this email. Check the address and account verification.';
+      } else if (body.action === 'assign' && /invalid.email|email.invalid/.test(reason)) {
+        message = 'Enter a valid email address.';
+      } else if (body.action === 'assign' && status === 400) {
+        message =
+          'The role could not be assigned. Check that the email belongs to an existing verified account and that the role change is allowed.';
+      }
+      throw new StaffManagementError(message);
+    }
   }
 
   async getSupportConversations(): Promise<SupportConversation[]> {
