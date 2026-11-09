@@ -27,7 +27,7 @@ import { ManagerNavigation } from './components/manager-navigation/manager-navig
 })
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
-  private readonly router = inject(Router);
+  protected readonly router = inject(Router);
   protected readonly managerRoute = signal(this.router.url.startsWith('/manager'));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
