@@ -30,7 +30,7 @@ Deno.serve(async (request: Request) => {
     try { body = await request.json(); } catch { return json({ error: 'Invalid request body' }, 400); }
     if (!validManagementInput(body)) return json({ error: 'Invalid staff action' }, 400);
     // Caller JWT context: database validates live role/session, grant and MFA.
-    const result = await caller.rpc('staff_manage', {
+    const result = body.action === 'assign' ? await caller.rpc('staff_assign_by_email', { p_email: body.email, p_role: body.role }) : await caller.rpc('staff_manage', {
       p_action: body.action, p_target_user_id: body.targetUserId,
       p_role: body.role ?? null, p_status: body.status ?? null,
     });
