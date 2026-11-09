@@ -7,6 +7,11 @@ const allowedOrigins = new Set([
   'http://localhost:4200',
 ]);
 
+function isAllowedOrigin(origin: string): boolean {
+  if (allowedOrigins.has(origin)) return true;
+  try { const url = new URL(origin); return url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.pathname === '/' && !url.search && !url.hash; } catch { return false; }
+}
+
 function escapeHtml(value: string): string { return value.replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch] || ch)); }
 function staffEmail(role: 'admin' | 'support', removed: boolean): string {
  const label = role === 'admin' ? 'Admin' : 'Support';
@@ -27,12 +32,12 @@ export async function handleRequest(
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
   };
-  if (origin && allowedOrigins.has(origin)) cors['Access-Control-Allow-Origin'] = origin;
+  if (origin && isAllowedOrigin(origin)) cors['Access-Control-Allow-Origin'] = origin;
   const json = (body: object, status = 200) => new Response(JSON.stringify(body), {
     status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });
   // Origin checks supplement JWT/MFA and database authorization, never replace them.
-  if (origin && !allowedOrigins.has(origin)) return json({ error: 'Origin not allowed' }, 403);
+  if (origin && !isAllowedOrigin(origin)) return json({ error: 'Origin not allowed' }, 403);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   try {
