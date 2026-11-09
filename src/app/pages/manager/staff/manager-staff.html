@@ -3,7 +3,7 @@
     <div>
       <h1 id="staff-title">Staff access</h1>
       <p>
-        Manage Admin and Support assignments without exposing privileged credentials or bypassing
+        Manage {{ isAdmin ? 'Support' : 'Admin and Support' }} assignments without exposing privileged credentials or bypassing
         the role hierarchy.
       </p>
     </div>
@@ -52,7 +52,7 @@
           <label for="staff-role">Role</label
           ><select id="staff-role" formControlName="role">
             <option value="support">Support</option>
-            <option value="admin">Admin</option>
+            @if (!isAdmin) { <option value="admin">Admin</option> }
           </select>
         </div>
         <button type="submit" class="button primary" [disabled]="form.invalid || !!pendingId()">
@@ -105,7 +105,7 @@
                 <td>{{ entry.appointed_at | date: 'MMM d, y' }}</td>
                 <td>
                   <div class="staff-actions">
-                    @if (entry.role === 'manager') {
+                    @if (entry.role === 'manager' || (isAdmin && entry.role !== 'support')) {
                       <span class="protected-label">Protected</span>
                     } @else if (entry.status === 'active') {
                       <button
