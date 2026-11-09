@@ -8,3 +8,6 @@
   <app-footer></app-footer>
 }
 <app-manager-navigation></app-manager-navigation>
+@if (!managerRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
+  <app-customer-chat></app-customer-chat>
+}
