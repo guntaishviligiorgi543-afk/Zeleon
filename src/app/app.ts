@@ -16,10 +16,11 @@ import AOS from 'aos';
 import { filter } from 'rxjs';
 import { Header } from './components/header/header';
 import { Footer } from './components/footer/footer';
+import { CustomerChat } from './components/customer-chat/customer-chat';
 import { ManagerNavigation } from './components/manager-navigation/manager-navigation';
 
 @Component({
-  imports: [RouterOutlet, Header, Footer, ManagerNavigation],
+  imports: [RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
