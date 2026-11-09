@@ -34,7 +34,12 @@ export class Login {
       await this.auth.signIn(email, password);
       this.form.controls.password.reset();
       const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
-      await this.router.navigateByUrl(typeof returnUrl === 'string' ? profileDestination(returnUrl) : '/');
+      const supportChat = this.router.parseUrl(this.router.url).queryParams['supportChat'];
+      if (typeof supportChat === 'string' && /^[0-9a-f-]{36}$/i.test(supportChat)) {
+        await this.router.navigate(['/'], { queryParams: { supportChat } });
+      } else {
+        await this.router.navigateByUrl(typeof returnUrl === 'string' ? profileDestination(returnUrl) : '/');
+      }
     } catch (error) {
       this.status.set(authErrorMessage(error));
     } finally { this.pending.set(false); }
