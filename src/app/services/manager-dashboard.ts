@@ -390,15 +390,33 @@ export class ManagerDashboard {
     if (error) throw error;
   }
 
-  async notifySupportResolved(conversationId: string): Promise<'sent' | 'failed'> {
+  private async sendSupportNotification(functionName: string, body: Record<string, string>): Promise<'sent' | 'failed'> {
     try {
-      const { data, error } = await this.client.functions.invoke('support-resolution-notification', {
-        body: { conversationId },
+      const { data: { session }, error: sessionError } = await this.client.auth.getSession();
+      if (sessionError || !session?.access_token) return 'failed';
+      const response = await fetch(`${environment.supabaseUrl}/functions/v1/${functionName}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          apikey: environment.supabasePublishableKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
       });
-      return error || data?.error ? 'failed' : 'sent';
-    } catch {
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.error) {
+        console.error('Support notification failed:', functionName, response.status, result.error);
+        return 'failed';
+      }
+      return 'sent';
+    } catch (error) {
+      console.error('Support notification network error:', functionName, error);
       return 'failed';
     }
+  }
+
+  async notifySupportResolved(conversationId: string): Promise<'sent' | 'failed'> {
+    return this.sendSupportNotification('support-resolution-notification', { conversationId });
   }
 
   async claimSupportConversation(conversationId: string): Promise<boolean> {
@@ -417,12 +435,7 @@ export class ManagerDashboard {
       body: body.trim(),
     }).select('id').single();
     if (error) throw error;
-    try {
-      const { data, error: notificationError } = await this.client.functions.invoke('support-reply-notification', { body: { messageId: reply.id } });
-      return { emailNotification: notificationError || data?.error ? 'failed' : 'sent' };
-    } catch {
-      return { emailNotification: 'failed' };
-    }
+    return { emailNotification: await this.sendSupportNotification('support-reply-notification', { messageId: reply.id }) };
   }
 
   async getSupportMessages(conversationId: string): Promise<SupportMessage[]> {
