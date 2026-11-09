@@ -147,7 +147,8 @@ export interface SupportMessage {
 
 export type StaffManagementRequest =
   | { action: 'assign'; email: string; role: 'admin' | 'support' }
-  | { action: 'set_status'; targetUserId: string; status: StaffStatus };
+  | { action: 'set_status'; targetUserId: string; status: StaffStatus }
+  | { action: 'remove'; targetUserId: string };
 
 // Only these curated messages may be shown; never surface raw backend errors.
 export class StaffManagementError extends Error {}
@@ -317,7 +318,7 @@ export class ManagerDashboard {
     return (data ?? []) as StaffDirectoryEntry[];
   }
 
-  async manageStaff(body: StaffManagementRequest): Promise<void> {
+  async manageStaff(body: StaffManagementRequest): Promise<{notificationSent?: boolean}> {
     const { data, error } = await this.client.functions.invoke('staff-management', { body });
     if (error || data?.ok !== true) {
       let status = 0;
@@ -352,6 +353,7 @@ export class ManagerDashboard {
       }
       throw new StaffManagementError(message);
     }
+    return { notificationSent: data.notificationSent };
   }
 
   async getSupportConversations(): Promise<SupportConversation[]> {
