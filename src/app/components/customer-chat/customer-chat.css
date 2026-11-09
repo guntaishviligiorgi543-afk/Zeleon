@@ -1,1 +1,53 @@
 :host{position:fixed;right:22px;bottom:22px;z-index:9998;font-family:inherit}.zc-widget{display:flex;flex-direction:column;align-items:flex-end;gap:14px}.zc-launcher{position:relative;display:grid;place-items:center;width:58px;height:58px;border:0;border-radius:50%;background:#151e36;color:#fff;box-shadow:0 8px 30px #0004;cursor:pointer;font-size:30px}.zc-launcher svg{width:29px;height:29px}.zc-dot{position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:#ff5252;border:2px solid white}.zc-panel{width:min(370px,calc(100vw - 28px));height:min(580px,calc(100dvh - 110px));min-height:300px;background:#fff;color:#18243b;border:1px solid #e3e8f0;border-radius:18px;box-shadow:0 16px 60px #0003;display:flex;flex-direction:column;overflow:hidden}.zc-header{background:#17233b;color:white;padding:17px 19px;display:flex;justify-content:space-between;align-items:center}.zc-header strong{display:block;font-size:16px}.zc-header span{display:block;font-size:12px;color:#b9c7dd;margin-top:4px}.zc-header button,.zc-subheader button{border:0;background:transparent;color:inherit;font-size:25px;cursor:pointer;min-width:38px;min-height:38px}.zc-empty{padding:25px;line-height:1.6}.zc-empty h3,.zc-list h3,.zc-new h3{margin:0 0 12px;font-size:16px}.zc-empty p{font-size:14px;color:#66738a}.zc-empty a,.zc-new button,.zc-compose button{display:inline-flex;justify-content:center;align-items:center;background:#17233b;color:#fff;border:0;border-radius:9px;padding:11px 15px;text-decoration:none;font-weight:600;cursor:pointer;min-height:42px}.zc-list{overflow:auto;min-height:90px;max-height:45%;padding:17px;border-bottom:1px solid #e8edf4}.zc-conversation{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;text-align:left;padding:12px;border:1px solid #e3e8f0;border-radius:9px;background:white;margin:8px 0;cursor:pointer}.zc-conversation strong{font-size:13px}.zc-conversation span,.zc-note{color:#738098;font-size:12px}.zc-new{display:flex;flex-direction:column;gap:9px;padding:17px;overflow:auto}.zc-new label{font-size:12px;font-weight:650}.zc-new input,.zc-new textarea,.zc-compose textarea{width:100%;box-sizing:border-box;border:1px solid #dce2eb;border-radius:9px;padding:11px;font:inherit;font-size:14px;resize:vertical;color:#17233b;background:white}.zc-subheader{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid #e8edf4;gap:8px}.zc-subheader button{color:#17233b}.zc-subheader strong{font-size:13px;display:block}.zc-subheader small{font-size:11px;color:#708098}.zc-messages{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:17px;background:#f7f9fc}.zc-message{max-width:85%;align-self:flex-start}.zc-message.zc-own{align-self:flex-end}.zc-message span{font-size:10px;color:#74839a}.zc-message p{margin:4px 0 0;padding:10px 13px;background:white;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.5}.zc-own p{background:#dce8ff}.zc-compose{display:flex;gap:8px;align-items:flex-end;padding:12px;border-top:1px solid #e8edf4}.zc-compose textarea{min-height:45px;max-height:120px}.zc-error{color:#a52020;background:#fff0f0;padding:9px 14px;font-size:12px;margin:0}.zc-note{padding:12px 17px;line-height:1.5}.zc-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}button:disabled{opacity:.55;cursor:not-allowed}@media(max-width:480px){:host{right:12px;bottom:12px}.zc-panel{height:min(580px,calc(100dvh - 92px))}.zc-launcher{width:54px;height:54px}}
+/* Refined chat proportions and consistent typography */
+:host, .zc-panel, .zc-panel button, .zc-panel input, .zc-panel textarea {
+  font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+}
+.zc-panel {
+  width: min(410px, calc(100vw - 28px));
+  height: min(525px, calc(100dvh - 110px));
+}
+/* Hover label is positioned to the left of the launcher, without changing its click target. */
+.zc-launcher::before {
+  content: 'Contact us';
+  position: absolute;
+  right: calc(100% + 12px);
+  top: 50%;
+  transform: translate(8px, -50%);
+  white-space: nowrap;
+  padding: 10px 14px;
+  background: #17233b;
+  color: #fff;
+  border: 1px solid #31415e;
+  border-radius: 10px;
+  box-shadow: 0 5px 18px #0002;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: .01em;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .zc-launcher:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(0, -50%);
+  }
+}
+.zc-launcher:focus-visible::before {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(0, -50%);
+}
+@media (max-width: 480px) {
+  .zc-panel {
+    width: min(410px, calc(100vw - 24px));
+    height: min(525px, calc(100dvh - 92px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .zc-launcher::before { transition: none; }
+}
