@@ -104,3 +104,9 @@ button[aria-busy='true'] { cursor: wait; }
   .staff-auth-card { padding: 28px 22px; border-radius: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { input, button { transition: none; } }
+
+.enrollment-section { display: grid; gap: 18px; margin-top: 30px; }
+.enrollment-section h2 { margin: 0; font-size: 20px; color: #fff; }
+.enrollment-section form { margin-top: 0; gap: 16px; }
+.qr-frame { display: grid; place-items: center; width: fit-content; max-width: 100%; margin: 0 auto; padding: 14px; border-radius: 14px; background: #fff; }
+.qr-frame img { display: block; width: min(240px, 65vw); height: auto; aspect-ratio: 1; }
