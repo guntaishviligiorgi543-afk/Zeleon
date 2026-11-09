@@ -28,7 +28,7 @@ import { ManagerNavigation } from './components/manager-navigation/manager-navig
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
   protected readonly router = inject(Router);
-  protected readonly managerRoute = signal(this.router.url.startsWith('/manager'));
+  protected readonly workspaceRoute = signal(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(this.router.url));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
   private readonly zone = inject(NgZone);
@@ -46,7 +46,7 @@ export class App implements AfterViewInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((event) => {
-        this.managerRoute.set(event.urlAfterRedirects.startsWith('/manager'));
+        this.workspaceRoute.set(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(event.urlAfterRedirects));
         this.refreshAfterRender();
       });
 

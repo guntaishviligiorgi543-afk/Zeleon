@@ -30,8 +30,8 @@ export class Header {
     }
   }
   readonly navigationLinks = [
-    { path: '/our-story', label: 'our-story' },
     { path: '/shop', label: 'Shop All' },
+    { path: '/our-story', label: 'Our Story' },
     { path: '/contact', label: 'Contact' },
   ];
 }

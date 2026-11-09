@@ -17,6 +17,13 @@
 
   <div class="headerContainer">
     <a class="logo" routerLink="/"> <span>Zeleon</span></a>
+    <nav class="navbar" aria-label="Main navigation">
+      @for (link of navigationLinks; track link.path) {
+        <a [routerLink]="link.path" routerLinkActive="active" ariaCurrentWhenActive="page">
+          <span>{{ link.label }}</span>
+        </a>
+      }
+    </nav>
     <div class="headerIcons">
       @if (auth.isAuthenticated()) {
         <a class="profile-link" routerLink="/profile" routerLinkActive="active"

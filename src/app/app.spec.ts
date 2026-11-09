@@ -16,6 +16,9 @@ describe('App', () => {
         provideRouter([
           { path: '', component: RoutedPage },
           { path: 'manager', component: RoutedPage },
+          { path: 'admin', component: RoutedPage },
+          { path: 'admin/staff', component: RoutedPage },
+          { path: 'support', component: RoutedPage },
         ]),
         { provide: Auth, useValue: createAuthStub() },
       ],
@@ -35,12 +38,19 @@ describe('App', () => {
     expect(compiled.querySelector('.logo span')?.textContent).toContain('Zeleon');
   });
 
-  it('hides the storefront header and footer on Manager routes', async () => {
+  it('hides storefront chrome in workspaces and restores it on the storefront', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
-    await TestBed.inject(Router).navigateByUrl('/manager');
+    const router = TestBed.inject(Router);
+    for (const url of ['/manager', '/admin', '/admin/staff', '/support?tab=tickets']) {
+      await router.navigateByUrl(url);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('app-header')).toBeNull();
+      expect(fixture.nativeElement.querySelector('app-footer')).toBeNull();
+    }
+    await router.navigateByUrl('/');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('app-header')).toBeNull();
-    expect(fixture.nativeElement.querySelector('app-footer')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-header')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-footer')).not.toBeNull();
   });
 });
