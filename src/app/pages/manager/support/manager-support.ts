@@ -26,6 +26,7 @@ export class ManagerSupport implements OnInit {
   readonly filter = signal<'all' | SupportConversation['status']>('all');
   readonly loading = signal(true);
   readonly pendingId = signal<string | null>(null);
+  readonly claiming = signal(false);
   readonly error = signal('');
   readonly success = signal('');
   readonly selected = signal<SupportConversation | null>(null);
@@ -104,6 +105,22 @@ export class ManagerSupport implements OnInit {
     }
   }
 
+  async claim(conversation: SupportConversation): Promise<void> {
+    if (!this.isSupport || conversation.assigned_support_id || this.claiming()) return;
+    this.claiming.set(true);
+    this.error.set('');
+    try {
+      const claimed = await this.dashboard.claimSupportConversation(conversation.id);
+      if (!claimed) throw new Error('Another agent has already claimed this request.');
+      await this.load();
+      const updated = this.conversations().find(item => item.id === conversation.id);
+      if (updated) await this.viewThread(updated);
+      this.success.set('Request assigned to you. You can now reply.');
+    } catch (error) {
+      this.error.set(error instanceof Error ? error.message : 'Could not claim this request.');
+    } finally { this.claiming.set(false); }
+  }
+
   async sendReply(): Promise<void> {
     const selected = this.selected();
     const body = this.replyText().trim();
@@ -111,9 +128,14 @@ export class ManagerSupport implements OnInit {
     this.sending.set(true);
     this.error.set('');
     try {
+      if (!selected.assigned_support_id) {
+        const claimed = await this.dashboard.claimSupportConversation(selected.id);
+        if (!claimed) throw new Error('This request was claimed by another agent.');
+      }
       await this.dashboard.sendSupportReply(selected.id, body);
       this.replyText.set('');
       this.messages.set(await this.dashboard.getSupportMessages(selected.id));
+      await this.load();
     } catch {
       this.error.set('Reply could not be sent. Verify assignment and conversation status.');
     } finally { this.sending.set(false); }
