@@ -3,6 +3,7 @@ import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } fro
 import { filter } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Auth } from '../../services/auth';
+import { StaffAccess } from '../../services/staff-access';
 
 interface ManagerNavItem {
   path: string;
@@ -20,8 +21,16 @@ interface ManagerNavItem {
 export class ManagerShell {
   private readonly router = inject(Router);
   readonly auth = inject(Auth);
+  readonly staff = inject(StaffAccess);
+  readonly workspaceName = this.router.url.startsWith('/admin') ? 'Admin' : this.router.url.startsWith('/support') ? 'Support' : 'Manager';
   readonly menuOpen = signal(false);
-  readonly navItems: ManagerNavItem[] = [
+  readonly navItems: ManagerNavItem[] = this.workspaceName === 'Admin' ? [
+    { path: '/admin', label: 'Products', icon: 'products', exact: true },
+    { path: '/admin/staff', label: 'Support Staff', icon: 'staff' },
+    { path: '/admin/support', label: 'Conversations', icon: 'support' },
+  ] : this.workspaceName === 'Support' ? [
+    { path: '/support', label: 'My Conversations', icon: 'support', exact: true },
+  ] : [
     { path: '/manager', label: 'Overview', icon: 'overview', exact: true },
     { path: '/manager/products', label: 'Products', icon: 'products' },
     { path: '/manager/staff', label: 'Staff', icon: 'staff' },
