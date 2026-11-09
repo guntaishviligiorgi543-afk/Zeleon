@@ -23,7 +23,7 @@ export async function handleRequest(
 ): Promise<Response> {
   const origin = request.headers.get('Origin');
   const cors: Record<string, string> = {
-    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
+    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
   };
