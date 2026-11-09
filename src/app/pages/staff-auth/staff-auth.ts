@@ -53,11 +53,11 @@ export class StaffAuth implements OnInit, OnDestroy {
         return;
       }
       // Remove stale, unverified factors to avoid exhausting the enrollment limit.
-      for (const factor of existing.totp.filter(f => f.status !== 'verified')) {
+      for (const factor of existing.all.filter(f => f.factor_type === 'totp' && f.status !== 'verified')) {
         const { error } = await this.client.auth.mfa.unenroll({ factorId: factor.id });
         if (error) throw error;
       }
-      const { data, error } = await this.client.auth.mfa.enroll({ factorType: 'totp', friendlyName: 'ZELEON Staff' });
+      const { data, error } = await this.client.auth.mfa.enroll({ factorType: 'totp', friendlyName: `ZELEON Staff ${crypto.randomUUID().slice(0, 8)}` });
       if (error) throw error;
       if (!data?.totp?.qr_code) throw new Error('QR code could not be generated.');
       this.clearQr();
