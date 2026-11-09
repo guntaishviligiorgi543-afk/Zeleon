@@ -1,4 +1,15 @@
-import { AfterRenderRef, AfterViewInit, afterNextRender, Component, DestroyRef, ElementRef, inject, Injector, NgZone, signal } from '@angular/core';
+import {
+  AfterRenderRef,
+  AfterViewInit,
+  afterNextRender,
+  Component,
+  DestroyRef,
+  ElementRef,
+  inject,
+  Injector,
+  NgZone,
+  signal,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
 import AOS from 'aos';
@@ -16,6 +27,7 @@ import { ManagerNavigation } from './components/manager-navigation/manager-navig
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
   private readonly router = inject(Router);
+  protected readonly managerRoute = signal(this.router.url.startsWith('/manager'));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
   private readonly zone = inject(NgZone);
@@ -27,10 +39,15 @@ export class App implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.refreshAfterRender();
-    this.router.events.pipe(
-      filter((event) => event instanceof NavigationEnd),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(() => this.refreshAfterRender());
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        this.managerRoute.set(event.urlAfterRedirects.startsWith('/manager'));
+        this.refreshAfterRender();
+      });
 
     this.destroyRef.onDestroy(() => {
       this.pendingRender?.destroy();
@@ -42,35 +59,38 @@ export class App implements AfterViewInit {
   private refreshAfterRender(): void {
     // Coalesce initial navigation and route changes until the new DOM is rendered.
     this.pendingRender?.destroy();
-    this.pendingRender = afterNextRender(() => {
-      this.pendingRender = undefined;
-      this.zone.runOutsideAngular(() => {
-        if (!this.aosInitialized) {
-          AOS.init({
-            duration: 1500,
-            easing: 'ease-in-out',
-            once: false,
-            mirror: true,
-            offset: 200,
-            // Routing explicitly refreshes the element list; avoid duplicate observation.
-            disableMutationObserver: true,
-          });
-          this.aosInitialized = true;
-          // Angular rendering does not wait for intrinsic image sizes or fonts.
-          // Refresh cached offsets when those change the routed content's height.
-          this.layoutObserver = new ResizeObserver(() => {
-            if (this.layoutFrame !== null) return;
-            this.layoutFrame = window.requestAnimationFrame(() => {
-              this.layoutFrame = null;
-              AOS.refresh();
+    this.pendingRender = afterNextRender(
+      () => {
+        this.pendingRender = undefined;
+        this.zone.runOutsideAngular(() => {
+          if (!this.aosInitialized) {
+            AOS.init({
+              duration: 1500,
+              easing: 'ease-in-out',
+              once: false,
+              mirror: true,
+              offset: 200,
+              // Routing explicitly refreshes the element list; avoid duplicate observation.
+              disableMutationObserver: true,
             });
-          });
-          const content = this.element.nativeElement.querySelector('main');
-          if (content) this.layoutObserver.observe(content);
-        } else {
-          AOS.refreshHard();
-        }
-      });
-    }, { injector: this.injector });
+            this.aosInitialized = true;
+            // Angular rendering does not wait for intrinsic image sizes or fonts.
+            // Refresh cached offsets when those change the routed content's height.
+            this.layoutObserver = new ResizeObserver(() => {
+              if (this.layoutFrame !== null) return;
+              this.layoutFrame = window.requestAnimationFrame(() => {
+                this.layoutFrame = null;
+                AOS.refresh();
+              });
+            });
+            const content = this.element.nativeElement.querySelector('main');
+            if (content) this.layoutObserver.observe(content);
+          } else {
+            AOS.refreshHard();
+          }
+        });
+      },
+      { injector: this.injector },
+    );
   }
 }

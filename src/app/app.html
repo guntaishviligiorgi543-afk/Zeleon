@@ -1,4 +1,6 @@
-<app-header></app-header>
+@if (!managerRoute()) {
+  <app-header></app-header>
+}
 <main>
   <router-outlet></router-outlet>
 </main>
