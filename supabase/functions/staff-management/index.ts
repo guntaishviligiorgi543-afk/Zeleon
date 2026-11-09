@@ -1,16 +1,28 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.118.0';
 import { validManagementInput } from './validation.ts';
 
-const cors = {
-  'Access-Control-Allow-Origin': 'https://zeleon.store',
-  'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-const json = (body: object, status = 200) => new Response(JSON.stringify(body), {
-  status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-});
+const allowedOrigins = new Set([
+  'https://zeleon.store',
+  'https://www.zeleon.store',
+  'http://localhost:4200',
+]);
 
-Deno.serve(async (request: Request) => {
+export async function handleRequest(
+  request: Request,
+  createCaller: typeof createClient = createClient,
+): Promise<Response> {
+  const origin = request.headers.get('Origin');
+  const cors: Record<string, string> = {
+    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    Vary: 'Origin',
+  };
+  if (origin && allowedOrigins.has(origin)) cors['Access-Control-Allow-Origin'] = origin;
+  const json = (body: object, status = 200) => new Response(JSON.stringify(body), {
+    status, headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  });
+  // Origin checks supplement JWT/MFA and database authorization, never replace them.
+  if (origin && !allowedOrigins.has(origin)) return json({ error: 'Origin not allowed' }, 403);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   try {
@@ -19,7 +31,7 @@ Deno.serve(async (request: Request) => {
     const url = Deno.env.get('SUPABASE_URL');
     const key = Deno.env.get('SUPABASE_ANON_KEY');
     if (!url || !key) return json({ error: 'Staff service unavailable' }, 503);
-    const caller = createClient(url, key, {
+    const caller = createCaller(url, key, {
       global: { headers: { Authorization: authorization } },
       auth: { persistSession: false, autoRefreshToken: false },
     });
@@ -39,4 +51,6 @@ Deno.serve(async (request: Request) => {
     if (result.error) return json({ error: 'Staff operation rejected' }, result.error.code === '42501' ? 403 : 400);
     return json({ ok: true });
   } catch { return json({ error: 'Staff service unavailable' }, 503); }
-});
+}
+
+if (import.meta.main) Deno.serve((request) => handleRequest(request));

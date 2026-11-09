@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import { TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { ManagerDashboard, ManagerProduct } from './manager-dashboard';
@@ -139,6 +140,23 @@ describe('ManagerDashboard', () => {
     ).rejects.toThrow(
       'The staff service could not complete the request. Check your connection and try again.',
     );
+  });
+
+  it('sends the user bearer token and public API key through the shared Supabase SDK', async () => {
+    const requests: Request[] = [];
+    const client = createClient('https://example.supabase.co', 'sb_publishable_test', {
+      accessToken: async () => 'test-user-jwt',
+      global: { fetch: async (input, init) => {
+        requests.push(new Request(input, init));
+        return new Response(JSON.stringify({ ok: true }), { headers: { 'Content-Type': 'application/json' } });
+      } },
+    });
+    const service = setup(client);
+    await service.manageStaff({ action: 'assign', email: 'employee@example.com', role: 'support' });
+    expect(requests).toHaveLength(1);
+    expect(requests[0].headers.get('Authorization')).toBe('Bearer test-user-jwt');
+    expect(requests[0].headers.get('apikey')).toBe('sb_publishable_test');
+    expect(await requests[0].json()).toEqual({ action: 'assign', email: 'employee@example.com', role: 'support' });
   });
 
   it('updates support assignment through the RLS-protected conversation table', async () => {
