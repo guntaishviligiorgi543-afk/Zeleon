@@ -62,10 +62,16 @@ export class StaffAuth implements OnInit, OnDestroy {
       if (!data?.totp?.qr_code) throw new Error('QR code could not be generated.');
       this.clearQr();
       this.enrollmentFactorId.set(data.id);
-      const svg = data.totp.qr_code;
-      if (!/^\s*<svg[\s>]/i.test(svg)) throw new Error('Unexpected QR code format.');
-      this.qrObjectUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
-      this.qrUrl.set(this.qrObjectUrl);
+      const qr = data.totp.qr_code.trim();
+      // Supabase Auth returns the TOTP QR as an SVG data URL, not necessarily raw SVG.
+      if (/^data:image\/svg\+xml(?:;[^,]*)?,/i.test(qr)) {
+        this.qrUrl.set(qr);
+      } else if (/^<svg[\s>]/i.test(qr) || /^<\?xml[\s\S]*?<svg[\s>]/i.test(qr)) {
+        this.qrObjectUrl = URL.createObjectURL(new Blob([qr], { type: 'image/svg+xml' }));
+        this.qrUrl.set(this.qrObjectUrl);
+      } else {
+        throw new Error('Unsupported authenticator QR code format.');
+      }
       this.code.reset();
     } catch (error) {
       this.error.set(error instanceof Error ? error.message : 'Could not start authenticator setup.');
