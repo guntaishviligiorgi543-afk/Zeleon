@@ -390,6 +390,12 @@ export class ManagerDashboard {
     if (error) throw error;
   }
 
+  async claimSupportConversation(conversationId: string): Promise<boolean> {
+    const { data, error } = await this.client.rpc('support_claim_conversation', { p_conversation_id: conversationId });
+    if (error) throw error;
+    return data === true;
+  }
+
   async sendSupportReply(conversationId: string, body: string): Promise<void> {
     const { data: userData, error: userError } = await this.client.auth.getUser();
     if (userError || !userData.user) throw userError ?? new Error('Sign in required');
