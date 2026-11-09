@@ -23,6 +23,7 @@ export class StaffAccess {
   private readonly serverGrant = signal(false);
   private lastTouch = 0;
   private touching = false;
+  private loadInFlight: Promise<StaffAssignment | null> | null = null;
   private idleTimer: ReturnType<typeof setTimeout> | null = null;
   private activityHandler = (): void => this.touch();
 
@@ -37,7 +38,17 @@ export class StaffAccess {
     this.destroyRef.onDestroy(() => this.stopWorkspaceSession());
   }
 
-  async load(): Promise<StaffAssignment | null> {
+  load(): Promise<StaffAssignment | null> {
+    if (this.loadInFlight) return this.loadInFlight;
+    const pending = this.loadAssignment();
+    this.loadInFlight = pending;
+    void pending.finally(() => {
+      if (this.loadInFlight === pending) this.loadInFlight = null;
+    }).catch(() => {});
+    return pending;
+  }
+
+  private async loadAssignment(): Promise<StaffAssignment | null> {
     await this.auth.ready;
     const user = await this.auth.getCurrentUser();
     if (!user) {
@@ -97,10 +108,14 @@ export class StaffAccess {
       factorId: factor.id,
       code,
     });
-    if (verifyError) throw verifyError;
+    if (verifyError) {
+      if (verifyError.message.toLowerCase().includes('invalid') || verifyError.message.toLowerCase().includes('expired'))
+        throw new Error('Authenticator code was rejected. Wait for the next 6-digit code and verify your device clock is automatic.');
+      throw verifyError;
+    }
 
     const grant = await this.client.rpc('staff_open_session');
-    if (grant.error) throw grant.error;
+    if (grant.error) throw new Error('MFA verified, but the protected staff session could not be opened. Please retry.');
 
     await this.load();
     if (!this.isVerified())
