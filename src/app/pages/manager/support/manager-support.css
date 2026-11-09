@@ -221,3 +221,50 @@
 .support-reply-form label { color: #17233b; font-weight: 650; font-size: .85rem; }
 .support-reply-form textarea { width: 100%; min-height: 105px; padding: 12px 14px; border: 1px solid #dce5f2; border-radius: 10px; background: #fff; color: #17233b; font: inherit; resize: vertical; }
 .support-reply-form .button { justify-self: end; }
+
+/* Keep the reply composer visible and interactive inside the conversation dialog. */
+.thread-panel {
+  display: flex;
+  flex-direction: column;
+  height: min(760px, calc(100dvh - 40px));
+  min-height: 0;
+}
+.thread-panel > header {
+  flex: 0 0 auto;
+}
+.thread-messages {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+.thread-messages article {
+  flex: 0 0 auto;
+}
+.thread-messages article.customer-message {
+  align-self: flex-end;
+}
+.support-reply-form {
+  flex: 0 0 auto;
+  min-height: 0;
+  background: #fff;
+  position: relative;
+  z-index: 1;
+}
+.support-reply-form textarea {
+  display: block;
+  box-sizing: border-box;
+  max-height: 180px;
+  min-height: 90px;
+  pointer-events: auto;
+  user-select: text;
+}
+@media (max-width: 620px) {
+  .thread-backdrop { padding: 10px; }
+  .thread-panel { height: calc(100dvh - 20px); max-height: none; }
+  .thread-messages { padding: 14px; }
+  .support-reply-form { padding: 12px 14px 16px; }
+}
