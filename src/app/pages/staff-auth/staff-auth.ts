@@ -14,6 +14,7 @@ import { SUPABASE_CLIENT } from '../../services/supabase';
 export class StaffAuth implements OnInit, OnDestroy {
   private readonly client = inject(SUPABASE_CLIENT);
   readonly enrollmentNeeded = signal(false);
+  readonly enrollmentJustCompleted = signal(false);
   readonly enrollmentFactorId = signal<string | null>(null);
   readonly qrUrl = signal<string | null>(null);
   private qrObjectUrl: string | null = null;
@@ -90,6 +91,7 @@ export class StaffAuth implements OnInit, OnDestroy {
       this.enrollmentFactorId.set(null);
       this.clearQr();
       this.enrollmentNeeded.set(false);
+      this.enrollmentJustCompleted.set(true);
       this.code.reset();
       // Enrollment confirms the factor; a fresh password + TOTP is still required for staff access.
     } catch (error) {
