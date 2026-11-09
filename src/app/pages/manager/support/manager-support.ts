@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { StaffAccess } from '../../../services/staff-access';
 import {
   ManagerDashboard,
   StaffDirectoryEntry,
@@ -16,6 +17,10 @@ import {
 })
 export class ManagerSupport implements OnInit {
   private readonly dashboard = inject(ManagerDashboard);
+  readonly access = inject(StaffAccess);
+  readonly isSupport = this.access.role() === 'support';
+  readonly replyText = signal('');
+  readonly sending = signal(false);
   readonly conversations = signal<SupportConversation[]>([]);
   readonly supportStaff = signal<StaffDirectoryEntry[]>([]);
   readonly filter = signal<'all' | SupportConversation['status']>('all');
@@ -45,7 +50,7 @@ export class ManagerSupport implements OnInit {
     try {
       const [conversations, staff] = await Promise.all([
         this.dashboard.getSupportConversations(),
-        this.dashboard.getStaffDirectory(),
+        this.isSupport ? Promise.resolve([] as StaffDirectoryEntry[]) : this.dashboard.getStaffDirectory(),
       ]);
       this.conversations.set(conversations);
       this.supportStaff.set(
@@ -61,6 +66,7 @@ export class ManagerSupport implements OnInit {
   }
 
   async assign(conversation: SupportConversation, value: string): Promise<void> {
+    if (this.isSupport) return;
     await this.update(
       conversation,
       { assigned_support_id: value || null },
@@ -85,6 +91,7 @@ export class ManagerSupport implements OnInit {
 
   async viewThread(conversation: SupportConversation): Promise<void> {
     this.selected.set(conversation);
+    this.replyText.set('');
     this.messages.set([]);
     this.messagesLoading.set(true);
     this.error.set('');
@@ -95,6 +102,21 @@ export class ManagerSupport implements OnInit {
     } finally {
       this.messagesLoading.set(false);
     }
+  }
+
+  async sendReply(): Promise<void> {
+    const selected = this.selected();
+    const body = this.replyText().trim();
+    if (!selected || !this.isSupport || !body || this.sending()) return;
+    this.sending.set(true);
+    this.error.set('');
+    try {
+      await this.dashboard.sendSupportReply(selected.id, body);
+      this.replyText.set('');
+      this.messages.set(await this.dashboard.getSupportMessages(selected.id));
+    } catch {
+      this.error.set('Reply could not be sent. Verify assignment and conversation status.');
+    } finally { this.sending.set(false); }
   }
 
   closeThread(): void {
