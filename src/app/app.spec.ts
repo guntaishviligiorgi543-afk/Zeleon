@@ -35,11 +35,12 @@ describe('App', () => {
     expect(compiled.querySelector('.logo span')?.textContent).toContain('Zeleon');
   });
 
-  it('hides the storefront header on Manager routes', async () => {
+  it('hides the storefront header and footer on Manager routes', async () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     await TestBed.inject(Router).navigateByUrl('/manager');
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('app-header')).toBeNull();
+    expect(fixture.nativeElement.querySelector('app-footer')).toBeNull();
   });
 });

@@ -4,5 +4,7 @@
 <main>
   <router-outlet></router-outlet>
 </main>
-<app-footer></app-footer>
+@if (!managerRoute()) {
+  <app-footer></app-footer>
+}
 <app-manager-navigation></app-manager-navigation>
