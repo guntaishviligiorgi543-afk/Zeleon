@@ -1,0 +1,861 @@
+{
+  "columns": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "bucket_id",
+      "type": "text",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "owner",
+      "type": "uuid",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "last_accessed_at",
+      "type": "timestamp with time zone",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "metadata",
+      "type": "jsonb",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "path_tokens",
+      "type": "text[]",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "version",
+      "type": "text",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "owner_id",
+      "type": "text",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "user_metadata",
+      "type": "jsonb",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "archived_at",
+      "type": "timestamp with time zone",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "is_delete_marker",
+      "type": "boolean",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "is_versioned",
+      "type": "boolean",
+      "table": "objects",
+      "schema": "storage"
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "category_id",
+      "type": "bigint",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "price",
+      "type": "numeric(10,2)",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "currency",
+      "type": "text",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "brand",
+      "type": "text",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "product_type_id",
+      "type": "bigint",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "flavor_id",
+      "type": "bigint",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "products",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "categories",
+      "schema": "public"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "categories",
+      "schema": "public"
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "table": "categories",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "product_images",
+      "schema": "public"
+    },
+    {
+      "name": "product_id",
+      "type": "bigint",
+      "table": "product_images",
+      "schema": "public"
+    },
+    {
+      "name": "storage_path",
+      "type": "text",
+      "table": "product_images",
+      "schema": "public"
+    },
+    {
+      "name": "is_primary",
+      "type": "boolean",
+      "table": "product_images",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "product_images",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "product_types",
+      "schema": "public"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "product_types",
+      "schema": "public"
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "table": "product_types",
+      "schema": "public"
+    },
+    {
+      "name": "created_by",
+      "type": "uuid",
+      "table": "product_types",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "product_types",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "product_flavors",
+      "schema": "public"
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "product_flavors",
+      "schema": "public"
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "table": "product_flavors",
+      "schema": "public"
+    },
+    {
+      "name": "created_by",
+      "type": "uuid",
+      "table": "product_flavors",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "product_flavors",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "order_number",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "customer_email",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "customer_first_name",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "customer_last_name",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "customer_phone",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "shipping_address",
+      "type": "jsonb",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "currency",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "subtotal",
+      "type": "numeric(12,2)",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "shipping_total",
+      "type": "numeric(12,2)",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "tax_total",
+      "type": "numeric(12,2)",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "total",
+      "type": "numeric(12,2)",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "order_status",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "payment_status",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "payment_provider",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "payment_reference",
+      "type": "text",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "orders",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "order_id",
+      "type": "uuid",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "product_id",
+      "type": "bigint",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "product_name",
+      "type": "text",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "product_slug",
+      "type": "text",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "unit_price",
+      "type": "numeric(12,2)",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "quantity",
+      "type": "integer",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "line_total",
+      "type": "numeric(12,2)",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "order_items",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "customer_user_id",
+      "type": "uuid",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "customer_first_name",
+      "type": "text",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "customer_last_name",
+      "type": "text",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "customer_email",
+      "type": "text",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "subject",
+      "type": "text",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "assigned_support_id",
+      "type": "uuid",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "assigned_admin_id",
+      "type": "uuid",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "resolved_at",
+      "type": "timestamp with time zone",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "support_conversations",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "support_messages",
+      "schema": "public"
+    },
+    {
+      "name": "conversation_id",
+      "type": "uuid",
+      "table": "support_messages",
+      "schema": "public"
+    },
+    {
+      "name": "sender_type",
+      "type": "text",
+      "table": "support_messages",
+      "schema": "public"
+    },
+    {
+      "name": "sender_user_id",
+      "type": "uuid",
+      "table": "support_messages",
+      "schema": "public"
+    },
+    {
+      "name": "body",
+      "type": "text",
+      "table": "support_messages",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "support_messages",
+      "schema": "public"
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "support_ratings",
+      "schema": "public"
+    },
+    {
+      "name": "conversation_id",
+      "type": "uuid",
+      "table": "support_ratings",
+      "schema": "public"
+    },
+    {
+      "name": "customer_user_id",
+      "type": "uuid",
+      "table": "support_ratings",
+      "schema": "public"
+    },
+    {
+      "name": "rating",
+      "type": "smallint",
+      "table": "support_ratings",
+      "schema": "public"
+    },
+    {
+      "name": "feedback",
+      "type": "text",
+      "table": "support_ratings",
+      "schema": "public"
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "support_ratings",
+      "schema": "public"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "qual": "true",
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "tablename": "categories",
+      "permissive": "PERMISSIVE",
+      "policyname": "public categories read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "is_active",
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "tablename": "products",
+      "permissive": "PERMISSIVE",
+      "policyname": "public active products read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM products p\n  WHERE ((p.id = product_images.product_id) AND p.is_active)))",
+      "roles": [
+        "anon",
+        "authenticated"
+      ],
+      "tablename": "product_images",
+      "permissive": "PERMISSIVE",
+      "policyname": "public active product images read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(user_id = ( SELECT auth.uid() AS uid))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "staff_roles",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_roles_read_self",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "products",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_manage_products",
+      "schemaname": "public",
+      "with_check": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "categories",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_manage_categories",
+      "schemaname": "public",
+      "with_check": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "product_images",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_manage_product_images",
+      "schemaname": "public",
+      "with_check": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "product_types",
+      "permissive": "PERMISSIVE",
+      "policyname": "product_types_staff_manage",
+      "schemaname": "public",
+      "with_check": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])"
+    },
+    {
+      "cmd": "ALL",
+      "qual": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "product_flavors",
+      "permissive": "PERMISSIVE",
+      "policyname": "product_flavors_staff_manage",
+      "schemaname": "public",
+      "with_check": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text])"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "private.has_staff_access(ARRAY['manager'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "manager_read_all_orders",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "private.has_staff_access(ARRAY['manager'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "order_items",
+      "permissive": "PERMISSIVE",
+      "policyname": "manager_read_all_order_items",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(private.has_staff_access(ARRAY['manager'::text, 'admin'::text]) OR (private.has_staff_access(ARRAY['support'::text]) AND (assigned_support_id = ( SELECT auth.uid() AS uid))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "support_conversations",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_read_conversations",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(private.has_staff_access(ARRAY['support'::text]) AND (assigned_support_id = ( SELECT auth.uid() AS uid)))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "support_conversations",
+      "permissive": "PERMISSIVE",
+      "policyname": "assigned_support_update_conversation",
+      "schemaname": "public",
+      "with_check": "(private.has_staff_access(ARRAY['support'::text]) AND (assigned_support_id = ( SELECT auth.uid() AS uid)))"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "private.has_staff_access(ARRAY['manager'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "support_conversations",
+      "permissive": "PERMISSIVE",
+      "policyname": "manager_update_conversation",
+      "schemaname": "public",
+      "with_check": "private.has_staff_access(ARRAY['manager'::text])"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM support_conversations c\n  WHERE ((c.id = support_messages.conversation_id) AND (private.has_staff_access(ARRAY['manager'::text, 'admin'::text]) OR (private.has_staff_access(ARRAY['support'::text]) AND (c.assigned_support_id = ( SELECT auth.uid() AS uid)))))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "support_messages",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_read_conversation_messages",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "support_messages",
+      "permissive": "PERMISSIVE",
+      "policyname": "assigned_support_append_messages",
+      "schemaname": "public",
+      "with_check": "((sender_type = 'support'::text) AND (sender_user_id = ( SELECT auth.uid() AS uid)) AND private.has_staff_access(ARRAY['support'::text]) AND (EXISTS ( SELECT 1\n   FROM support_conversations c\n  WHERE ((c.id = support_messages.conversation_id) AND (c.assigned_support_id = ( SELECT auth.uid() AS uid)) AND (c.status = ANY (ARRAY['open'::text, 'waiting_customer'::text]))))))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "private.has_staff_access(ARRAY['manager'::text, 'admin'::text, 'support'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "support_ratings",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_read_all_ratings",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_upload_product_images",
+      "schemaname": "storage",
+      "with_check": "((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text]))"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text]))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_update_product_images",
+      "schemaname": "storage",
+      "with_check": "((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text]))"
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text]))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "objects",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_delete_product_images",
+      "schemaname": "storage",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "private.has_staff_access(ARRAY['manager'::text])",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "staff_audit_logs",
+      "permissive": "PERMISSIVE",
+      "policyname": "staff_audit_logs_manager_read",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "true",
+      "roles": [
+        "service_role"
+      ],
+      "tablename": "staff_access_grants",
+      "permissive": "PERMISSIVE",
+      "policyname": "private_staff_access_service_role",
+      "schemaname": "private",
+      "with_check": "true"
+    }
+  ]
+}

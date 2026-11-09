@@ -258,7 +258,7 @@ export class Home {
     let pointerStartScroll = 0;
     let dragging = false;
     const pointerDown = (event: PointerEvent) => {
-      if (event.pointerType !== 'mouse' || event.button !== 0 ||
+      if ((event.pointerType === 'mouse' && event.button !== 0) ||
           (event.target as HTMLElement).closest('button')) return;
       pointerStartX = event.clientX;
       pointerStartY = event.clientY;

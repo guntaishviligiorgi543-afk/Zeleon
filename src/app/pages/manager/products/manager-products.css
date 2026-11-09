@@ -78,6 +78,82 @@
   min-height: 38px;
   padding-inline: 12px;
 }
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 20px;
+  border-top: 1px solid #e9eef5;
+  background: #fbfdff;
+}
+.pagination-summary {
+  margin: 0;
+  color: #69778e;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.page-size {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  color: #69778e;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.page-size select {
+  min-width: 68px;
+  min-height: 44px;
+  padding: 0 30px 0 11px;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  outline: 0;
+  background: #fff;
+  color: #263653;
+  font:
+    600 0.7rem 'Montserrat',
+    sans-serif;
+  cursor: pointer;
+}
+.page-size select:focus-visible,
+.page-button:focus-visible {
+  outline: 3px solid rgba(40, 104, 255, 0.2);
+  outline-offset: 2px;
+}
+.page-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.page-button {
+  display: inline-grid;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  place-items: center;
+  border: 1px solid #dbe3ef;
+  border-radius: 10px;
+  background: #fff;
+  color: #526078;
+  font:
+    600 0.66rem 'Montserrat',
+    sans-serif;
+  cursor: pointer;
+}
+.page-button:hover:not(:disabled),
+.page-button.is-current {
+  border-color: #2868ff;
+  background: #2868ff;
+  color: #fff;
+}
+.page-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.nav-button {
+  padding-inline: 13px;
+}
 .dialog-backdrop {
   position: fixed;
   inset: 0;
@@ -198,6 +274,27 @@
   }
   .catalog-loading {
     grid-template-columns: 1fr;
+  }
+  .pagination {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+  .pagination-summary {
+    width: 100%;
+  }
+  .page-size {
+    margin-left: 0;
+  }
+  .page-controls {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+  .page-button {
+    flex: 0 0 44px;
+  }
+  .page-button.nav-button {
+    flex: 1 0 auto;
   }
   .editor {
     padding: 18px;

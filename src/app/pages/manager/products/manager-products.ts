@@ -25,6 +25,8 @@ export class ManagerProducts implements OnInit {
   readonly editorOpen = signal(false);
   readonly editing = signal<ManagerProduct | null>(null);
   readonly query = signal('');
+  readonly pageSize = signal(10);
+  readonly currentPage = signal(1);
   readonly selectedImage = signal<File | null>(null);
   readonly newType = new FormControl('', {
     nonNullable: true,
@@ -44,6 +46,29 @@ export class ManagerProducts implements OnInit {
         )
       : this.products();
   });
+  readonly totalPages = computed(() =>
+    Math.max(1, Math.ceil(this.filteredProducts().length / this.pageSize())),
+  );
+  readonly paginatedProducts = computed(() => {
+    const page = Math.min(this.currentPage(), this.totalPages());
+    const start = (page - 1) * this.pageSize();
+    return this.filteredProducts().slice(start, start + this.pageSize());
+  });
+  readonly pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = Math.min(this.currentPage(), total);
+    const visiblePageCount = Math.min(5, total);
+    const start = Math.max(1, Math.min(current - 2, total - visiblePageCount + 1));
+    return Array.from({ length: visiblePageCount }, (_, index) => start + index);
+  });
+  readonly rangeStart = computed(() =>
+    this.filteredProducts().length
+      ? (Math.min(this.currentPage(), this.totalPages()) - 1) * this.pageSize() + 1
+      : 0,
+  );
+  readonly rangeEnd = computed(() =>
+    Math.min(this.rangeStart() + this.pageSize() - 1, this.filteredProducts().length),
+  );
 
   readonly form = new FormGroup({
     name: new FormControl('', {
@@ -85,11 +110,28 @@ export class ManagerProducts implements OnInit {
       ]);
       this.products.set(products);
       this.references.set(references);
+      this.goToPage(this.currentPage());
     } catch {
       this.error.set('Products could not be loaded. Verify the Manager session and try again.');
     } finally {
       this.loading.set(false);
     }
+  }
+
+  setQuery(value: string): void {
+    this.query.set(value);
+    this.currentPage.set(1);
+  }
+
+  setPageSize(value: string): void {
+    const nextPageSize = Number(value);
+    if (![5, 10, 20].includes(nextPageSize)) return;
+    this.pageSize.set(nextPageSize);
+    this.currentPage.set(1);
+  }
+
+  goToPage(page: number): void {
+    this.currentPage.set(Math.max(1, Math.min(page, this.totalPages())));
   }
 
   openCreate(): void {

@@ -27,7 +27,7 @@
         placeholder="Search products"
         aria-label="Search products"
         [value]="query()"
-        (input)="query.set($any($event.target).value)"
+        (input)="setQuery($any($event.target).value)"
       />
     </div>
     @if (loading()) {
@@ -38,7 +38,7 @@
       </div>
     } @else if (filteredProducts().length) {
       <div class="product-list">
-        @for (product of filteredProducts(); track product.id) {
+        @for (product of paginatedProducts(); track product.id) {
           <article class="product-row">
             <div class="product-image">
               @if (product.images[0]?.publicUrl; as image) {
@@ -71,6 +71,53 @@
           </article>
         }
       </div>
+      <nav class="pagination" aria-label="Product catalog pagination">
+        <p class="pagination-summary" aria-live="polite">
+          Showing {{ rangeStart() }}&ndash;{{ rangeEnd() }} of {{ filteredProducts().length }}
+        </p>
+        <label class="page-size">
+          Rows per page
+          <select
+            aria-label="Rows per page"
+            [value]="pageSize()"
+            (change)="setPageSize($any($event.target).value)"
+          >
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="20">20</option>
+          </select>
+        </label>
+        <div class="page-controls">
+          <button
+            type="button"
+            class="page-button nav-button"
+            [disabled]="currentPage() === 1"
+            (click)="goToPage(currentPage() - 1)"
+          >
+            Previous
+          </button>
+          @for (page of pageNumbers(); track page) {
+            <button
+              type="button"
+              class="page-button"
+              [class.is-current]="page === currentPage()"
+              [attr.aria-current]="page === currentPage() ? 'page' : null"
+              [attr.aria-label]="'Page ' + page"
+              (click)="goToPage(page)"
+            >
+              {{ page }}
+            </button>
+          }
+          <button
+            type="button"
+            class="page-button nav-button"
+            [disabled]="currentPage() === totalPages()"
+            (click)="goToPage(currentPage() + 1)"
+          >
+            Next
+          </button>
+        </div>
+      </nav>
     } @else {
       <div class="empty">
         <p><strong>No matching products</strong>Adjust the search or create a new product.</p>
