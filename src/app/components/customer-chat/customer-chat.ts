@@ -31,8 +31,7 @@ export class CustomerChat {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
-    this.destroyRef.onDestroy(() => this.disconnect());
-    this.client.auth.onAuthStateChange((_event, session) => {
+    const { data: authSubscription } = this.client.auth.onAuthStateChange((_event, session) => {
       const next = session?.user?.id ?? null;
       if (next !== this.userId) {
         this.userId = next;
@@ -43,6 +42,7 @@ export class CustomerChat {
         if (this.opened() && next) queueMicrotask(() => void this.load());
       }
     });
+    this.destroyRef.onDestroy(() => { authSubscription.subscription.unsubscribe(); this.disconnect(); });
   }
 
   toggle(): void {
@@ -67,7 +67,7 @@ export class CustomerChat {
       if (chosen) await this.select(chosen as Conversation);
       else { this.active.set(null); this.messages.set([]); this.disconnect(); }
     } catch (e) { if (id === this.requestId) this.error.set(this.message(e)); }
-    finally { if (id === this.requestId) this.busy.set(false); }
+    finally { this.busy.set(false); }
   }
 
   async select(conversation: Conversation): Promise<void> {
