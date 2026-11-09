@@ -110,3 +110,14 @@ button[aria-busy='true'] { cursor: wait; }
 .enrollment-section form { margin-top: 0; gap: 16px; }
 .qr-frame { display: grid; place-items: center; width: fit-content; max-width: 100%; margin: 0 auto; padding: 14px; border-radius: 14px; background: #fff; }
 .qr-frame img { display: block; width: min(240px, 65vw); height: auto; aspect-ratio: 1; }
+
+/* Clear transition from authenticator enrollment to staff verification. */
+.setup-success { display: flex; align-items: flex-start; gap: 14px; margin-top: 28px; padding: 18px; border: 1px solid #65b58a70; border-radius: 12px; background: #65b58a13; color: #e8fff0; }
+.setup-success-icon { display: grid; flex: 0 0 28px; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #65b58a35; color: #9bf0b6; font-weight: 700; }
+.setup-success strong { font-size: 13px; }
+.setup-success p { margin: 7px 0 0; color: #c7dfcf; font-size: 12px; line-height: 1.7; }
+.verification-step { margin-top: 28px; }
+.verification-step h2 { margin: 10px 0 7px; font-size: 19px; color: #fff; }
+.verification-step p { margin: 0; color: #aaa; font-size: 12px; line-height: 1.7; }
+.step-badge { display: inline-block; padding: 6px 10px; border: 1px solid #de131355; border-radius: 99px; background: #de131315; color: #ff9797; font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+.verification-step + form { margin-top: 20px; }
