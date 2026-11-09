@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { SUPABASE_CLIENT } from '../../services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+import { environment } from '../../../environments/environment';
 
 type Conversation = { id: string; subject: string | null; status: string; updated_at: string };
 type Message = { id: string; conversation_id: string; sender_type: string; body: string; created_at: string };
@@ -129,11 +130,20 @@ export class CustomerChat {
       subjectInput.value = ''; messageInput.value = '';
       await this.load();
       await this.select(conversation as Conversation);
-      // Acknowledgement is sent only for the customer's first request; failure must not block chat.
-      void this.client.functions.invoke('support-request-acknowledgement', {
-        body: { conversationId: conversation.id },
-      }).then(({ error }) => { if (error) console.warn('Support acknowledgement email unavailable'); })
-        .catch(() => console.warn('Support acknowledgement email unavailable'));
+      // Send confirmation without Supabase SDK's additional CORS request headers.
+      void this.client.auth.getSession().then(async ({ data: { session } }) => {
+        if (!session?.access_token) return;
+        const response = await fetch(`${environment.supabaseUrl}/functions/v1/support-request-acknowledgement`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+            apikey: environment.supabasePublishableKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ conversationId: conversation.id }),
+        });
+        if (!response.ok) console.warn('Support acknowledgement email failed', response.status);
+      }).catch(error => console.warn('Support acknowledgement email unavailable', error));
     } catch (e) { this.error.set(this.message(e)); }
     finally { this.sending.set(false); }
   }
