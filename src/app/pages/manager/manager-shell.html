@@ -1,6 +1,6 @@
 <section class="manager-shell">
   <header class="manager-mobile-bar">
-    <a routerLink="/manager" class="manager-wordmark" aria-label="ZELEON Manager overview">
+    <a [routerLink]="workspaceName === 'Admin' ? '/admin' : workspaceName === 'Support' ? '/support' : '/manager'" class="manager-wordmark" aria-label="ZELEON staff dashboard">
       <span class="wordmark-mark" aria-hidden="true"></span>
       <span>ZELEON</span>
     </a>
@@ -18,11 +18,11 @@
 
   <aside id="manager-nav" class="manager-rail" [class.is-open]="menuOpen()">
     <div class="rail-heading">
-      <a routerLink="/manager" class="manager-wordmark" aria-label="ZELEON Manager overview">
+      <a [routerLink]="workspaceName === 'Admin' ? '/admin' : workspaceName === 'Support' ? '/support' : '/manager'" class="manager-wordmark" aria-label="ZELEON staff dashboard">
         <span class="wordmark-mark" aria-hidden="true"></span>
         <span>ZELEON</span>
       </a>
-      <p>Manager operations</p>
+      <p>{{ workspaceName }} operations</p>
     </div>
 
     <nav aria-label="Manager dashboard">
@@ -71,7 +71,7 @@
         (auth.displayName() || 'M').charAt(0).toUpperCase()
       }}</span>
       <span
-        ><strong>{{ auth.displayName() || 'Manager' }}</strong
+        ><strong>{{ auth.displayName() || workspaceName }}</strong
         ><small>Verified session</small></span
       >
     </div>
