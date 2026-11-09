@@ -132,7 +132,8 @@ export class ManagerSupport implements OnInit {
         const claimed = await this.dashboard.claimSupportConversation(selected.id);
         if (!claimed) throw new Error('This request was claimed by another agent.');
       }
-      await this.dashboard.sendSupportReply(selected.id, body);
+      const result = await this.dashboard.sendSupportReply(selected.id, body);
+      this.success.set(result.emailNotification === 'sent' ? 'Reply sent and customer email notification requested.' : 'Reply sent, but customer email notification could not be delivered.');
       this.replyText.set('');
       this.messages.set(await this.dashboard.getSupportMessages(selected.id));
       await this.load();
