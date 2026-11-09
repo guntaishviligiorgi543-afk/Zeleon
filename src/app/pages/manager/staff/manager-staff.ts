@@ -19,11 +19,11 @@ export class ManagerStaff implements OnInit {
   readonly success = signal('');
   readonly assignOpen = signal(false);
   readonly form = new FormGroup({
-    targetUserId: new FormControl('', {
+    email: new FormControl('', {
       nonNullable: true,
       validators: [
         Validators.required,
-        Validators.pattern(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
+        Validators.email,
       ],
     }),
     role: new FormControl<'admin' | 'support'>('support', { nonNullable: true }),
@@ -57,7 +57,7 @@ export class ManagerStaff implements OnInit {
       await this.dashboard.manageStaff({ action: 'assign', ...this.form.getRawValue() });
       await this.load();
       this.assignOpen.set(false);
-      this.form.reset({ targetUserId: '', role: 'support' });
+      this.form.reset({ email: '', role: 'support' });
       this.success.set('Staff role assigned.');
     } catch {
       this.error.set(
