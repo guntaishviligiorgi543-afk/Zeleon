@@ -88,6 +88,12 @@ export class ManagerSupport implements OnInit {
       { status: value as SupportConversation['status'] },
       'Conversation status updated.',
     );
+    if (value === 'resolved' && conversation.status !== 'resolved' && this.conversations().some(item => item.id === conversation.id && item.status === 'resolved')) {
+      const result = await this.dashboard.notifySupportResolved(conversation.id);
+      this.success.set(result === 'sent'
+        ? 'Conversation resolved. Resolution email notification requested.'
+        : 'Conversation resolved, but the customer email notification failed.');
+    }
   }
 
   async viewThread(conversation: SupportConversation): Promise<void> {
