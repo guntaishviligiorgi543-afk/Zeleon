@@ -95,6 +95,11 @@
                 <option value="resolved">Resolved</option>
               </select></label
             >
+            @if (isSupport && !conversation.assigned_support_id) {
+              <button type="button" class="button" [disabled]="claiming()" (click)="claim(conversation)">
+                {{ claiming() ? 'Claiming…' : 'Take request' }}
+              </button>
+            }
             <div class="rating">
               @if (conversation.rating; as rating) {
                 <strong>{{ rating.rating }}/5</strong
