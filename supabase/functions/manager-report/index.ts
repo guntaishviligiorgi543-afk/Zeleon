@@ -1,12 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.118.0';
 import { createManagerPdf, ReportSnapshot } from './pdf.ts';
 
-const allowedOrigins = new Set(['https://zeleon.store', 'http://localhost:4200']);
+const allowedOrigins = new Set(['https://zeleon.store', 'https://www.zeleon.store', 'http://localhost:4200']);
+const isAllowedOrigin = (origin: string): boolean => {
+  if (allowedOrigins.has(origin)) return true;
+  try { const url = new URL(origin); return url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1') && url.pathname === '/' && !url.search && !url.hash; } catch { return false; }
+};
 const corsFor = (request: Request): Record<string, string> => {
   const origin = request.headers.get('Origin') ?? '';
   return {
-    'Access-Control-Allow-Origin': allowedOrigins.has(origin) ? origin : 'https://zeleon.store',
-    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info',
+    ...(origin && isAllowedOrigin(origin) ? { 'Access-Control-Allow-Origin': origin } : {}),
+    'Access-Control-Allow-Headers': 'authorization, content-type, apikey, x-client-info, x-supabase-api-version',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
     Vary: 'Origin',
   };
@@ -23,6 +27,8 @@ const json = (request: Request, body: object, status: number) =>
 
 Deno.serve(async (request: Request) => {
   const cors = corsFor(request);
+  const origin = request.headers.get('Origin');
+  if (origin && !isAllowedOrigin(origin)) return json(request, { error: 'Origin not allowed' }, 403);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
   if (request.method !== 'POST') return json(request, { error: 'Method not allowed' }, 405);
   try {
