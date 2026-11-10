@@ -159,6 +159,7 @@
         }
         @if (escalationOpen()) {
           <div class="support-reply-form">
+            @if (error()) { <div class="notice error" role="alert">{{ error() }}</div> }
             <label for="escalation-reason">Escalation reason (required, 10–2000 characters)</label>
             <textarea id="escalation-reason" rows="3" maxlength="2000" [ngModel]="escalationReason()" (ngModelChange)="escalationReason.set($event)" placeholder="Describe the issue and why Admin / Manager assistance is required"></textarea>
             <button type="button" class="button primary" [disabled]="escalationReason().trim().length < 10 || pendingId() === conversation.id" (click)="escalateThread()">Submit escalation</button>
