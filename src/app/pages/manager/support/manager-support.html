@@ -28,6 +28,9 @@
       <span>{{ isSupport ? 'Assigned conversations' : 'Active support' }}</span><strong>{{ isSupport ? conversations().length : supportStaff().length }}</strong>
     </article>
     <article>
+      <span>Escalated · Admin / Manager attention</span><strong>{{ escalatedCount() }}</strong>
+    </article>
+    <article>
       <span>Resolved</span><strong>{{ conversations().length - unresolvedCount() }}</strong>
     </article>
   </div>
@@ -35,7 +38,7 @@
     <div class="surface-heading">
       <div>
         <h2>Conversation queue</h2>
-        <p>Private conversation access remains enforced by RLS</p>
+        <p>Private conversation access remains enforced by RLS · Escalated requests require Admin / Manager review</p>
       </div>
       <select
         class="filter-select"
@@ -100,6 +103,9 @@
                 {{ claiming() ? 'Claiming…' : 'Take request' }}
               </button>
             }
+            @if (conversation.status === "escalated") {
+              <div class="notice error"><strong>Escalated</strong><p>{{ conversation.escalation_reason || "Requires review" }}</p></div>
+            }
             <div class="rating">
               @if (conversation.rating; as rating) {
                 <strong>{{ rating.rating }}/5</strong
@@ -144,10 +150,30 @@
           </div>
           <button type="button" aria-label="Close conversation" (click)="closeThread()">×</button>
         </header>
+        @if (conversation.status === 'escalated') {
+          <div class="notice error" role="status">
+            <strong>Escalated to Admin / Manager</strong>
+            <p>{{ conversation.escalation_reason }}</p>
+            @if (conversation.escalated_at) { <small>{{ conversation.escalated_at | date:'MMM d, y, HH:mm' }}</small> }
+          </div>
+        }
+        @if (escalationOpen()) {
+          <div class="support-reply-form">
+            <label for="escalation-reason">Escalation reason (required, 10–2000 characters)</label>
+            <textarea id="escalation-reason" rows="3" maxlength="2000" [ngModel]="escalationReason()" (ngModelChange)="escalationReason.set($event)" placeholder="Describe the issue and why Admin / Manager assistance is required"></textarea>
+            <button type="button" class="button primary" [disabled]="escalationReason().trim().length < 10 || pendingId() === conversation.id" (click)="escalateThread()">Submit escalation</button>
+            <button type="button" class="button" (click)="escalationOpen.set(false)">Cancel</button>
+          </div>
+        }
         <div class="thread-actions">
           @if (conversation.status === 'resolved') {
             <span role="status">Resolved</span>
           } @else {
+            @if (conversation.status !== 'escalated') {
+              <button type="button" class="button" (click)="escalationOpen.set(true)" [disabled]="pendingId() === conversation.id">Escalate to Admin / Manager</button>
+            } @else {
+              <button type="button" class="button" (click)="resumeThread()" [disabled]="pendingId() === conversation.id">Return to open</button>
+            }
             <button type="button" class="button primary" (click)="resolveThread()" [disabled]="pendingId() === conversation.id">
               {{ pendingId() === conversation.id ? 'Resolving...' : 'Mark as resolved' }}
             </button>
