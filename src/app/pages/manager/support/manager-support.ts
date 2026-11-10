@@ -20,6 +20,8 @@ export class ManagerSupport implements OnInit {
   readonly access = inject(StaffAccess);
   readonly isSupport = this.access.role() === 'support';
   readonly replyText = signal('');
+  readonly escalationReason = signal('');
+  readonly escalationOpen = signal(false);
   readonly sending = signal(false);
   readonly conversations = signal<SupportConversation[]>([]);
   readonly supportStaff = signal<StaffDirectoryEntry[]>([]);
@@ -37,6 +39,7 @@ export class ManagerSupport implements OnInit {
       ? this.conversations()
       : this.conversations().filter((conversation) => conversation.status === this.filter()),
   );
+  readonly escalatedCount = computed(() => this.conversations().filter(c => c.status === 'escalated').length);
   readonly unresolvedCount = computed(
     () => this.conversations().filter((conversation) => conversation.status !== 'resolved').length,
   );
@@ -83,6 +86,12 @@ export class ManagerSupport implements OnInit {
       'escalated',
     ];
     if (!allowed.includes(value as SupportConversation['status'])) return;
+    if (value === 'escalated' && conversation.status !== 'escalated') {
+      this.selected.set(conversation);
+      this.escalationReason.set('');
+      this.escalationOpen.set(true);
+      return;
+    }
     await this.update(
       conversation,
       { status: value as SupportConversation['status'] },
@@ -96,6 +105,26 @@ export class ManagerSupport implements OnInit {
     }
   }
 
+  async escalateThread(): Promise<void> {
+    const conversation = this.selected();
+    const reason = this.escalationReason().trim();
+    if (!conversation || reason.length < 10 || reason.length > 2000 || this.pendingId()) return;
+    await this.update(conversation, { status: 'escalated', escalation_reason: reason }, 'Request escalated to Admin and Manager queue.');
+    const updated = this.conversations().find(item => item.id === conversation.id);
+    if (updated?.status === 'escalated') {
+      this.selected.set(updated);
+      this.escalationOpen.set(false);
+    }
+  }
+
+  async resumeThread(): Promise<void> {
+    const conversation = this.selected();
+    if (!conversation || conversation.status !== 'escalated') return;
+    await this.changeStatus(conversation, 'open');
+    const updated = this.conversations().find(item => item.id === conversation.id);
+    if (updated?.status === 'open') this.selected.set(updated);
+  }
+
   async resolveThread(): Promise<void> {
     const conversation = this.selected();
     if (!conversation || conversation.status === 'resolved' || this.pendingId()) return;
@@ -106,6 +135,7 @@ export class ManagerSupport implements OnInit {
 
   async viewThread(conversation: SupportConversation): Promise<void> {
     this.selected.set(conversation);
+    this.escalationOpen.set(false);
     this.replyText.set('');
     this.messages.set([]);
     this.messagesLoading.set(true);
@@ -158,12 +188,13 @@ export class ManagerSupport implements OnInit {
 
   closeThread(): void {
     this.selected.set(null);
+    this.escalationOpen.set(false);
     this.messages.set([]);
   }
 
   private async update(
     conversation: SupportConversation,
-    changes: { assigned_support_id?: string | null; status?: SupportConversation['status'] },
+    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null },
     message: string,
   ): Promise<void> {
     this.pendingId.set(conversation.id);
