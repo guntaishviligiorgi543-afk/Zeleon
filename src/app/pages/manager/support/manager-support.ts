@@ -109,7 +109,17 @@ export class ManagerSupport implements OnInit {
     const conversation = this.selected();
     const reason = this.escalationReason().trim();
     if (!conversation || reason.length < 10 || reason.length > 2000 || this.pendingId()) return;
-    await this.update(conversation, { status: 'escalated', escalation_reason: reason }, 'Request escalated to Admin and Manager queue.');
+    if (this.isSupport && !conversation.assigned_support_id) {
+      try {
+        const claimed = await this.dashboard.claimSupportConversation(conversation.id);
+        if (!claimed) throw new Error('This request was already claimed by another agent.');
+      } catch (e) {
+        this.error.set(e instanceof Error ? e.message : 'Claim this request before escalating.');
+        return;
+      }
+    }
+    const saved = await this.update(conversation, { status: 'escalated', escalation_reason: reason }, 'Request escalated to Admin and Manager queue.');
+    if (!saved) return;
     const updated = this.conversations().find(item => item.id === conversation.id);
     if (updated?.status === 'escalated') {
       this.selected.set(updated);
@@ -200,18 +210,21 @@ export class ManagerSupport implements OnInit {
     conversation: SupportConversation,
     changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null },
     message: string,
-  ): Promise<void> {
+  ): Promise<boolean> {
     this.pendingId.set(conversation.id);
     this.error.set('');
     this.success.set('');
     try {
       await this.dashboard.updateConversation(conversation.id, changes);
       await this.load();
+      const updated = this.conversations().find(item => item.id === conversation.id);
+      if (!updated || (changes.status && updated.status !== changes.status)) throw new Error('The server did not confirm the status update. Check your staff permissions.');
+      this.selected.update(current => current?.id === updated.id ? updated : current);
       this.success.set(message);
-    } catch {
-      this.error.set(
-        'The conversation could not be updated. Only active Support employees can be assigned.',
-      );
+      return true;
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'The conversation could not be updated.');
+      return false;
     } finally {
       this.pendingId.set(null);
     }
