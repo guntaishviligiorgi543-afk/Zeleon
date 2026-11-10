@@ -273,3 +273,13 @@
   .thread-actions { padding: 14px; }
   .support-reply-form { padding: 12px 14px 16px; }
 }
+
+.support-sections { display:flex;flex-wrap:wrap;gap:10px;margin:0 0 20px; }
+.support-ratings { padding:24px; }
+.support-rating-summary { display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:20px;margin:16px 0;background:#f3f9ff;border-radius:12px;color:#17324d; }
+.support-rating-summary strong { font-size:1.6rem; }
+.support-rating-entry { padding:18px 0;border-bottom:1px solid #d6e9f8;overflow-wrap:anywhere; }
+.support-rating-entry > div { display:flex;gap:16px;align-items:center;flex-wrap:wrap; }
+.support-rating-entry strong { font-size:1.45rem;letter-spacing:2px; }
+.support-rating-entry p { margin:10px 0;color:#425d75;white-space:pre-wrap; }
+.support-rating-entry small { color:#65728a; }
