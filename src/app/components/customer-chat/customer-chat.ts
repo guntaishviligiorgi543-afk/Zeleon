@@ -29,6 +29,11 @@ export class CustomerChat {
   readonly active = signal<Conversation | null>(null);
   readonly messages = signal<Message[]>([]);
   readonly unread = signal(false);
+  readonly rating = signal<number | null>(null);
+  readonly ratingChoice = signal(0);
+  readonly ratingFeedback = signal('');
+  readonly ratingSaving = signal(false);
+  readonly ratingNotice = signal('');
   private channel: RealtimeChannel | null = null;
   private userId: string | null = null;
   private requestId = 0;
@@ -39,6 +44,8 @@ export class CustomerChat {
   constructor() {
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     const querySubscription = this.route.queryParamMap.subscribe(params => {
+      const rating = Number(params.get('supportRating'));
+      if (Number.isInteger(rating) && rating >= 1 && rating <= 5) this.ratingChoice.set(rating);
       const id = params.get('supportChat');
       if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
       this.deepLink.set(id);
@@ -90,6 +97,8 @@ export class CustomerChat {
     this.disconnect();
     this.active.set(conversation);
     this.messages.set([]);
+    this.rating.set(null);
+    this.ratingNotice.set('');
     const id = ++this.requestId;
     const { data, error } = await this.client.from('support_messages')
       .select('id,conversation_id,sender_type,body,created_at')
@@ -97,6 +106,7 @@ export class CustomerChat {
     if (id !== this.requestId) return;
     if (error) { this.error.set(this.message(error)); return; }
     this.messages.set((data ?? []) as Message[]);
+    if (conversation.status === 'resolved') void this.loadRating(conversation.id);
     void this.refreshPresence();
     this.channel = this.client.channel('customer-chat-' + conversation.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages', filter: 'conversation_id=eq.' + conversation.id }, payload => {
@@ -108,6 +118,7 @@ export class CustomerChat {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'support_conversations', filter: 'id=eq.' + conversation.id }, payload => {
         const updated = payload.new as Conversation;
         this.active.update(old => old?.id === updated.id ? { ...old, ...updated } : old);
+        if (updated.status === 'resolved') void this.loadRating(updated.id);
         this.conversations.update(rows => rows.map(row => row.id === updated.id ? { ...row, ...updated } : row));
       }).subscribe();
   }
@@ -171,6 +182,29 @@ export class CustomerChat {
     finally { this.sending.set(false); }
   }
 
+  private async loadRating(conversationId: string): Promise<void> {
+    const { data, error } = await this.client.from('support_ratings').select('rating,feedback').eq('conversation_id', conversationId).maybeSingle();
+    if (error || this.active()?.id !== conversationId) return;
+    this.rating.set(data?.rating ?? null);
+    if (data) { this.ratingChoice.set(data.rating); this.ratingFeedback.set(data.feedback ?? ''); }
+  }
+  async submitRating(): Promise<void> {
+    const conversation = this.active();
+    const user = await this.auth.getCurrentUser();
+    if (!conversation || conversation.status !== 'resolved' || this.rating() || !user || this.ratingSaving()) return;
+    const rating = this.ratingChoice();
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) return;
+    this.ratingSaving.set(true);
+    this.ratingNotice.set('');
+    const { error } = await this.client.from('support_ratings').insert({
+      conversation_id: conversation.id, customer_user_id: user.id,
+      rating, feedback: this.ratingFeedback().trim().slice(0, 2000) || null,
+    });
+    this.ratingSaving.set(false);
+    if (error) { this.ratingNotice.set('Could not save your rating. Please try again.'); return; }
+    this.rating.set(rating);
+    this.ratingNotice.set('Thank you for rating our support!');
+  }
   back(): void { void this.clearPresence(); this.disconnect(); this.active.set(null); this.messages.set([]); }
   private async refreshPresence(): Promise<void> {
     const conversation = this.active();
