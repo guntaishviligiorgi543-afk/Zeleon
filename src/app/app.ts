@@ -16,17 +16,19 @@ import AOS from 'aos';
 import { filter } from 'rxjs';
 import { Header } from './components/header/header';
 import { Footer } from './components/footer/footer';
+import { Home } from './pages/home/home';
 import { CustomerChat } from './components/customer-chat/customer-chat';
 import { ManagerNavigation } from './components/manager-navigation/manager-navigation';
 
 @Component({
-  imports: [RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat],
+  imports: [RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat, Home],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
+  protected readonly ratingRoute = signal(this.router.url.startsWith('/rate-support/'));
   protected readonly router = inject(Router);
   protected readonly workspaceRoute = signal(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(this.router.url));
   private readonly injector = inject(Injector);
@@ -46,6 +48,7 @@ export class App implements AfterViewInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((event) => {
+        this.ratingRoute.set(event.urlAfterRedirects.startsWith('/rate-support/'));
         this.workspaceRoute.set(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(event.urlAfterRedirects));
         this.refreshAfterRender();
       });
