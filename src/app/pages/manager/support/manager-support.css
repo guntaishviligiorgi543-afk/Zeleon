@@ -156,6 +156,10 @@
   font-size: 1.4rem;
   cursor: pointer;
 }
+.thread-actions {
+  flex: 0 0 auto;
+  padding: 14px 22px;
+}
 .thread-messages {
   display: grid;
   gap: 12px;
@@ -266,5 +270,6 @@
   .thread-backdrop { padding: 10px; }
   .thread-panel { height: calc(100dvh - 20px); max-height: none; }
   .thread-messages { padding: 14px; }
+  .thread-actions { padding: 14px; }
   .support-reply-form { padding: 12px 14px 16px; }
 }
