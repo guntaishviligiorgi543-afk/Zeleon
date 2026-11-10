@@ -120,6 +120,12 @@ export interface StaffDirectoryEntry {
   updated_at: string;
 }
 
+export interface SupportRatingEntry {
+  conversation_id: string;
+  rating: number;
+  feedback: string | null;
+  created_at: string;
+}
 export interface SupportRating {
   rating: number;
   feedback: string | null;
@@ -356,6 +362,14 @@ export class ManagerDashboard {
       throw new StaffManagementError(message);
     }
     return { notificationSent: data.notificationSent };
+  }
+
+  async getSupportRatings(): Promise<SupportRatingEntry[]> {
+    const { data, error } = await this.client.from('support_ratings')
+      .select('conversation_id,rating,feedback,created_at')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data ?? []) as SupportRatingEntry[];
   }
 
   async getSupportConversations(): Promise<SupportConversation[]> {
