@@ -1,4 +1,4 @@
-import { Component, DestroyRef, HostListener, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, HostListener, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { SUPABASE_CLIENT } from '../../services/supabase';
@@ -20,9 +20,9 @@ import { SUPABASE_CLIENT } from '../../services/supabase';
         } @else if (alreadyRated()) {
           <p class="rate-success">Thanks! You rated this conversation {{ alreadyRated() }} / 5 ★.</p>
         } @else {
-          <div class="rate-stars" role="group" aria-label="Choose a rating" (mouseleave)="hovered.set(0)">
+          <div class="rate-stars" role="group" aria-label="Choose a rating" (mouseleave)="hoveredRating.set(0)">
             @for (star of [1,2,3,4,5]; track star) {
-              <button type="button" [attr.aria-label]="star + ' stars'" [attr.aria-pressed]="choice() === star" (mouseenter)="hovered.set(star)" (focus)="hovered.set(star)" (blur)="hovered.set(0)" (click)="choice.set(star)" [style.color]="star <= (hovered() || choice()) ? '#e8a600' : '#a4b2c1'">★</button>
+              <button type="button" [attr.aria-label]="star + (star === 1 ? ' star' : ' stars')" [attr.aria-pressed]="choice() === star" (mouseenter)="hoveredRating.set(star)" (focus)="hoveredRating.set(star)" (blur)="hoveredRating.set(0)" (click)="choice.set(star)" [class.is-highlighted]="star <= displayedRating()">★</button>
             }
           </div>
           <label for="rate-feedback">Your feedback (optional)</label>
@@ -39,8 +39,9 @@ import { SUPABASE_CLIENT } from '../../services/supabase';
     .rate-card h1{font-size:clamp(23px,4vw,30px);margin:14px 0 20px}
     .rate-close{position:absolute;top:10px;right:14px;border:0;background:transparent;color:#65728a;font-size:30px;cursor:pointer}
     .rate-stars{display:flex;justify-content:center;gap:3px;margin:16px 0 24px}
-    .rate-stars button{border:0;background:transparent;font-size:clamp(36px,9vw,52px);padding:4px;cursor:pointer;transition:color 180ms,transform 180ms}
-    .rate-stars button:hover,.rate-stars button:focus-visible{transform:scale(1.1)}
+    .rate-stars button{border:0;background:transparent;font-size:clamp(36px,9vw,52px);padding:4px;cursor:pointer;color:#A4B2C1;transition:color 180ms ease,transform 180ms ease}
+    .rate-stars button.is-highlighted{color:#E8A600}
+    @media(hover:hover){.rate-stars button:hover{transform:scale(1.1)}}
     .rate-stars button:focus-visible,.rate-close:focus-visible{outline:2px solid #55aee8;outline-offset:3px}
     .rate-card label{display:block;text-align:left;font-weight:600;margin-bottom:9px}
     .rate-card textarea{box-sizing:border-box;width:100%;padding:13px;border:1px solid #cbdde9;border-radius:10px;resize:vertical}
@@ -48,7 +49,7 @@ import { SUPABASE_CLIENT } from '../../services/supabase';
     .rate-submit:disabled{opacity:.5;cursor:not-allowed}
     .rate-error{color:#b42318}.rate-success{color:#18794e}
     @media(max-width:480px){.rate-card{padding:34px 20px}}
-    @media(prefers-reduced-motion:reduce){.rate-stars button{transition:none}}
+    @media(prefers-reduced-motion:reduce){.rate-stars button{transition:none}.rate-stars button:hover{transform:none}}
   `],
 })
 export class SupportRatingPage {
@@ -56,7 +57,6 @@ export class SupportRatingPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
-  readonly hovered = signal(0);
   private readonly client = inject(SUPABASE_CLIENT);
   readonly loading = signal(true);
   readonly saving = signal(false);
@@ -65,6 +65,8 @@ export class SupportRatingPage {
   readonly alreadyRated = signal<number | null>(null);
   readonly feedback = signal('');
   readonly choice = signal(0);
+  readonly hoveredRating = signal(0);
+  readonly displayedRating = computed(() => this.hoveredRating() || this.choice());
   readonly conversationId = this.route.snapshot.paramMap.get('id') ?? '';
   readonly returnPath = '/rate-support/' + encodeURIComponent(this.conversationId) + '?stars=' + this.route.snapshot.queryParamMap.get('stars');
   constructor() {
