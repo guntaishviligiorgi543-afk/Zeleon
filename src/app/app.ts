@@ -28,8 +28,8 @@ import { ManagerNavigation } from './components/manager-navigation/manager-navig
 })
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
-  protected readonly ratingRoute = signal(this.router.url.startsWith('/rate-support/'));
   protected readonly router = inject(Router);
+  protected readonly ratingRoute = signal(this.router.url.startsWith('/rate-support/'));
   protected readonly workspaceRoute = signal(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(this.router.url));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
