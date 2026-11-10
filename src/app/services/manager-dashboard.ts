@@ -132,6 +132,8 @@ export interface SupportConversation {
   subject: string | null;
   status: 'open' | 'waiting_customer' | 'resolved' | 'escalated';
   assigned_support_id: string | null;
+  escalation_reason: string | null;
+  escalated_at: string | null;
   created_at: string;
   updated_at: string;
   rating: SupportRating | null;
@@ -361,7 +363,7 @@ export class ManagerDashboard {
       this.client
         .from('support_conversations')
         .select(
-          'id,customer_first_name,customer_last_name,customer_email,subject,status,assigned_support_id,created_at,updated_at',
+          'id,customer_first_name,customer_last_name,customer_email,subject,status,assigned_support_id,escalation_reason,escalated_at,created_at,updated_at',
         )
         .order('updated_at', { ascending: false }),
       this.client.from('support_ratings').select('conversation_id,rating,feedback'),
@@ -384,7 +386,7 @@ export class ManagerDashboard {
 
   async updateConversation(
     id: string,
-    changes: { assigned_support_id?: string | null; status?: SupportConversation['status'] },
+    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null },
   ): Promise<void> {
     const { error } = await this.client.from('support_conversations').update(changes).eq('id', id);
     if (error) throw error;
