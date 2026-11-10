@@ -37,6 +37,8 @@ export class Login {
       const supportChat = this.router.parseUrl(this.router.url).queryParams['supportChat'];
       if (typeof supportChat === 'string' && /^[0-9a-f-]{36}$/i.test(supportChat)) {
         await this.router.navigate(['/'], { queryParams: { supportChat } });
+      } else if (typeof returnUrl === 'string' && /^\/rate-support\/[0-9a-f-]{36}(?:\?stars=[1-5])?$/i.test(returnUrl)) {
+        await this.router.navigateByUrl(returnUrl);
       } else {
         await this.router.navigateByUrl(typeof returnUrl === 'string' ? profileDestination(returnUrl) : '/');
       }
