@@ -2,12 +2,13 @@
   <app-header></app-header>
 }
 <main>
+  @if (ratingRoute()) { <app-home></app-home> }
   <router-outlet></router-outlet>
 </main>
 @if (!workspaceRoute()) {
   <app-footer></app-footer>
 }
 <app-manager-navigation></app-manager-navigation>
-@if (!workspaceRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
+@if (!workspaceRoute() && !ratingRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
   <app-customer-chat></app-customer-chat>
 }
