@@ -1,6 +1,6 @@
 <div class="zc-widget">
   @if (opened()) {
-    <section class="zc-panel" aria-label="ZELEON customer support">
+    <section class="zc-panel" [class.zc-panel-guest]="auth.initialized() && !auth.isAuthenticated()" aria-label="ZELEON customer support">
       <header class="zc-header"><div><strong>ZELEON Support</strong><span>We're here to help</span></div><button type="button" aria-label="Close chat" (click)="toggle()">×</button></header>
       @if (!auth.initialized()) { <p class="zc-note">Loading account…</p> }
       @else if (!auth.isAuthenticated()) {

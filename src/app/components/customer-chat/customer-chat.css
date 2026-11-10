@@ -51,3 +51,19 @@
 @media (prefers-reduced-motion: reduce) {
   .zc-launcher::before { transition: none; }
 }
+
+.zc-panel.zc-panel-guest {
+  height: auto;
+  min-height: 0;
+  max-height: calc(100dvh - 110px);
+  overflow-y: auto;
+}
+.zc-panel-guest > .zc-header,
+.zc-panel-guest > .zc-empty {
+  flex-shrink: 0;
+}
+@media (max-width: 480px) {
+  .zc-panel.zc-panel-guest {
+    max-height: calc(100dvh - 92px);
+  }
+}

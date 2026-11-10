@@ -126,7 +126,7 @@
   @if (selected(); as conversation) {
     <div
       class="thread-backdrop"
-      (mousedown)="$event.target === $event.currentTarget && closeThread()"
+      (mousedown)="$event.target === $event.currentTarget ? closeThread() : undefined"
     >
       <section
         class="thread-panel surface"
