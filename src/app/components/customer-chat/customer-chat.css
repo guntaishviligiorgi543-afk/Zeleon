@@ -67,3 +67,11 @@
     max-height: calc(100dvh - 92px);
   }
 }
+
+/* Resolved conversation feedback */
+.zc-rating { padding: 16px; display: grid; gap: 10px; border-top: 1px solid #d6e9f8; }
+.zc-rating-stars { display: flex; gap: 6px; }
+.zc-rating-stars button { border: 0; background: transparent; padding: 4px; font-size: 29px; cursor: pointer; }
+.zc-rating textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #d6e9f8; border-radius: 9px; resize: vertical; }
+.zc-rating > button { border: 0; border-radius: 9px; background: #8fd0f5; color: #17324d; padding: 11px; font-weight: 700; cursor: pointer; }
+.zc-rating > button:disabled { opacity: .5; cursor: not-allowed; }
