@@ -7,6 +7,7 @@ import {
   StaffDirectoryEntry,
   SupportConversation,
   SupportMessage,
+  SupportRatingEntry,
 } from '../../../services/manager-dashboard';
 
 @Component({
@@ -19,6 +20,9 @@ export class ManagerSupport implements OnInit {
   private readonly dashboard = inject(ManagerDashboard);
   readonly access = inject(StaffAccess);
   readonly isSupport = this.access.role() === 'support';
+  readonly section = signal<'conversations' | 'ratings'>('conversations');
+  readonly ratings = signal<SupportRatingEntry[]>([]);
+  readonly averageRating = computed(() => this.ratings().length ? (this.ratings().reduce((sum, row) => sum + row.rating, 0) / this.ratings().length).toFixed(1) : '—');
   readonly replyText = signal('');
   readonly escalationReason = signal('');
   readonly escalationOpen = signal(false);
@@ -52,11 +56,13 @@ export class ManagerSupport implements OnInit {
     this.loading.set(true);
     this.error.set('');
     try {
-      const [conversations, staff] = await Promise.all([
+      const [conversations, staff, ratings] = await Promise.all([
         this.dashboard.getSupportConversations(),
         this.isSupport ? Promise.resolve([] as StaffDirectoryEntry[]) : this.dashboard.getStaffDirectory(),
+        this.dashboard.getSupportRatings(),
       ]);
       this.conversations.set(conversations);
+      this.ratings.set(ratings);
       this.supportStaff.set(
         staff.filter((entry) => entry.role === 'support' && entry.status === 'active'),
       );
