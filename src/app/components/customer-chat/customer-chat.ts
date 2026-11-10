@@ -32,9 +32,12 @@ export class CustomerChat {
   private channel: RealtimeChannel | null = null;
   private userId: string | null = null;
   private requestId = 0;
+  private readonly presenceTimer = setInterval(() => void this.refreshPresence(), 25000);
+  private readonly onVisibilityChange = () => { if (!document.hidden) void this.refreshPresence(); };
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
     const querySubscription = this.route.queryParamMap.subscribe(params => {
       const id = params.get('supportChat');
       if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
@@ -53,12 +56,13 @@ export class CustomerChat {
         if (this.opened() && next) queueMicrotask(() => void this.load());
       }
     });
-    this.destroyRef.onDestroy(() => { authSubscription.subscription.unsubscribe(); querySubscription.unsubscribe(); this.disconnect(); });
+    this.destroyRef.onDestroy(() => { authSubscription.subscription.unsubscribe(); querySubscription.unsubscribe(); this.disconnect(); clearInterval(this.presenceTimer); document.removeEventListener('visibilitychange', this.onVisibilityChange); });
   }
 
   toggle(): void {
     this.opened.update(value => !value);
     if (this.opened()) { this.unread.set(false); void this.load(); }
+    else void this.clearPresence();
   }
 
   async load(): Promise<void> {
@@ -93,6 +97,7 @@ export class CustomerChat {
     if (id !== this.requestId) return;
     if (error) { this.error.set(this.message(error)); return; }
     this.messages.set((data ?? []) as Message[]);
+    void this.refreshPresence();
     this.channel = this.client.channel('customer-chat-' + conversation.id)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'support_messages', filter: 'conversation_id=eq.' + conversation.id }, payload => {
         const message = payload.new as Message;
@@ -166,7 +171,20 @@ export class CustomerChat {
     finally { this.sending.set(false); }
   }
 
-  back(): void { this.disconnect(); this.active.set(null); this.messages.set([]); }
+  back(): void { void this.clearPresence(); this.disconnect(); this.active.set(null); this.messages.set([]); }
+  private async refreshPresence(): Promise<void> {
+    const conversation = this.active();
+    if (!conversation || !this.opened() || document.hidden || !this.userId) return;
+    const { error } = await this.client.from('support_chat_presence').upsert({
+      conversation_id: conversation.id, user_id: this.userId, last_seen_at: new Date().toISOString(),
+    }, { onConflict: 'conversation_id,user_id' });
+    if (error) console.warn('Support chat presence unavailable', error.message);
+  }
+  private async clearPresence(): Promise<void> {
+    const conversation = this.active();
+    if (!conversation || !this.userId) return;
+    await this.client.from('support_chat_presence').delete().eq('conversation_id', conversation.id).eq('user_id', this.userId);
+  }
   private disconnect(): void {
     this.requestId++;
     if (this.channel) { void this.client.removeChannel(this.channel); this.channel = null; }
