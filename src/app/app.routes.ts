@@ -27,6 +27,10 @@ export const routes: Routes = [
     component: Home,
   },
   {
+    path: 'rate-support/:id',
+    loadComponent: () => import('./pages/support-rating/support-rating').then(m => m.SupportRatingPage),
+  },
+  {
     path: 'shop',
     component: Shop,
   },
