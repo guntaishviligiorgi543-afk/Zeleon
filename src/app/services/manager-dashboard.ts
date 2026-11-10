@@ -392,6 +392,10 @@ export class ManagerDashboard {
     if (error) throw error;
   }
 
+  async notifySupportEscalated(conversationId: string): Promise<'sent' | 'failed'> {
+    return this.sendSupportNotification('support-escalation-notification', { conversationId });
+  }
+
   private async sendSupportNotification(functionName: string, body: Record<string, string>): Promise<'sent' | 'failed'> {
     try {
       const { data: { session }, error: sessionError } = await this.client.auth.getSession();
