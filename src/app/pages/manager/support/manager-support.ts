@@ -114,6 +114,10 @@ export class ManagerSupport implements OnInit {
     if (updated?.status === 'escalated') {
       this.selected.set(updated);
       this.escalationOpen.set(false);
+      const notification = await this.dashboard.notifySupportEscalated(conversation.id);
+      this.success.set(notification === 'sent'
+        ? 'Request escalated. Admin and Manager email notifications requested.'
+        : 'Request escalated, but staff email notification failed. Admin and Manager can still review it in the dashboard.');
     }
   }
 
