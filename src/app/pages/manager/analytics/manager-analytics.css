@@ -3,16 +3,16 @@
   min-height: 44px;
   align-items: center;
   gap: 8px;
-  color: #66748a;
+  color: var(--workspace-muted, #66748a);
   font-size: 0.68rem;
   font-weight: 650;
 }
 .period-label select {
   min-height: 42px;
   padding: 0 10px;
-  border: 1px solid #d2deec;
+  border: 1px solid var(--workspace-line, #d2deec);
   border-radius: 10px;
-  background: #fff;
+  background: var(--workspace-surface, #fff);
   font:
     600 0.7rem 'Montserrat',
     sans-serif;
@@ -25,20 +25,20 @@
 }
 .analytics-metrics article {
   padding: 21px;
-  border: 1px solid #dce5f2;
+  border: 1px solid var(--workspace-line, #dce5f2);
   border-radius: 16px;
-  background: #fff;
+  background: var(--workspace-surface, #fff);
 }
 .analytics-metrics span {
   display: block;
-  color: #69768c;
+  color: var(--workspace-muted, #69768c);
   font-size: 0.68rem;
   font-weight: 650;
 }
 .analytics-metrics strong {
   display: block;
   margin-top: 15px;
-  color: #1c2a44;
+  color: var(--workspace-text, #1c2a44);
   font-size: clamp(1.35rem, 2.2vw, 2rem);
   font-weight: 650;
   letter-spacing: -0.04em;
@@ -87,7 +87,7 @@
   display: block;
 }
 .chart-date {
-  color: #8b97a9;
+  color: var(--workspace-muted, #8b97a9);
   font-size: 0.54rem;
   text-align: center;
   white-space: nowrap;
@@ -113,8 +113,8 @@
   justify-content: space-between;
   gap: 18px;
   padding: 13px 0;
-  border-bottom: 1px solid #e9eef5;
-  color: #34435d;
+  border-bottom: 1px solid var(--workspace-line, #e9eef5);
+  color: var(--workspace-text, #34435d);
   font-size: 0.72rem;
 }
 .performance-list > div:last-child {
@@ -125,7 +125,7 @@
   gap: 4px;
 }
 .performance-list small {
-  color: #8995a6;
+  color: var(--workspace-muted, #8995a6);
   font-size: 0.6rem;
 }
 .growth-list {
@@ -148,16 +148,16 @@
   min-height: 4px;
   max-height: 100%;
   border-radius: 4px 4px 1px 1px;
-  background: #8f78df;
+  background: var(--workspace-accent-text, #8f78df);
 }
 .payment-note strong {
-  color: #283752;
+  color: var(--workspace-text, #283752);
   font-size: 0.78rem;
 }
 .payment-note p {
   max-width: 850px;
   margin: 7px 0 0;
-  color: #6b788c;
+  color: var(--workspace-muted, #6b788c);
   font-size: 0.7rem;
   line-height: 1.6;
 }

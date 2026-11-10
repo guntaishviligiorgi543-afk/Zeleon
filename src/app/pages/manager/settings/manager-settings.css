@@ -17,16 +17,16 @@
   height: 52px;
   place-items: center;
   border-radius: 15px;
-  background: #edf2f8;
-  color: #53627a;
+  background: var(--workspace-subtle, #edf2f8);
+  color: var(--workspace-muted, #53627a);
 }
 .card-icon.blue {
-  background: #e8f0ff;
-  color: #2868ff;
+  background: var(--workspace-subtle, #e8f0ff);
+  color: var(--workspace-accent-text, #2868ff);
 }
 .card-icon.purple {
-  background: #eeeafd;
-  color: #7657e8;
+  background: var(--workspace-subtle, #eeeafd);
+  color: var(--workspace-accent-text, #7657e8);
 }
 .card-icon svg {
   width: 24px;
@@ -39,13 +39,13 @@
 }
 .settings-card h2 {
   margin: 2px 0 8px;
-  color: #22314b;
+  color: var(--workspace-text, #22314b);
   font-size: 1rem;
 }
 .settings-card p {
   max-width: 680px;
   margin: 0 0 18px;
-  color: #6b788d;
+  color: var(--workspace-muted, #6b788d);
   font-size: 0.75rem;
   line-height: 1.65;
 }
@@ -55,24 +55,24 @@ dl {
   gap: 1px;
   margin: 0 0 18px;
   overflow: hidden;
-  border: 1px solid #e0e7f1;
+  border: 1px solid var(--workspace-line, #e0e7f1);
   border-radius: 12px;
-  background: #e0e7f1;
+  background: var(--workspace-accent-bg, #e0e7f1);
 }
 dl div {
   padding: 12px;
-  background: #f9fbfe;
+  background: var(--workspace-surface, #f9fbfe);
 }
 dt {
   margin-bottom: 5px;
-  color: #8490a2;
+  color: var(--workspace-muted, #8490a2);
   font-size: 0.6rem;
   font-weight: 650;
 }
 dd {
   margin: 0;
   overflow: hidden;
-  color: #34435c;
+  color: var(--workspace-text, #34435c);
   font-size: 0.7rem;
   font-weight: 600;
   text-overflow: ellipsis;

@@ -10,16 +10,16 @@ td:nth-child(2) small {
 }
 td:nth-child(2) small {
   margin-top: 4px;
-  color: #8994a6;
+  color: var(--workspace-muted, #8994a6);
   font-size: 0.6rem;
 }
 .details-button {
   min-height: 36px;
   padding: 0 10px;
-  border: 1px solid #d4dfed;
+  border: 1px solid var(--workspace-line, #d4dfed);
   border-radius: 9px;
-  background: #fff;
-  color: #2868ff;
+  background: var(--workspace-surface, #fff);
+  color: var(--workspace-accent-text, #2868ff);
   font:
     650 0.65rem 'Montserrat',
     sans-serif;
@@ -27,7 +27,7 @@ td:nth-child(2) small {
 }
 .details-row td {
   padding: 0;
-  background: #f8faff;
+  background: var(--workspace-surface, #f8faff);
 }
 .order-items {
   display: grid;
@@ -39,11 +39,11 @@ td:nth-child(2) small {
   max-width: 560px;
   justify-content: space-between;
   gap: 20px;
-  color: #5e6c82;
+  color: var(--workspace-muted, #5e6c82);
   font-size: 0.7rem;
 }
 .order-items p {
-  color: #79869a;
+  color: var(--workspace-muted, #79869a);
   font-size: 0.7rem;
 }
 @media (max-width: 700px) {

@@ -25,7 +25,7 @@ td:first-child small {
     max-width: 250px;
     margin-top: 5px;
     overflow: hidden;
-    color: #8793a5;
+    color: var(--workspace-muted, #8793a5);
     font-size: 0.61rem;
     text-overflow: ellipsis;
 }
@@ -35,9 +35,9 @@ td:first-child small {
     min-height: 27px;
     align-items: center;
     padding: 0 9px;
-    border: 1px solid #d5dff0;
+    border: 1px solid var(--workspace-line, #d5dff0);
     border-radius: 8px;
-    color: #43536d;
+    color: var(--workspace-text, #43536d);
     font-size: 0.67rem;
     font-weight: 650;
     text-transform: capitalize;
@@ -55,7 +55,7 @@ td:first-child small {
 }
 
 .protected-label {
-    color: #7657e8;
+    color: var(--workspace-accent-text, #7657e8);
     font-size: 0.68rem;
     font-weight: 650;
 }

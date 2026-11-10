@@ -16,7 +16,7 @@
   align-items: center;
   gap: 16px;
   padding: 15px 20px;
-  border-bottom: 1px solid #e9eef5;
+  border-bottom: 1px solid var(--workspace-line, #e9eef5);
 }
 .product-row:last-child {
   border-bottom: 0;
@@ -27,9 +27,9 @@
   height: 64px;
   overflow: hidden;
   place-items: center;
-  border: 1px solid #e1e8f2;
+  border: 1px solid var(--workspace-line, #e1e8f2);
   border-radius: 13px;
-  background: #f5f8fc;
+  background: var(--workspace-subtle, #f5f8fc);
 }
 .product-image img {
   width: 100%;
@@ -39,7 +39,7 @@
 .product-image svg {
   width: 25px;
   fill: none;
-  stroke: #8a9ab2;
+  stroke: var(--workspace-muted, #8a9ab2);
   stroke-width: 1.4;
 }
 .product-copy {
@@ -52,22 +52,22 @@
 }
 .product-copy strong {
   overflow: hidden;
-  color: #24334e;
+  color: var(--workspace-text, #24334e);
   font-size: 0.82rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .product-copy p {
   margin: 7px 0 4px;
-  color: #69778e;
+  color: var(--workspace-muted, #69778e);
   font-size: 0.68rem;
 }
 .product-copy small {
-  color: #9aa5b5;
+  color: var(--workspace-muted, #9aa5b5);
   font-size: 0.62rem;
 }
 .product-price {
-  color: #263653;
+  color: var(--workspace-text, #263653);
   font-size: 0.82rem;
 }
 .row-actions {
@@ -84,12 +84,12 @@
   justify-content: space-between;
   gap: 14px;
   padding: 16px 20px;
-  border-top: 1px solid #e9eef5;
-  background: #fbfdff;
+  border-top: 1px solid var(--workspace-line, #e9eef5);
+  background: var(--workspace-surface, #fbfdff);
 }
 .pagination-summary {
   margin: 0;
-  color: #69778e;
+  color: var(--workspace-muted, #69778e);
   font-size: 0.68rem;
   font-weight: 600;
 }
@@ -98,7 +98,7 @@
   align-items: center;
   gap: 8px;
   margin-left: auto;
-  color: #69778e;
+  color: var(--workspace-muted, #69778e);
   font-size: 0.68rem;
   font-weight: 600;
 }
@@ -106,11 +106,11 @@
   min-width: 68px;
   min-height: 44px;
   padding: 0 30px 0 11px;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--workspace-line, #dbe3ef);
   border-radius: 10px;
   outline: 0;
-  background: #fff;
-  color: #263653;
+  background: var(--workspace-surface, #fff);
+  color: var(--workspace-text, #263653);
   font:
     600 0.7rem 'Montserrat',
     sans-serif;
@@ -132,10 +132,10 @@
   min-height: 44px;
   padding: 0 10px;
   place-items: center;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--workspace-line, #dbe3ef);
   border-radius: 10px;
-  background: #fff;
-  color: #526078;
+  background: var(--workspace-surface, #fff);
+  color: var(--workspace-text, #526078);
   font:
     600 0.66rem 'Montserrat',
     sans-serif;
@@ -178,12 +178,12 @@
 }
 .editor-header h2 {
   margin: 0;
-  color: #1d2b45;
+  color: var(--workspace-text, #1d2b45);
   font-size: 1.25rem;
 }
 .editor-header p {
   margin: 7px 0 0;
-  color: #7b8799;
+  color: var(--workspace-muted, #7b8799);
   font-size: 0.7rem;
 }
 .close-button {
@@ -192,10 +192,10 @@
   height: 44px;
   flex: 0 0 auto;
   place-items: center;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--workspace-line, #dbe3ef);
   border-radius: 11px;
-  background: #fff;
-  color: #526078;
+  background: var(--workspace-surface, #fff);
+  color: var(--workspace-text, #526078);
   font-size: 1.4rem;
   cursor: pointer;
 }
@@ -210,7 +210,7 @@
   min-width: 0;
   min-height: 46px;
   padding: 10px 12px;
-  border: 1px dashed #b9c8dc;
+  border: 1px dashed var(--workspace-line, #b9c8dc);
   border-radius: 10px;
   outline: 0;
   font:
@@ -227,7 +227,7 @@
   margin-top: 20px;
   padding-top: 18px;
   overflow-x: auto;
-  border-top: 1px solid #e4eaf3;
+  border-top: 1px solid var(--workspace-line, #e4eaf3);
 }
 .image-strip div {
   position: relative;

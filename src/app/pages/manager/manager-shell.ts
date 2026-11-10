@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -17,8 +18,22 @@ interface ManagerNavItem {
   imports: [RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './manager-shell.html',
   styleUrl: './manager-shell.css',
+  host: { '[class.workspace-dark]': 'darkTheme()' },
 })
 export class ManagerShell {
+  private readonly document = inject(DOCUMENT);
+  readonly darkTheme = signal(this.readTheme());
+
+  private readTheme(): boolean {
+    try { return this.document.defaultView?.localStorage.getItem('zeleon-workspace-theme') === 'dark'; }
+    catch { return false; }
+  }
+
+  toggleTheme(): void {
+    this.darkTheme.update(value => !value);
+    try { this.document.defaultView?.localStorage.setItem('zeleon-workspace-theme', this.darkTheme() ? 'dark' : 'light'); }
+    catch { /* The toggle remains usable when browser storage is unavailable. */ }
+  }
   private readonly router = inject(Router);
   readonly auth = inject(Auth);
   readonly staff = inject(StaffAccess);
