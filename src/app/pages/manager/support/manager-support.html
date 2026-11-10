@@ -34,6 +34,25 @@
       <span>Resolved</span><strong>{{ conversations().length - unresolvedCount() }}</strong>
     </article>
   </div>
+  <nav class="support-sections" aria-label="Support sections">
+    <button type="button" class="button" [class.primary]="section() === 'conversations'" (click)="section.set('conversations')">Conversations</button>
+    <button type="button" class="button" [class.primary]="section() === 'ratings'" (click)="section.set('ratings')">Customer ratings ({{ ratings().length }})</button>
+  </nav>
+  @if (section() === 'ratings') {
+    <article class="surface support-ratings">
+      <div class="surface-heading"><div><h2>Customer feedback</h2><p>Ratings submitted after resolved conversations · Visible to Support, Admin and Manager</p></div></div>
+      <div class="support-rating-summary"><strong>{{ averageRating() }} / 5 ★</strong><span>{{ ratings().length }} customer ratings</span></div>
+      @for (item of ratings(); track item.conversation_id) {
+        <article class="support-rating-entry">
+          <div><strong [attr.aria-label]="item.rating + ' out of 5 stars'">
+            @for (star of [1,2,3,4,5]; track star) { <span [style.color]="star <= item.rating ? '#e8a600' : '#a7b4c4'">★</span> }
+          </strong><small>{{ item.created_at | date:'MMM d, y, HH:mm' }}</small></div>
+          <p>{{ item.feedback || 'No written feedback provided.' }}</p>
+          <small>Conversation: {{ item.conversation_id }}</small>
+        </article>
+      } @empty { <p class="empty">No customer ratings yet.</p> }
+    </article>
+  } @else {
   <article class="surface">
     <div class="surface-heading">
       <div>
@@ -129,6 +148,7 @@
       </div>
     }
   </article>
+  }
   @if (selected(); as conversation) {
     <div
       class="thread-backdrop"
