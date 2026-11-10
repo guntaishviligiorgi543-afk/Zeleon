@@ -96,6 +96,14 @@ export class ManagerSupport implements OnInit {
     }
   }
 
+  async resolveThread(): Promise<void> {
+    const conversation = this.selected();
+    if (!conversation || conversation.status === 'resolved' || this.pendingId()) return;
+    await this.changeStatus(conversation, 'resolved');
+    const updated = this.conversations().find(item => item.id === conversation.id);
+    if (updated?.status === 'resolved') this.selected.set(updated);
+  }
+
   async viewThread(conversation: SupportConversation): Promise<void> {
     this.selected.set(conversation);
     this.replyText.set('');
