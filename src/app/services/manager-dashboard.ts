@@ -441,7 +441,8 @@ export class ManagerDashboard {
       body: body.trim(),
     }).select('id').single();
     if (error) throw error;
-    return { emailNotification: await this.sendSupportNotification('support-reply-notification', { messageId: reply.id }) };
+    // Database trigger queues this reply for a 3-minute digest; cron sends only when the chat is inactive.
+    return { emailNotification: 'sent' };
   }
 
   async getSupportMessages(conversationId: string): Promise<SupportMessage[]> {
