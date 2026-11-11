@@ -88,6 +88,7 @@ export class SupportRatingPage {
     const stars = Number(this.route.snapshot.queryParamMap.get('stars'));
     if (Number.isInteger(stars) && stars >= 1 && stars <= 5) this.choice.set(stars);
     effect(() => {
+      if (!this.auth.initialized()) return;
       const userId = this.auth.user()?.id ?? null;
       if (this.lastUserId === undefined) { this.lastUserId = userId; return; }
       if (this.lastUserId === userId) return;
@@ -95,7 +96,7 @@ export class SupportRatingPage {
       this.authRevision++;
       this.clearRatingState();
       // A session switch must not carry an email rating link into another account.
-      void this.router.navigateByUrl('/');
+      if (!this.switching()) void this.router.navigateByUrl('/');
     });
     void this.load();
   }
