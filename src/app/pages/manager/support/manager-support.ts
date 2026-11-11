@@ -25,6 +25,10 @@ export class ManagerSupport implements OnInit {
   readonly averageRating = computed(() => this.ratings().length ? (this.ratings().reduce((sum, row) => sum + row.rating, 0) / this.ratings().length).toFixed(1) : '—');
   readonly replyText = signal('');
   readonly escalationReason = signal('');
+  readonly internalNote = signal('');
+  readonly escalationNotes = signal<Array<{ id: string; body: string; author_id: string; created_at: string }>>([]);
+  readonly reviewBusy = signal(false);
+  readonly escalationQueue = signal(false);
   readonly escalationTarget = signal<'admin' | 'manager'>('admin');
   readonly escalationOpen = signal(false);
   readonly sending = signal(false);
@@ -39,11 +43,11 @@ export class ManagerSupport implements OnInit {
   readonly selected = signal<SupportConversation | null>(null);
   readonly messages = signal<SupportMessage[]>([]);
   readonly messagesLoading = signal(false);
-  readonly filtered = computed(() =>
-    this.filter() === 'all'
-      ? this.conversations()
-      : this.conversations().filter((conversation) => conversation.status === this.filter()),
-  );
+  readonly filtered = computed(() => {
+    const role = this.access.role();
+    const list = this.escalationQueue() ? this.conversations().filter(c => c.status === 'escalated' && (role === 'manager' || c.escalation_target === role)) : this.conversations();
+    return this.filter() === 'all' ? list : list.filter(c => c.status === this.filter());
+  });
   readonly escalatedCount = computed(() => this.conversations().filter(c => c.status === 'escalated').length);
   readonly unresolvedCount = computed(
     () => this.conversations().filter((conversation) => conversation.status !== 'resolved').length,
@@ -162,14 +166,44 @@ export class ManagerSupport implements OnInit {
     this.escalationOpen.set(false);
     this.replyText.set('');
     this.messages.set([]);
+    this.escalationNotes.set([]);
+    this.internalNote.set('');
     this.messagesLoading.set(true);
     this.error.set('');
     try {
-      this.messages.set(await this.dashboard.getSupportMessages(conversation.id));
+      const [messages, notes] = await Promise.all([this.dashboard.getSupportMessages(conversation.id), this.dashboard.escalationNotes(conversation.id)]);
+      this.messages.set(messages);
+      this.escalationNotes.set(notes);
     } catch {
       this.error.set('The protected conversation messages could not be loaded.');
     } finally {
       this.messagesLoading.set(false);
+    }
+  }
+
+  async reviewEscalation(action: 'accept' | 'note' | 'return' | 'resolve'): Promise<void> {
+    const conversation = this.selected();
+    if (!conversation || this.reviewBusy()) return;
+    const note = this.internalNote().trim();
+    if (action === 'note' && !note) return;
+    if ((action === 'return' || action === 'resolve') && note.length < 10) {
+      this.error.set('Write a decision of at least 10 characters.');
+      return;
+    }
+    this.reviewBusy.set(true);
+    this.error.set('');
+    try {
+      await this.dashboard.escalationAction(conversation.id, action, note || undefined);
+      await this.load();
+      const updated = this.conversations().find(c => c.id === conversation.id);
+      if (updated) this.selected.set(updated);
+      this.escalationNotes.set(await this.dashboard.escalationNotes(conversation.id));
+      this.internalNote.set('');
+      this.success.set(action === 'accept' ? 'Escalation accepted.' : action === 'note' ? 'Internal note saved (not visible to customer).' : 'Decision saved and ticket updated.');
+    } catch (e) {
+      this.error.set(e instanceof Error ? e.message : 'Escalation action failed.');
+    } finally {
+      this.reviewBusy.set(false);
     }
   }
 
