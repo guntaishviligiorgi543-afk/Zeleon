@@ -401,7 +401,7 @@ export class ManagerDashboard {
 
   async updateConversation(
     id: string,
-    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null; escalation_target?: 'admin' | 'manager' | null },
+    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null; escalation_target?: 'admin' | 'manager' | null; escalated_at?: string | null },
   ): Promise<void> {
     const { data, error } = await this.client.from('support_conversations').update(changes).eq('id', id).select('id').maybeSingle();
     if (error) throw error;
