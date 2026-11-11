@@ -9,24 +9,30 @@ describe('ManagerSupport reply composer', () => {
     id: 'conversation-1', customer_first_name: 'Test', customer_last_name: 'Customer',
     customer_email: 'customer@example.com', subject: 'Order question', status: 'open',
     assigned_support_id: 'support-1', created_at: '2026-11-09T00:00:00Z',
+    escalation_reason: null, escalation_target: null, escalated_at: null,
     updated_at: '2026-11-09T00:00:00Z', rating: null,
   };
 
-  async function openThread() {
+  async function openThread(role = 'support', selectedConversation = conversation) {
     await TestBed.configureTestingModule({
       imports: [ManagerSupport],
       providers: [
-        { provide: StaffAccess, useValue: { role: signal('support') } },
+        { provide: StaffAccess, useValue: { role: signal(role) } },
         { provide: ManagerDashboard, useValue: {
-          getSupportConversations: async () => [conversation],
+          getSupportConversations: async () => [selectedConversation],
+          getSupportRatings: async () => selectedConversation.rating ? [{
+            ...selectedConversation.rating, conversation_id: selectedConversation.id, created_at: selectedConversation.updated_at,
+          }] : [],
+          getStaffDirectory: async () => [],
           getSupportMessages: async () => [],
         } },
       ],
     }).compileComponents();
     const fixture = TestBed.createComponent(ManagerSupport);
+    await fixture.componentInstance.load();
     fixture.detectChanges();
     await fixture.whenStable();
-    await fixture.componentInstance.viewThread(conversation);
+    await fixture.componentInstance.viewThread(selectedConversation);
     fixture.detectChanges();
     await fixture.whenStable();
     return fixture;
@@ -55,4 +61,34 @@ describe('ManagerSupport reply composer', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.selected()).toBeNull();
   });
+
+  const escalatedConversation: SupportConversation = {
+    ...conversation, status: 'escalated', escalation_target: 'admin',
+    escalation_reason: 'Escalation detail for the reviewing manager.',
+    escalated_at: '2026-11-09T00:00:00Z',
+    rating: { rating: 4, feedback: 'Customer feedback belongs in ratings.' },
+  };
+
+  it('shows only an escalation badge and rating score in the Support dashboard', async () => {
+    const fixture = await openThread('support', escalatedConversation);
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('.conversation-row .status.escalated')?.textContent).toBe('Escalated');
+    expect(root.querySelector('.thread-panel .status.escalated')?.textContent).toBe('Escalated');
+    expect(root.querySelector('.rating')?.textContent).toContain('4/5');
+    expect(root.textContent).not.toContain(escalatedConversation.escalation_reason);
+    expect(root.textContent).not.toContain(escalatedConversation.rating!.feedback);
+    fixture.componentInstance.closeThread();
+    fixture.componentInstance.section.set('ratings');
+    fixture.detectChanges();
+    expect(root.querySelector('.support-rating-entry')?.textContent).toContain(escalatedConversation.rating!.feedback);
+    expect(root.querySelector('.support-rating-entry [aria-label="4 out of 5 stars"]')).not.toBeNull();
+  });
+
+  for (const role of ['admin', 'manager']) {
+    it(`preserves escalation details for ${role} review`, async () => {
+      const fixture = await openThread(role, escalatedConversation);
+      expect(fixture.nativeElement.querySelector('.thread-panel').textContent).toContain(escalatedConversation.escalation_reason);
+      expect(fixture.nativeElement.querySelector('.rating').textContent).not.toContain(escalatedConversation.rating!.feedback);
+    });
+  }
 });
