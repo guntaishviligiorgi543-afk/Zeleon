@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { Auth, authErrorMessage, profileDestination } from '../../services/auth';
 import { EMAIL_PATTERN } from '../auth-validation';
 import { PasswordToggle } from '../../directives/password-toggle.directive';
+import { legacyRatingPath } from '../support-rating/rating-link';
 
 @Component({
   imports: [ReactiveFormsModule, RouterLink, PasswordToggle],
@@ -35,7 +36,10 @@ export class Login {
       this.form.controls.password.reset();
       const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
       const supportChat = this.router.parseUrl(this.router.url).queryParams['supportChat'];
-      if (typeof supportChat === 'string' && /^[0-9a-f-]{36}$/i.test(supportChat)) {
+      const ratingPath = legacyRatingPath(this.router.parseUrl(this.router.url).queryParams);
+      if (ratingPath) {
+        await this.router.navigateByUrl(ratingPath);
+      } else if (typeof supportChat === 'string' && /^[0-9a-f-]{36}$/i.test(supportChat)) {
         await this.router.navigate(['/'], { queryParams: { supportChat } });
       } else if (typeof returnUrl === 'string' && /^\/rate-support\/[0-9a-f-]{36}(?:\?stars=[1-5])?$/i.test(returnUrl)) {
         await this.router.navigateByUrl(returnUrl);

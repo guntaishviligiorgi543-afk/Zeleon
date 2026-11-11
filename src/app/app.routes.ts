@@ -1,4 +1,6 @@
-import { Routes } from '@angular/router';
+import { Router, Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { legacyRatingPath } from './pages/support-rating/rating-link';
 
 import { Home } from './pages/home/home';
 import { Shop } from './pages/shop/shop';
@@ -25,6 +27,11 @@ export const routes: Routes = [
   {
     path: '',
     component: Home,
+    canActivate: [(route) => {
+      const target = legacyRatingPath(route.queryParams);
+      return target ? inject(Router).parseUrl(target) : true;
+    }],
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
   },
   {
     path: 'rate-support/:id',

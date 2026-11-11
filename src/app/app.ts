@@ -19,6 +19,7 @@ import { Footer } from './components/footer/footer';
 import { Home } from './pages/home/home';
 import { CustomerChat } from './components/customer-chat/customer-chat';
 import { ManagerNavigation } from './components/manager-navigation/manager-navigation';
+import { legacyRatingPath } from './pages/support-rating/rating-link';
 
 @Component({
   imports: [RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat, Home],
@@ -29,7 +30,7 @@ import { ManagerNavigation } from './components/manager-navigation/manager-navig
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
   protected readonly router = inject(Router);
-  protected readonly ratingRoute = signal(this.router.url.startsWith('/rate-support/'));
+  protected readonly ratingRoute = signal(this.isRatingUrl(this.router.url));
   protected readonly workspaceRoute = signal(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(this.router.url));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -48,7 +49,7 @@ export class App implements AfterViewInit {
         takeUntilDestroyed(this.destroyRef),
       )
       .subscribe((event) => {
-        this.ratingRoute.set(event.urlAfterRedirects.startsWith('/rate-support/'));
+        this.ratingRoute.set(this.isRatingUrl(event.urlAfterRedirects));
         this.workspaceRoute.set(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(event.urlAfterRedirects));
         this.refreshAfterRender();
       });
@@ -58,6 +59,10 @@ export class App implements AfterViewInit {
       this.layoutObserver?.disconnect();
       if (this.layoutFrame !== null) window.cancelAnimationFrame(this.layoutFrame);
     });
+  }
+
+  private isRatingUrl(url: string): boolean {
+    return url.startsWith('/rate-support/') || !!legacyRatingPath(this.router.parseUrl(url).queryParams);
   }
 
   private refreshAfterRender(): void {

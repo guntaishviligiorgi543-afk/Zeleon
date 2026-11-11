@@ -1,0 +1,5 @@
+:host > [inert],
+main > app-home[inert] {
+  position: relative;
+  z-index: 0;
+}

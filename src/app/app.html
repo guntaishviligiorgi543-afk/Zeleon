@@ -1,14 +1,14 @@
 @if (!workspaceRoute()) {
-  <app-header></app-header>
+  <app-header [attr.inert]="ratingRoute() ? '' : null"></app-header>
 }
 <main>
-  @if (ratingRoute()) { <app-home></app-home> }
+  @if (ratingRoute()) { <app-home inert></app-home> }
   <router-outlet></router-outlet>
 </main>
 @if (!workspaceRoute()) {
-  <app-footer></app-footer>
+  <app-footer [attr.inert]="ratingRoute() ? '' : null"></app-footer>
 }
-<app-manager-navigation></app-manager-navigation>
+<app-manager-navigation [attr.inert]="ratingRoute() ? '' : null"></app-manager-navigation>
 @if (!workspaceRoute() && !ratingRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
   <app-customer-chat></app-customer-chat>
 }

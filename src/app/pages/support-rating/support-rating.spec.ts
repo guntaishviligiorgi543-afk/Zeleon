@@ -5,8 +5,10 @@ import { SUPABASE_CLIENT } from '../../services/supabase';
 import { SupportRatingPage } from './support-rating';
 
 describe('Support rating stars', () => {
+  const insert = vi.fn();
+  beforeEach(() => insert.mockReset().mockResolvedValue({ error: null }));
   async function create(stars?: string) {
-    const client = { from: (table: string) => ({ select: () => ({ eq: () => ({
+    const client = { from: (table: string) => ({ insert, select: () => ({ eq: () => ({
       maybeSingle: async () => ({ data: table === 'support_conversations'
         ? { id: 'conversation', subject: 'Help', status: 'resolved' } : null, error: null }),
     }) }) }) };
@@ -17,7 +19,7 @@ describe('Support rating stars', () => {
           paramMap: convertToParamMap({ id: 'conversation' }),
           queryParamMap: convertToParamMap(stars === undefined ? {} : { stars }),
         } } },
-        { provide: Auth, useValue: { ready: Promise.resolve(), isAuthenticated: () => true } },
+        { provide: Auth, useValue: { ready: Promise.resolve(), isAuthenticated: () => true, getCurrentUser: async () => ({ id: 'customer' }) } },
         { provide: SUPABASE_CLIENT, useValue: client },
       ],
     }).compileComponents();
@@ -28,6 +30,48 @@ describe('Support rating stars', () => {
     fixture.detectChanges();
     return fixture;
   }
+
+  it('submits once with optional feedback and shows success', async () => {
+    const fixture = await create('4');
+    fixture.componentInstance.feedback.set('Great help');
+    await fixture.componentInstance.submit();
+    await fixture.componentInstance.submit();
+    fixture.detectChanges();
+    expect(insert).toHaveBeenCalledTimes(1);
+    expect(insert).toHaveBeenCalledWith({ conversation_id: 'conversation', customer_user_id: 'customer', rating: 4, feedback: 'Great help' });
+    expect(fixture.nativeElement.querySelector('.rate-success').textContent).toContain('4 / 5');
+  });
+
+  it('keeps the form and selection available after a failed save', async () => {
+    const fixture = await create('3');
+    insert.mockResolvedValueOnce({ error: { code: 'network' } });
+    await fixture.componentInstance.submit();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[role="alert"]')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('#rate-feedback')).not.toBeNull();
+    expect(fixture.componentInstance.choice()).toBe(3);
+    expect(fixture.componentInstance.saving()).toBe(false);
+  });
+
+  it('locks scrolling, traps focus, closes on Escape/backdrop, and restores scroll', async () => {
+    const before = document.body.style.overflow;
+    const fixture = await create();
+    const navigate = vi.spyOn(TestBed.inject((await import('@angular/router')).Router), 'navigateByUrl').mockResolvedValue(true);
+    expect(document.body.style.overflow).toBe('hidden');
+    const close = fixture.nativeElement.querySelector('.rate-close') as HTMLButtonElement;
+    const feedback = fixture.nativeElement.querySelector('textarea') as HTMLTextAreaElement;
+    close.focus();
+    close.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(feedback);
+    fixture.nativeElement.querySelector('.rate-card').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(navigate).not.toHaveBeenCalled();
+    fixture.nativeElement.querySelector('.rating-overlay').dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    expect(navigate).toHaveBeenCalledWith('/');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(navigate).toHaveBeenCalledTimes(2);
+    fixture.destroy();
+    expect(document.body.style.overflow).toBe(before);
+  });
 
   it('starts with five gray, unselected stars and disables submission', async () => {
     const fixture = await create();

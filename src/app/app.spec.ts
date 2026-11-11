@@ -4,12 +4,15 @@ import { provideRouter, Router } from '@angular/router';
 import { Auth } from './services/auth';
 import { createAuthStub } from './testing/auth-stub';
 import { App } from './app';
+import { Products } from './services/products';
 
 @Component({ template: '' })
 class RoutedPage {}
 
 describe('App', () => {
   beforeEach(async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true, addEventListener() {}, removeEventListener() {} }));
+    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
@@ -19,10 +22,32 @@ describe('App', () => {
           { path: 'admin', component: RoutedPage },
           { path: 'admin/staff', component: RoutedPage },
           { path: 'support', component: RoutedPage },
+          { path: 'rate-support/:id', loadComponent: () => import('./pages/support-rating/support-rating').then(m => m.SupportRatingPage) },
         ]),
         { provide: Auth, useValue: createAuthStub() },
+        { provide: Products, useValue: { getActiveProducts: async () => [] } },
       ],
     }).compileComponents();
+  });
+
+  it('renders the actual homepage behind the rating modal and removes the chat widget', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    await TestBed.inject(Router).navigateByUrl('/rate-support/00000000-0000-4000-8000-000000000001?stars=3');
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('app-home .hero h1')?.textContent).toContain('born to');
+    expect(root.querySelector('.rating-overlay [role="dialog"] h1')?.textContent).toBe('Rate your experience');
+    expect(root.querySelector('app-customer-chat')).toBeNull();
+    expect(root.querySelector('app-header')?.hasAttribute('inert')).toBe(true);
+    expect(root.querySelector('app-home')?.hasAttribute('inert')).toBe(true);
+    expect(root.querySelector('app-footer')?.hasAttribute('inert')).toBe(true);
+    expect(root.querySelector('a.rate-submit')?.getAttribute('href')).toContain('stars%3D3');
+    await TestBed.inject(Router).navigateByUrl('/');
+    fixture.detectChanges();
+    expect(root.querySelector('.rating-overlay')).toBeNull();
+    expect(root.querySelector('app-header')?.hasAttribute('inert')).toBe(false);
   });
 
   it('should create the app', () => {

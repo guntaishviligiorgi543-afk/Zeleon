@@ -4,6 +4,7 @@ import { Auth } from '../../services/auth';
 import { SUPABASE_CLIENT } from '../../services/supabase';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { environment } from '../../../environments/environment';
+import { legacyRatingPath } from '../../pages/support-rating/rating-link';
 
 type Conversation = { id: string; subject: string | null; status: string; updated_at: string };
 type Message = { id: string; conversation_id: string; sender_type: string; body: string; created_at: string };
@@ -44,8 +45,11 @@ export class CustomerChat {
   constructor() {
     document.addEventListener('visibilitychange', this.onVisibilityChange);
     const querySubscription = this.route.queryParamMap.subscribe(params => {
-      const rating = Number(params.get('supportRating'));
-      if (Number.isInteger(rating) && rating >= 1 && rating <= 5) this.ratingChoice.set(rating);
+      const ratingPath = legacyRatingPath({ supportChat: params.get('supportChat'), supportRating: params.get('supportRating') });
+      if (ratingPath) {
+        void this.router.navigateByUrl(ratingPath, { replaceUrl: true });
+        return;
+      }
       const id = params.get('supportChat');
       if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
       this.deepLink.set(id);
