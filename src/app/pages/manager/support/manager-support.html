@@ -229,16 +229,18 @@
         }
         <div class="thread-actions">
           @if (conversation.status === 'resolved') {
-            <span role="status">Resolved</span>
-          } @else {
+            <span role="status">Customer conversation resolved</span>
+          } @else if (isSupport) {
             @if (conversation.status !== 'escalated') {
               <button type="button" class="button" (click)="escalationOpen.set(true)" [disabled]="pendingId() === conversation.id">Escalate conversation</button>
+              <button type="button" class="button primary" (click)="resolveThread()" [disabled]="pendingId() === conversation.id">
+                {{ pendingId() === conversation.id ? 'Resolving...' : 'Resolve customer conversation' }}
+              </button>
             } @else {
-              <button type="button" class="button" (click)="resumeThread()" [disabled]="pendingId() === conversation.id">Return to open</button>
+              <span class="status escalated">Awaiting Admin / Manager decision</span>
             }
-            <button type="button" class="button primary" (click)="resolveThread()" [disabled]="pendingId() === conversation.id">
-              {{ pendingId() === conversation.id ? 'Resolving...' : 'Mark as resolved' }}
-            </button>
+          } @else {
+            <span>Customer conversation closure is managed by Support. Use the escalation review actions above.</span>
           }
         </div>
         @if (isSupport && (conversation.status === 'open' || conversation.status === 'waiting_customer')) {
