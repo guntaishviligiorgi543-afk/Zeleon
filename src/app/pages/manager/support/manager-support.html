@@ -123,7 +123,7 @@
               </button>
             }
             @if (conversation.status === "escalated") {
-              <div class="notice error"><strong>Escalated</strong><p>{{ conversation.escalation_reason || "Requires review" }}</p></div>
+              <div class="notice error"><strong>Escalated to {{ conversation.escalation_target === 'manager' ? 'Manager' : conversation.escalation_target === 'admin' ? 'Admin' : 'Admin / Manager' }}</strong><p>{{ conversation.escalation_reason || "Requires review" }}</p></div>
             }
             <div class="rating">
               @if (conversation.rating; as rating) {
@@ -172,7 +172,7 @@
         </header>
         @if (conversation.status === 'escalated') {
           <div class="notice error" role="status">
-            <strong>Escalated to Admin / Manager</strong>
+            <strong>Escalated to {{ conversation.escalation_target === 'manager' ? 'Manager' : conversation.escalation_target === 'admin' ? 'Admin' : 'Admin / Manager' }}</strong>
             <p>{{ conversation.escalation_reason }}</p>
             @if (conversation.escalated_at) { <small>{{ conversation.escalated_at | date:'MMM d, y, HH:mm' }}</small> }
           </div>
@@ -180,6 +180,7 @@
         @if (escalationOpen()) {
           <div class="support-reply-form">
             @if (error()) { <div class="notice error" role="alert">{{ error() }}</div> }
+            <fieldset class="escalation-destination"><legend>Escalate to</legend><label><input type="radio" name="escalation-target" value="admin" [checked]="escalationTarget() === 'admin'" (change)="escalationTarget.set('admin')" /> Admin</label><label><input type="radio" name="escalation-target" value="manager" [checked]="escalationTarget() === 'manager'" (change)="escalationTarget.set('manager')" /> Manager</label></fieldset>
             <label for="escalation-reason">Escalation reason (required, 10–2000 characters)</label>
             <textarea id="escalation-reason" rows="3" maxlength="2000" [ngModel]="escalationReason()" (ngModelChange)="escalationReason.set($event)" placeholder="Describe the issue and why Admin / Manager assistance is required"></textarea>
             <button type="button" class="button primary" [disabled]="escalationReason().trim().length < 10 || pendingId() === conversation.id" (click)="escalateThread()">Submit escalation</button>
@@ -191,7 +192,7 @@
             <span role="status">Resolved</span>
           } @else {
             @if (conversation.status !== 'escalated') {
-              <button type="button" class="button" (click)="escalationOpen.set(true)" [disabled]="pendingId() === conversation.id">Escalate to Admin / Manager</button>
+              <button type="button" class="button" (click)="escalationOpen.set(true)" [disabled]="pendingId() === conversation.id">Escalate conversation</button>
             } @else {
               <button type="button" class="button" (click)="resumeThread()" [disabled]="pendingId() === conversation.id">Return to open</button>
             }
