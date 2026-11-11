@@ -283,3 +283,8 @@
 .support-rating-entry strong { font-size:1.45rem;letter-spacing:2px; }
 .support-rating-entry p { margin:10px 0;color:#425d75;white-space:pre-wrap; }
 .support-rating-entry small { color:#65728a; }
+
+.escalation-destination{display:flex;flex-wrap:wrap;gap:12px 20px;border:1px solid #d8e2ed;border-radius:10px;padding:12px 16px;margin:0 0 14px}
+.escalation-destination legend{font-weight:650;padding:0 6px}
+.escalation-destination label{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.escalation-destination input{accent-color:#338fc2}
