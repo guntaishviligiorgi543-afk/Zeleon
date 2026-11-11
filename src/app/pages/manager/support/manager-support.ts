@@ -121,13 +121,14 @@ export class ManagerSupport implements OnInit {
       try {
         const claimed = await this.dashboard.claimSupportConversation(conversation.id);
         if (!claimed) throw new Error('This request was already claimed by another agent.');
+        await this.load();
       } catch (e) {
         this.error.set(e instanceof Error ? e.message : 'Claim this request before escalating.');
         return;
       }
     }
     const target = this.escalationTarget();
-    const saved = await this.update(conversation, { status: 'escalated', escalation_reason: reason, escalation_target: target }, `Request escalated to ${target === 'admin' ? 'Admin' : 'Manager'} queue.`);
+    const saved = await this.update(conversation, { status: 'escalated', escalation_reason: reason, escalation_target: target, escalated_at: new Date().toISOString() }, `Request escalated to ${target === 'admin' ? 'Admin' : 'Manager'} queue.`);
     if (!saved) return;
     const updated = this.conversations().find(item => item.id === conversation.id);
     if (updated?.status === 'escalated') {
@@ -217,7 +218,7 @@ export class ManagerSupport implements OnInit {
 
   private async update(
     conversation: SupportConversation,
-    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null; escalation_target?: 'admin' | 'manager' | null },
+    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null; escalation_target?: 'admin' | 'manager' | null; escalated_at?: string | null },
     message: string,
   ): Promise<boolean> {
     this.pendingId.set(conversation.id);
