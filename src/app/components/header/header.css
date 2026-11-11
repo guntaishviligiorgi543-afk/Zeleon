@@ -197,6 +197,11 @@ header {
     transition: gap 280ms ease, padding 280ms ease, color 280ms ease;
 }
 
+.headerIcons .auth-action-label,
+.headerIcons .auth-signup-link {
+    font-size: 1rem;
+}
+
 .auth-action-label {
     max-width: 0;
     margin-left: 0;
@@ -206,7 +211,6 @@ header {
     white-space: nowrap;
     color: #fefefe;
     font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-    font-size: 0.56rem;
     font-weight: 650;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -236,7 +240,6 @@ header {
     white-space: nowrap;
     color: #fefefe;
     font-family: 'Montserrat', Helvetica, Arial, sans-serif;
-    font-size: 0.46rem;
     font-weight: 650;
     letter-spacing: 0.08em;
     text-transform: uppercase;
