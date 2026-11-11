@@ -25,6 +25,7 @@ export class ManagerSupport implements OnInit {
   readonly averageRating = computed(() => this.ratings().length ? (this.ratings().reduce((sum, row) => sum + row.rating, 0) / this.ratings().length).toFixed(1) : '—');
   readonly replyText = signal('');
   readonly escalationReason = signal('');
+  readonly escalationTarget = signal<'admin' | 'manager'>('admin');
   readonly escalationOpen = signal(false);
   readonly sending = signal(false);
   readonly conversations = signal<SupportConversation[]>([]);
@@ -95,6 +96,7 @@ export class ManagerSupport implements OnInit {
     if (value === 'escalated' && conversation.status !== 'escalated') {
       this.selected.set(conversation);
       this.escalationReason.set('');
+      this.escalationTarget.set('admin');
       this.escalationOpen.set(true);
       return;
     }
@@ -124,7 +126,8 @@ export class ManagerSupport implements OnInit {
         return;
       }
     }
-    const saved = await this.update(conversation, { status: 'escalated', escalation_reason: reason }, 'Request escalated to Admin and Manager queue.');
+    const target = this.escalationTarget();
+    const saved = await this.update(conversation, { status: 'escalated', escalation_reason: reason, escalation_target: target }, `Request escalated to ${target === 'admin' ? 'Admin' : 'Manager'} queue.`);
     if (!saved) return;
     const updated = this.conversations().find(item => item.id === conversation.id);
     if (updated?.status === 'escalated') {
@@ -132,8 +135,8 @@ export class ManagerSupport implements OnInit {
       this.escalationOpen.set(false);
       const notification = await this.dashboard.notifySupportEscalated(conversation.id);
       this.success.set(notification === 'sent'
-        ? 'Request escalated. Admin and Manager email notifications requested.'
-        : 'Request escalated, but staff email notification failed. Admin and Manager can still review it in the dashboard.');
+        ? `Request escalated to ${target}. Staff email notification requested.`
+        : `Request escalated to ${target}, but staff email notification failed. The request remains available in the dashboard.`);
     }
   }
 
@@ -214,7 +217,7 @@ export class ManagerSupport implements OnInit {
 
   private async update(
     conversation: SupportConversation,
-    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null },
+    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null; escalation_target?: 'admin' | 'manager' | null },
     message: string,
   ): Promise<boolean> {
     this.pendingId.set(conversation.id);
