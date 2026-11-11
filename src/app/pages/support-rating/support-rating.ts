@@ -95,8 +95,9 @@ export class SupportRatingPage {
       this.lastUserId = userId;
       this.authRevision++;
       this.clearRatingState();
-      // A session switch must not carry an email rating link into another account.
-      if (!this.switching()) void this.router.navigateByUrl('/');
+      // Revalidate against the new session instead of leaving the modal empty.
+      // Explicit account switching is handled by switchAccount().
+      if (!this.switching()) void this.load();
     });
     void this.load();
   }
@@ -135,12 +136,15 @@ export class SupportRatingPage {
   async load(): Promise<void> {
     const revision = ++this.authRevision;
     this.loading.set(true);
+    this.alreadyRated.set(null);
+    this.subject.set('');
     this.eligible.set(false);
     this.accountMismatch.set(false);
     this.error.set('');
     try {
       await this.auth.ready;
-      if (!this.auth.isAuthenticated()) { this.loading.set(false); return; }
+      if (revision !== this.authRevision) return;
+      if (!this.auth.isAuthenticated()) return;
       const expectedUserId = this.auth.user()?.id;
       const { data: conversation, error } = await this.client.from('support_conversations')
         .select('id,subject,status,customer_user_id').eq('id', this.conversationId).maybeSingle();
