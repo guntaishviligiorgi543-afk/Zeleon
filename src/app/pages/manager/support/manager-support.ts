@@ -199,7 +199,12 @@ export class ManagerSupport implements OnInit {
       if (updated) this.selected.set(updated);
       this.escalationNotes.set(await this.dashboard.escalationNotes(conversation.id));
       this.internalNote.set('');
-      this.success.set(action === 'accept' ? 'Escalation accepted.' : action === 'note' ? 'Internal note saved (not visible to customer).' : 'Decision saved and ticket updated.');
+      if (action === 'return' || action === 'resolve') {
+        const delivery = await this.dashboard.notifyEscalationDecision(conversation.id);
+        this.success.set(delivery === 'sent' ? 'Decision saved. Support email notification requested.' : 'Decision saved, but Support email notification failed.');
+      } else {
+        this.success.set(action === 'accept' ? 'Escalation accepted.' : 'Internal note saved (not visible to customer).');
+      }
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Escalation action failed.');
     } finally {
