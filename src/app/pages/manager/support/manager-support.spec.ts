@@ -85,10 +85,18 @@ describe('ManagerSupport reply composer', () => {
   });
 
   for (const role of ['admin', 'manager']) {
-    it(`preserves escalation details for ${role} review`, async () => {
+    it(`shows only escalation badges and a rating score for ${role}`, async () => {
       const fixture = await openThread(role, escalatedConversation);
-      expect(fixture.nativeElement.querySelector('.thread-panel').textContent).toContain(escalatedConversation.escalation_reason);
-      expect(fixture.nativeElement.querySelector('.rating').textContent).not.toContain(escalatedConversation.rating!.feedback);
+      const root = fixture.nativeElement as HTMLElement;
+      expect(root.querySelector('.conversation-row .status.escalated')?.textContent).toBe('Escalated');
+      expect(root.querySelector('.thread-panel .status.escalated')?.textContent).toBe('Escalated');
+      expect(root.querySelector('.rating')?.textContent).toContain('4/5');
+      expect(root.textContent).not.toContain(escalatedConversation.escalation_reason);
+      expect(root.textContent).not.toContain(escalatedConversation.rating!.feedback);
+      fixture.componentInstance.closeThread();
+      fixture.componentInstance.section.set('ratings');
+      fixture.detectChanges();
+      expect(root.querySelector('.support-rating-entry')?.textContent).toContain(escalatedConversation.rating!.feedback);
     });
   }
 });

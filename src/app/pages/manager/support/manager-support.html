@@ -128,11 +128,7 @@
               </button>
             }
             @if (conversation.status === "escalated") {
-              @if (isSupport) {
-                <span class="status escalated">Escalated</span>
-              } @else {
-                <div class="notice error"><strong>Escalated to {{ conversation.escalation_target === 'manager' ? 'Manager' : conversation.escalation_target === 'admin' ? 'Admin' : 'Admin / Manager' }}</strong><p>{{ conversation.escalation_reason || "Requires review" }}</p></div>
-              }
+              <span class="status escalated">Escalated</span>
             }
             <div class="rating">
               @if (conversation.rating; as rating) {
@@ -179,15 +175,7 @@
           <button type="button" aria-label="Close conversation" (click)="closeThread()">×</button>
         </header>
         @if (conversation.status === 'escalated') {
-          @if (isSupport) {
-            <div class="thread-actions"><span class="status escalated" role="status">Escalated</span></div>
-          } @else {
-          <div class="notice error" role="status">
-            <strong>Escalated to {{ conversation.escalation_target === 'manager' ? 'Manager' : conversation.escalation_target === 'admin' ? 'Admin' : 'Admin / Manager' }}</strong>
-            <p>{{ conversation.escalation_reason }}</p>
-            @if (conversation.escalated_at) { <small>{{ conversation.escalated_at | date:'MMM d, y, HH:mm' }}</small> }
-          </div>
-          }
+          <div class="thread-actions"><span class="status escalated" role="status">Escalated</span></div>
         }
         @if (conversation.escalation_target && (isSupport || access.role() === 'manager' || access.role() === conversation.escalation_target)) {
           <section class="support-reply-form" aria-label="Internal escalation review">
