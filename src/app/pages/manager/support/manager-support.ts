@@ -97,6 +97,7 @@ export class ManagerSupport implements OnInit {
       'escalated',
     ];
     if (!allowed.includes(value as SupportConversation['status'])) return;
+    if (this.isSupport && conversation.status === 'escalated' && value === 'resolved') return;
     if (value === 'escalated' && conversation.status !== 'escalated') {
       this.selected.set(conversation);
       this.escalationReason.set('');
@@ -147,7 +148,7 @@ export class ManagerSupport implements OnInit {
 
   async resumeThread(): Promise<void> {
     const conversation = this.selected();
-    if (!conversation || conversation.status !== 'escalated') return;
+    if (!this.isSupport || !conversation || conversation.status !== 'escalated') return;
     await this.changeStatus(conversation, 'open');
     const updated = this.conversations().find(item => item.id === conversation.id);
     if (updated?.status === 'open') this.selected.set(updated);
@@ -155,7 +156,7 @@ export class ManagerSupport implements OnInit {
 
   async resolveThread(): Promise<void> {
     const conversation = this.selected();
-    if (!conversation || conversation.status === 'resolved' || this.pendingId()) return;
+    if (!this.isSupport || !conversation || conversation.status === 'resolved' || conversation.status === 'escalated' || this.pendingId()) return;
     await this.changeStatus(conversation, 'resolved');
     const updated = this.conversations().find(item => item.id === conversation.id);
     if (updated?.status === 'resolved') this.selected.set(updated);
