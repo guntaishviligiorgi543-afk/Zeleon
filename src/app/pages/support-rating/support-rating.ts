@@ -16,6 +16,10 @@ import { SUPABASE_CLIENT } from '../../services/supabase';
         @else if (!auth.isAuthenticated()) {
           <p>Please sign in to submit your rating.</p>
           <a class="rate-submit" [routerLink]="['/login']" [queryParams]="{ returnUrl: returnPath }">Sign in to rate</a>
+        } @else if (accountMismatch()) {
+          <p>This rating link may belong to another account. Sign in with the account that received the email to continue.</p>
+          <button type="button" class="rate-submit" [disabled]="switching()" (click)="switchAccount()">{{ switching() ? 'Switching…' : 'Switch Account' }}</button>
+          <a class="rate-home" routerLink="/">Back to Home</a>
         } @else if (alreadyRated()) {
           <p class="rate-success">Thanks! You rated this conversation {{ alreadyRated() }} / 5 ★.</p>
         } @else if (eligible()) {
