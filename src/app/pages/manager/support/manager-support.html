@@ -38,6 +38,11 @@
     <button type="button" class="button" [class.primary]="section() === 'conversations'" (click)="section.set('conversations')">Conversations</button>
     <button type="button" class="button" [class.primary]="section() === 'ratings'" (click)="section.set('ratings')">Customer ratings ({{ ratings().length }})</button>
   </nav>
+  @if (!isSupport) {
+    <button type="button" class="button" [class.primary]="escalationQueue()" (click)="escalationQueue.set(!escalationQueue()); filter.set('all')">
+      {{ escalationQueue() ? 'Show all conversations' : 'Escalations for my role' }}
+    </button>
+  }
   @if (section() === 'ratings') {
     <article class="surface support-ratings">
       <div class="surface-heading"><div><h2>Customer feedback</h2><p>Ratings submitted after resolved conversations · Visible to Support, Admin and Manager</p></div></div>
@@ -183,6 +188,27 @@
             @if (conversation.escalated_at) { <small>{{ conversation.escalated_at | date:'MMM d, y, HH:mm' }}</small> }
           </div>
           }
+        }
+        @if (conversation.escalation_target && (isSupport || access.role() === 'manager' || access.role() === conversation.escalation_target)) {
+          <section class="support-reply-form" aria-label="Internal escalation review">
+            <h3>Internal escalation review</h3>
+            <p>Review: {{ conversation.review_status || 'pending' }}. Notes are visible to staff only, never to the customer.</p>
+            @for (note of escalationNotes(); track note.id) {
+              <article class="surface"><small>{{ note.created_at | date:'MMM d, y, HH:mm' }}</small><p>{{ note.body }}</p></article>
+            }
+            @if (!isSupport && conversation.status === 'escalated' && (conversation.review_status === 'pending' || !conversation.reviewer_id)) {
+              <button type="button" class="button primary" [disabled]="reviewBusy()" (click)="reviewEscalation('accept')">Accept escalation</button>
+            }
+            @if (conversation.status === 'escalated' || conversation.review_status === 'returned') {
+              <label for="internal-note">Private staff note / decision</label>
+              <textarea id="internal-note" rows="3" maxlength="5000" [ngModel]="internalNote()" (ngModelChange)="internalNote.set($event)" placeholder="Internal instructions for Support"></textarea>
+              <button type="button" class="button" [disabled]="reviewBusy() || !internalNote().trim()" (click)="reviewEscalation('note')">Save internal note</button>
+              @if (!isSupport && conversation.status === 'escalated' && conversation.review_status === 'in_review') {
+                <button type="button" class="button primary" [disabled]="reviewBusy() || internalNote().trim().length < 10" (click)="reviewEscalation('return')">Return to Support</button>
+                <button type="button" class="button" [disabled]="reviewBusy() || internalNote().trim().length < 10" (click)="reviewEscalation('resolve')">Resolve escalation</button>
+              }
+            }
+          </section>
         }
         @if (escalationOpen()) {
           <div class="support-reply-form">
