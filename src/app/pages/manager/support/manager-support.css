@@ -288,3 +288,114 @@
 .escalation-destination legend{font-weight:650;padding:0 6px}
 .escalation-destination label{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
 .escalation-destination input{accent-color:#338fc2}
+
+/* Full-height dedicated thread view: one vertical scroll for every section. */
+.thread-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 24px);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+.thread-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(920px, 100%);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.thread-panel > header {
+  flex: 0 0 auto;
+  align-items: center;
+  min-width: 0;
+  background: var(--workspace-surface, #fff);
+}
+.thread-panel > header > div { min-width: 0; overflow-wrap: anywhere; }
+.thread-panel header .thread-back {
+  width: auto;
+  min-width: 88px;
+  height: 42px;
+  padding: 0 14px;
+  font-size: .8rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.thread-content-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  padding: 18px clamp(12px, 2vw, 24px) 28px;
+  scrollbar-gutter: stable;
+}
+.thread-chat-label {
+  color: var(--workspace-text, #23324c);
+  font-size: .85rem;
+  font-weight: 700;
+}
+.thread-content-scroll .thread-messages {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  min-height: 180px;
+  max-height: none;
+  padding: 18px;
+  overflow: visible;
+  box-sizing: border-box;
+  border: 1px solid var(--workspace-line, #dce5f2);
+  border-radius: 12px;
+}
+.thread-content-scroll .thread-messages article { max-width: 86%; min-width: 0; overflow-wrap: anywhere; }
+.thread-content-scroll .thread-messages article.customer-message { align-self: flex-end; }
+.thread-content-scroll .thread-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0;
+}
+.thread-content-scroll .support-reply-form {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  position: static;
+  z-index: auto;
+  border: 1px solid var(--workspace-line, #dce5f2);
+  border-radius: 12px;
+}
+.thread-content-scroll .support-reply-form textarea {
+  width: 100%;
+  min-width: 0;
+  max-height: none;
+  box-sizing: border-box;
+  resize: vertical;
+}
+.thread-content-scroll .support-reply-form .button { align-self: flex-start; justify-self: auto; }
+.thread-content-scroll .support-reply-form article { min-width: 0; overflow-wrap: anywhere; }
+.thread-content-scroll .notice { overflow-wrap: anywhere; }
+@media (max-width: 620px) {
+  .thread-backdrop { padding: 0; }
+  .thread-panel { width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .thread-panel > header { padding: 14px; gap: 12px; }
+  .thread-content-scroll { padding: 14px 12px 28px; scrollbar-gutter: auto; }
+  .thread-content-scroll .thread-messages { padding: 12px; }
+  .thread-content-scroll .support-reply-form { padding: 14px; }
+}
