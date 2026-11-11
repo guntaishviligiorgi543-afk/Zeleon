@@ -1,14 +1,30 @@
 <div class="zc-widget">
   @if (opened()) {
     <section class="zc-panel" [class.zc-panel-guest]="auth.initialized() && !auth.isAuthenticated()" aria-label="ZELEON customer support">
-      <header class="zc-header"><div><strong>ZELEON Support</strong><span>We're here to help</span></div><button type="button" aria-label="Close chat" (click)="toggle()">×</button></header>
+      <header class="zc-header"><div><strong>ZELEON Support</strong><span>We're here to help</span></div><div class="zc-header-actions">
+        @if (auth.isAuthenticated() && (active() || (newChat() && conversations().length))) {
+          <button type="button" aria-label="Back to conversations" [disabled]="sending() || deleting()" (click)="back()"><span aria-hidden="true">←</span></button>
+        }
+        <button type="button" aria-label="Close chat" (click)="toggle()">×</button>
+      </div></header>
       @if (!auth.initialized()) { <p class="zc-note">Loading account…</p> }
       @else if (!auth.isAuthenticated()) {
         <div class="zc-empty"><h3>How can we help?</h3><p>Sign in to message our support team and keep your conversation history.</p><a [routerLink]="['/login']" [queryParams]="deepLink() ? { supportChat: deepLink() } : {}">Sign in to chat</a></div>
       } @else {
         @if (error()) { <p class="zc-error" role="alert">{{ error() }}</p> }
-        @if (active(); as conversation) {
-          <div class="zc-subheader"><button type="button" (click)="back()" aria-label="Back to conversations">←</button><div><strong>{{ conversation.subject || 'Support request' }}</strong><small>{{ conversation.status === 'resolved' ? 'Resolved' : 'Active conversation' }}</small></div></div>
+        @if (undoIds().length) {
+          <div class="zc-history-notice" role="status"><span>History removed.</span><button type="button" [disabled]="deleting() || sending()" (click)="undoDelete()">Undo</button></div>
+        }
+        @if (deleteTarget(); as target) {
+          <div class="zc-delete-confirm" role="alertdialog" aria-labelledby="zc-delete-title" aria-describedby="zc-delete-description">
+            <h3 id="zc-delete-title">{{ target === 'all' ? 'Delete all history?' : 'Delete this conversation?' }}</h3>
+            <p id="zc-delete-description">This removes {{ target === 'all' ? 'all conversations' : 'this conversation' }} from your history. The support team keeps its records. You can undo this after deleting.</p>
+            <div><button type="button" [disabled]="deleting()" (click)="deleteTarget.set(null)">Cancel</button><button type="button" class="zc-delete-confirm-button" [disabled]="deleting()" (click)="deleteHistory()">{{ deleting() ? 'Deleting…' : 'Delete' }}</button></div>
+          </div>
+        } @else if (busy()) {
+          <p class="zc-note" role="status">Loading conversations…</p>
+        } @else if (active(); as conversation) {
+          <div class="zc-subheader" tabindex="-1"><div><strong>{{ conversation.subject || 'Support request' }}</strong><small>{{ conversation.status === 'resolved' ? 'Resolved' : 'Active conversation' }}</small></div></div>
           <div class="zc-messages" role="log" aria-live="polite">
             @for (message of messages(); track message.id) {
               <div class="zc-message" [class.zc-own]="message.sender_type === 'customer'"><span>{{ message.sender_type === 'customer' ? 'You' : 'ZELEON Support' }}</span><p>{{ message.body }}</p></div>
@@ -37,13 +53,18 @@
               @if (ratingNotice()) { <p class="zc-note" role="status">{{ ratingNotice() }}</p> }
             </section>
           }
-        } @else {
+        } @else if (!newChat() && conversations().length) {
           <div class="zc-list">
-            <h3>Your conversations</h3>
+            <h3 tabindex="-1">Your conversations</h3>
             @for (conversation of conversations(); track conversation.id) {
-              <button class="zc-conversation" type="button" (click)="select(conversation)"><strong>{{ conversation.subject || 'Support request' }}</strong><span>{{ conversation.status }}</span></button>
-            } @empty { <p class="zc-note">No conversations yet. Send your first message below.</p> }
+              <div class="zc-history-row">
+                <button class="zc-conversation" type="button" (click)="select(conversation)"><strong>{{ conversation.subject || 'Support request' }}</strong><span>{{ conversation.status }}</span></button>
+                <button class="zc-delete-history" type="button" [attr.aria-label]="'Delete conversation: ' + (conversation.subject || 'Support request')" (click)="requestDelete(conversation)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></svg></button>
+              </div>
+            }
           </div>
+          <div class="zc-history-actions"><button class="zc-start-new" type="button" (click)="startNew()">Start new</button><button class="zc-delete-all" type="button" (click)="requestDelete('all')">Delete all history</button></div>
+        } @else {
           <form class="zc-new" (submit)="$event.preventDefault(); create(subject, firstMessage)">
             <h3>New request</h3>
             <label for="zc-subject">Subject</label><input #subject id="zc-subject" maxlength="150" required placeholder="What do you need help with?" />

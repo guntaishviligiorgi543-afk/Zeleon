@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, ElementRef, inject, Injector, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { SUPABASE_CLIENT } from '../../services/supabase';
@@ -21,6 +21,8 @@ export class CustomerChat {
   private readonly client = inject(SUPABASE_CLIENT);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
   readonly deepLink = signal<string | null>(null);
   readonly opened = signal(false);
   readonly busy = signal(false);
@@ -35,6 +37,11 @@ export class CustomerChat {
   readonly ratingFeedback = signal('');
   readonly ratingSaving = signal(false);
   readonly ratingNotice = signal('');
+  readonly newChat = signal(false);
+  readonly deleteTarget = signal<Conversation | 'all' | null>(null);
+  readonly deleting = signal(false);
+  readonly undoIds = signal<string[]>([]);
+  private historyRevision = 0;
   private channel: RealtimeChannel | null = null;
   private userId: string | null = null;
   private requestId = 0;
@@ -61,9 +68,14 @@ export class CustomerChat {
       if (next !== this.userId) {
         this.userId = next;
         this.disconnect();
+        this.historyRevision++;
+        this.busy.set(false);
         this.conversations.set([]);
         this.active.set(null);
         this.messages.set([]);
+        this.newChat.set(false);
+        this.deleteTarget.set(null);
+        this.undoIds.set([]);
         if (this.opened() && next) queueMicrotask(() => void this.load());
       }
     });
@@ -72,34 +84,50 @@ export class CustomerChat {
 
   toggle(): void {
     this.opened.update(value => !value);
-    if (this.opened()) { this.unread.set(false); void this.load(); }
+    if (this.opened()) { this.back(); this.unread.set(false); void this.load(); }
     else void this.clearPresence();
   }
 
   async load(): Promise<void> {
     await this.auth.ready;
     if (!this.auth.isAuthenticated()) return;
-    const id = ++this.requestId;
+    const revision = ++this.historyRevision;
+    const userId = this.auth.user()?.id;
     this.busy.set(true);
     this.error.set('');
     try {
-      const { data, error } = await this.client.from('support_conversations')
-        .select('id,subject,status,updated_at').order('updated_at', { ascending: false }).limit(30);
-      if (error) throw error;
-      if (id !== this.requestId) return;
-      this.conversations.set((data ?? []) as Conversation[]);
-      const current = this.active();
-      const chosen = (data ?? []).find(c => c.id === this.deepLink()) ?? (data ?? []).find(c => c.id === current?.id) ?? data?.[0] ?? null;
-      if (this.deepLink()) { this.deepLink.set(null); void this.router.navigate([], { relativeTo: this.route, queryParams: { supportChat: null }, queryParamsHandling: 'merge', replaceUrl: true }); }
-      if (chosen) await this.select(chosen as Conversation);
-      else { this.active.set(null); this.messages.set([]); this.disconnect(); }
-    } catch (e) { if (id === this.requestId) this.error.set(this.message(e)); }
-    finally { this.busy.set(false); }
+      const rows: Conversation[] = [];
+      for (let offset = 0; ; offset += 100) {
+        const { data, error } = await this.client.rpc('customer_support_history').range(offset, offset + 99);
+        if (error) throw error;
+        if (revision !== this.historyRevision || userId !== this.auth.user()?.id) return;
+        rows.push(...(data ?? []) as Conversation[]);
+        if (!data || data.length < 100) break;
+      }
+      this.conversations.set(rows);
+      this.newChat.set(!rows.length);
+      const deepLink = this.deepLink();
+      if (deepLink) {
+        const { data, error } = await this.client.from('support_conversations')
+          .select('id,subject,status,updated_at').eq('id', deepLink).eq('customer_user_id', userId!).maybeSingle();
+        if (revision !== this.historyRevision || userId !== this.auth.user()?.id) return;
+        if (error) throw error;
+        this.deepLink.set(null);
+        void this.router.navigate([], { relativeTo: this.route, queryParams: { supportChat: null }, queryParamsHandling: 'merge', replaceUrl: true });
+        if (data) await this.select(data as Conversation);
+        else this.error.set('This conversation is no longer available.');
+      }
+    } catch (e) { if (revision === this.historyRevision) this.error.set(this.message(e)); }
+    finally { if (revision === this.historyRevision) this.busy.set(false); }
   }
 
-  async select(conversation: Conversation): Promise<void> {
+  async select(conversation: Conversation, created = false): Promise<void> {
+    if ((this.sending() && !created) || this.deleting()) return;
     this.disconnect();
+    this.newChat.set(false);
+    this.error.set('');
     this.active.set(conversation);
+    this.focusView('.zc-subheader');
     this.messages.set([]);
     this.rating.set(null);
     this.ratingNotice.set('');
@@ -149,7 +177,7 @@ export class CustomerChat {
       if (messageError) throw messageError;
       subjectInput.value = ''; messageInput.value = '';
       await this.load();
-      await this.select(conversation as Conversation);
+      await this.select(conversation as Conversation, true);
       // Send confirmation without Supabase SDK's additional CORS request headers.
       void this.client.auth.getSession().then(async ({ data: { session } }) => {
         if (!session?.access_token) return;
@@ -209,7 +237,58 @@ export class CustomerChat {
     this.rating.set(rating);
     this.ratingNotice.set('Thank you for rating our support!');
   }
-  back(): void { void this.clearPresence(); this.disconnect(); this.active.set(null); this.messages.set([]); }
+  back(): void {
+    if (this.sending() || this.deleting()) return;
+    void this.clearPresence(); this.disconnect(); this.historyRevision++;
+    this.busy.set(false); this.active.set(null); this.messages.set([]);
+    this.newChat.set(!this.conversations().length); this.error.set(''); this.deleteTarget.set(null);
+    this.focusView(this.newChat() ? '#zc-subject' : '.zc-list h3');
+  }
+  startNew(): void {
+    if (this.sending() || this.deleting()) return;
+    this.back(); this.newChat.set(true); this.focusView('#zc-subject');
+  }
+  requestDelete(target: Conversation | 'all'): void {
+    if (this.deleting() || this.busy()) return;
+    this.error.set(''); this.deleteTarget.set(target);
+    this.focusView('.zc-delete-confirm button');
+  }
+  async deleteHistory(): Promise<void> {
+    const target = this.deleteTarget();
+    const userId = this.auth.user()?.id;
+    if (!target || !userId || this.deleting()) return;
+    this.deleting.set(true); this.error.set('');
+    try {
+      const { data, error } = await this.client.rpc('customer_hide_support_history', { p_conversation_id: target === 'all' ? null : target.id });
+      if (userId !== this.auth.user()?.id) return;
+      if (error) throw error;
+      const ids = (data ?? []) as string[];
+      if (target !== 'all' && !ids.includes(target.id)) throw new Error('The conversation could not be removed. Refresh your history and try again.');
+      this.undoIds.set(ids);
+      this.conversations.update(rows => rows.filter(row => !ids.includes(row.id)));
+      this.newChat.set(!this.conversations().length);
+      this.deleteTarget.set(null);
+      this.focusView(this.newChat() ? '#zc-subject' : '.zc-list h3');
+    } catch (e) { if (userId === this.auth.user()?.id) this.error.set(this.message(e)); }
+    finally { this.deleting.set(false); }
+  }
+  async undoDelete(): Promise<void> {
+    const ids = this.undoIds();
+    const userId = this.auth.user()?.id;
+    if (!ids.length || !userId || this.deleting()) return;
+    this.deleting.set(true); this.error.set('');
+    try {
+      const { error } = await this.client.rpc('customer_restore_support_history', { p_conversation_ids: ids });
+      if (userId !== this.auth.user()?.id) return;
+      if (error) throw error;
+      this.undoIds.set([]);
+      await this.load();
+    } catch (e) { if (userId === this.auth.user()?.id) this.error.set(this.message(e)); }
+    finally { this.deleting.set(false); }
+  }
+  private focusView(selector: string): void {
+    afterNextRender(() => this.element.nativeElement.querySelector<HTMLElement>(selector)?.focus(), { injector: this.injector });
+  }
   private async refreshPresence(): Promise<void> {
     const conversation = this.active();
     if (!conversation || !this.opened() || document.hidden || !this.userId) return;

@@ -75,3 +75,26 @@
 .zc-rating textarea { box-sizing: border-box; width: 100%; padding: 10px; border: 1px solid #d6e9f8; border-radius: 9px; resize: vertical; }
 .zc-rating > button { border: 0; border-radius: 9px; background: #8fd0f5; color: #17324d; padding: 11px; font-weight: 700; cursor: pointer; }
 .zc-rating > button:disabled { opacity: .5; cursor: not-allowed; }
+
+.zc-header { flex: 0 0 auto; }
+.zc-header-actions { display: flex; align-items: center; gap: 4px; }
+.zc-header .zc-header-actions span { color: inherit; font-size: 24px; margin: 0; }
+.zc-list { flex: 1; min-height: 0; max-height: none; border-bottom: 0; }
+.zc-history-row { display: flex; align-items: stretch; gap: 6px; }
+.zc-conversation { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.zc-delete-history { align-self: center; flex: 0 0 40px; height: 44px; border: 0; border-radius: 9px; background: transparent; color: #738098; cursor: pointer; }
+.zc-delete-history svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.zc-delete-history:hover, .zc-delete-all:hover { color: #a52020; background: #fff0f0; }
+.zc-history-actions { display: grid; gap: 8px; flex: 0 0 auto; padding: 14px 17px; border-top: 1px solid #e8edf4; }
+.zc-start-new, .zc-delete-confirm button { min-height: 44px; padding: 11px 15px; border: 0; border-radius: 9px; background: #17233b; color: #fff; font-weight: 600; cursor: pointer; }
+.zc-delete-all { min-height: 44px; border: 0; border-radius: 9px; background: transparent; color: #66738a; cursor: pointer; }
+.zc-new { flex: 1; min-height: 0; }
+.zc-new textarea { flex: 1; min-height: 80px; }
+.zc-history-notice { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 17px; background: #edf4ff; color: #17233b; font-size: 13px; }
+.zc-history-notice button { min-height: 44px; border: 0; background: transparent; color: #17233b; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.zc-delete-confirm { padding: 22px 17px; overflow-y: auto; }
+.zc-delete-confirm h3 { margin: 0 0 12px; font-size: 16px; }
+.zc-delete-confirm p { color: #66738a; font-size: 14px; line-height: 1.6; }
+.zc-delete-confirm > div { display: flex; justify-content: flex-end; gap: 10px; }
+.zc-delete-confirm .zc-delete-confirm-button { background: #a52020; }
+.zc-panel button:focus-visible, .zc-panel a:focus-visible, .zc-panel input:focus-visible, .zc-panel textarea:focus-visible { outline: 2px solid #55aee8; outline-offset: 2px; }
