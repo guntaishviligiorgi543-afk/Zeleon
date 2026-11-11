@@ -144,6 +144,8 @@ export interface SupportConversation {
   created_at: string;
   updated_at: string;
   rating: SupportRating | null;
+  review_status?: 'pending' | 'in_review' | 'returned' | 'resolved' | null;
+  reviewer_id?: string | null;
 }
 export interface SupportMessage {
   id: string;
@@ -391,10 +393,16 @@ export class ManagerDashboard {
         { rating: Number(rating.rating), feedback: rating.feedback as string | null },
       ]),
     );
+    const ids = (conversations.data ?? []).map((row) => row.id);
+    const reviews = ids.length ? await this.client.from('support_escalation_reviews').select('conversation_id,review_status,reviewer_id').in('conversation_id', ids) : { data: [], error: null };
+    if (reviews.error) throw reviews.error;
+    const reviewMap = new Map((reviews.data ?? []).map(row => [row.conversation_id, row]));
     return ((conversations.data ?? []) as unknown as Omit<SupportConversation, 'rating'>[]).map(
       (conversation) => ({
         ...conversation,
         rating: byConversation.get(conversation.id) ?? null,
+        review_status: reviewMap.get(conversation.id)?.review_status ?? 'pending',
+        reviewer_id: reviewMap.get(conversation.id)?.reviewer_id ?? null,
       }),
     );
   }
@@ -406,6 +414,20 @@ export class ManagerDashboard {
     const { data, error } = await this.client.from('support_conversations').update(changes).eq('id', id).select('id').maybeSingle();
     if (error) throw error;
     if (!data) throw new Error('Update denied: this conversation is not assigned to your account or you lack permission.');
+  }
+
+  async escalationAction(id: string, action: 'accept' | 'note' | 'return' | 'resolve', note?: string): Promise<void> {
+    const { error } = await this.client.rpc('staff_escalation_action', {
+      p_conversation_id: id, p_action: action, p_note: note ?? null,
+    });
+    if (error) throw error;
+  }
+
+  async escalationNotes(id: string): Promise<Array<{ id: string; body: string; author_id: string; created_at: string }>> {
+    const { data, error } = await this.client.from('support_escalation_notes')
+      .select('id,body,author_id,created_at').eq('conversation_id', id).order('created_at');
+    if (error) throw error;
+    return data ?? [];
   }
 
   async notifySupportEscalated(conversationId: string): Promise<'sent' | 'failed'> {
