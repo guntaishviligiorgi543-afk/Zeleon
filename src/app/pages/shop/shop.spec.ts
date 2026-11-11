@@ -9,6 +9,7 @@ describe('Shop', () => {
   let fixture: ComponentFixture<Shop>;
 
   beforeEach(async () => {
+    HTMLElement.prototype.scrollIntoView = vi.fn();
     await TestBed.configureTestingModule({
       imports: [Shop],
       providers: [provideRouter([]), { provide: Products, useValue: { getActiveProducts: vi.fn().mockResolvedValue([]) } }],
@@ -17,6 +18,72 @@ describe('Shop', () => {
     fixture = TestBed.createComponent(Shop);
     component = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  function addProducts(count = 25) {
+    component.products.set(Array.from({ length: count }, (_, index) => ({
+      id: index + 1, name: `Product ${index + 1}`, slug: `product-${index + 1}`,
+      price: index + 1, currency: 'USD', image: '',
+      category: index < 13 ? 'classic' : 'zero-sugar', categoryName: index < 13 ? 'Classic' : 'Zero Sugar',
+    })));
+    fixture.detectChanges();
+  }
+
+  it('renders 12 products per page with working page buttons and an accurate range', () => {
+    addProducts();
+    expect(fixture.nativeElement.querySelectorAll('.productCard').length).toBe(12);
+    expect(fixture.nativeElement.querySelector('.page-summary').textContent).toContain('1–12 of 25');
+    expect(fixture.nativeElement.querySelector('.pagination button').disabled).toBe(true);
+    (fixture.nativeElement.querySelector('[aria-label="Page 2"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    expect(component.paginatedProducts.map(product => product.id)).toEqual(Array.from({ length: 12 }, (_, i) => i + 13));
+    expect(fixture.nativeElement.querySelector('[aria-current="page"]').textContent.trim()).toBe('2');
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.productsContainer'));
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
+    component.goToPage(3);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.productCard').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.page-summary').textContent).toContain('25–25 of 25');
+    expect(fixture.nativeElement.querySelector('.pagination button:last-child').disabled).toBe(true);
+    component.goToPage(999);
+    expect(component.pageNumber).toBe(3);
+    component.goToPage(0);
+    expect(component.pageNumber).toBe(1);
+  });
+
+  it('resets pagination when filtering or sorting and paginates the sorted category', () => {
+    addProducts();
+    component.goToPage(3);
+    component.selectCategory('classic');
+    expect(component.pageNumber).toBe(1);
+    expect(component.totalPages).toBe(2);
+    component.goToPage(2);
+    expect(component.paginatedProducts.map(product => product.id)).toEqual([13]);
+    component.chooseSort('priceHighToLow');
+    expect(component.pageNumber).toBe(1);
+    expect(component.paginatedProducts[0].id).toBe(13);
+    expect(component.paginatedProducts.at(-1)?.id).toBe(2);
+    expect(component.products()[0].id).toBe(1);
+  });
+
+  it('clamps after inventory changes and hides controls for empty or single-page results', () => {
+    addProducts();
+    component.goToPage(3);
+    addProducts(5);
+    expect(component.pageNumber).toBe(1);
+    expect(component.paginatedProducts.length).toBe(5);
+    expect(fixture.nativeElement.querySelector('.pagination')).toBeNull();
+    component.products.set([]);
+    fixture.detectChanges();
+    expect(component.pageStart).toBe(0);
+    expect(component.pageEnd).toBe(0);
+    expect(fixture.nativeElement.querySelector('.pagination-footer')).toBeNull();
+  });
+
+  it('keeps page controls compact for large catalogs', () => {
+    addProducts(240);
+    component.goToPage(10);
+    expect(component.paginationItems).toEqual([1, null, 9, 10, 11, null, 20]);
   });
 
   it('should create', () => {

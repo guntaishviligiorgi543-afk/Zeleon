@@ -118,6 +118,45 @@ section {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 20px;
   margin-top: 40px;
+  scroll-margin-top: 160px;
+}
+
+.pagination-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+}
+.page-summary { margin: 0; color: #aaa; font-size: 14px; }
+.pagination { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pagination button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #666;
+  border-radius: 40px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color 180ms ease, color 180ms ease;
+}
+.pagination button[aria-current='page'], .pagination button:hover:not(:disabled) {
+  background: #fff;
+  color: #000;
+}
+.pagination button:disabled { opacity: .4; cursor: not-allowed; }
+.pagination button:focus-visible, .productsContainer:focus-visible { outline: 2px solid #aaa; outline-offset: 4px; }
+.pagination > span { padding: 0 4px; }
+@media (max-width: 600px) {
+  .pagination-footer { flex-direction: column; align-items: center; }
+  .pagination { justify-content: center; gap: 6px; }
+  .pagination button { padding-inline: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pagination button { transition: none; }
 }
 
 .productCard {

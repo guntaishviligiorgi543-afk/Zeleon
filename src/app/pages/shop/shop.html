@@ -109,10 +109,28 @@
   } @else if (displayedProducts.length === 0) {
     <p role="status">No products found in this category.</p>
   }
-  <div class="productsContainer" [attr.aria-busy]="loading()">
-    @for (product of displayedProducts; track product.id) {
+  <div class="productsContainer" id="shop-products" tabindex="-1" aria-label="Products" [attr.aria-busy]="loading()">
+    @for (product of paginatedProducts; track product.id) {
       <div class="productCard" appProductCard [product]="product" [routerLink]="['/product', product.id]"
         tabindex="0" role="link" (keydown.enter)="navigateToProduct(product.id)"></div>
     }
   </div>
+  @if (!loading() && !error() && displayedProducts.length) {
+    <div class="pagination-footer">
+      <p class="page-summary" role="status">Showing {{ pageStart }}–{{ pageEnd }} of {{ displayedProducts.length }} products</p>
+      @if (totalPages > 1) {
+        <nav class="pagination" aria-label="Product pages">
+          <button type="button" [disabled]="pageNumber === 1" (click)="goToPage(pageNumber - 1)" aria-controls="shop-products">Previous</button>
+          @for (page of paginationItems; track $index) {
+            @if (page !== null) {
+              <button type="button" [attr.aria-current]="pageNumber === page ? 'page' : null" [attr.aria-label]="'Page ' + page" aria-controls="shop-products" (click)="goToPage(page)">{{ page }}</button>
+            } @else {
+              <span aria-hidden="true">…</span>
+            }
+          }
+          <button type="button" [disabled]="pageNumber === totalPages" (click)="goToPage(pageNumber + 1)" aria-controls="shop-products">Next</button>
+        </nav>
+      }
+    </div>
+  }
 </section>

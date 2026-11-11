@@ -19,6 +19,8 @@ export class Shop {
   readonly products = signal<readonly Product[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly pageSize = 12;
+  readonly currentPage = signal(1);
   private readonly catalog = inject(Products);
   private readonly router = inject(Router);
   private request?: AbortController;
@@ -28,6 +30,7 @@ export class Shop {
     inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed(destroyRef)).subscribe((params) => {
       const category = params.get('category');
       this.selectedCategory = ['classic', 'boost-blends', 'zero-sugar'].includes(category ?? '') ? category as Category : 'all';
+      this.currentPage.set(1);
     });
     afterNextRender(() => { void this.loadProducts(); });
     destroyRef.onDestroy(() => this.request?.abort());
@@ -40,7 +43,10 @@ export class Shop {
     this.error.set('');
     try {
       const products = await this.catalog.getActiveProducts(request.signal);
-      if (!request.signal.aborted) this.products.set(products);
+      if (!request.signal.aborted) {
+        this.products.set(products);
+        this.currentPage.set(this.pageNumber);
+      }
     } catch (error) {
       if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'Products could not be loaded.');
     } finally {
@@ -70,6 +76,7 @@ export class Shop {
 
   chooseSort(value: Sort): void {
     this.selectedSort = value;
+    this.currentPage.set(1);
     this.sortOpen.set(false);
   }
 
@@ -120,6 +127,36 @@ export class Shop {
 
   selectCategory(category: Category): void {
     this.selectedCategory = category;
+    this.currentPage.set(1);
+  }
+
+  get totalPages(): number { return Math.max(1, Math.ceil(this.displayedProducts.length / this.pageSize)); }
+  get pageNumber(): number { return Math.min(this.currentPage(), this.totalPages); }
+  get pageStart(): number { return this.displayedProducts.length ? (this.pageNumber - 1) * this.pageSize + 1 : 0; }
+  get pageEnd(): number { return Math.min(this.pageNumber * this.pageSize, this.displayedProducts.length); }
+  get paginatedProducts(): Product[] {
+    return this.displayedProducts.slice((this.pageNumber - 1) * this.pageSize, this.pageNumber * this.pageSize);
+  }
+  get paginationItems(): (number | null)[] {
+    const pages = new Set([1, this.totalPages]);
+    for (let page = this.pageNumber - 1; page <= this.pageNumber + 1; page++) {
+      if (page >= 1 && page <= this.totalPages) pages.add(page);
+    }
+    const items: (number | null)[] = [];
+    for (const page of [...pages].sort((a, b) => a - b)) {
+      const previous = items[items.length - 1];
+      if (typeof previous === 'number' && page > previous + 1) items.push(null);
+      items.push(page);
+    }
+    return items;
+  }
+  goToPage(page: number): void {
+    const target = Math.max(1, Math.min(page, this.totalPages));
+    if (target === this.pageNumber) return;
+    this.currentPage.set(target);
+    const grid = this.element.nativeElement.querySelector<HTMLElement>('.productsContainer');
+    grid?.focus({ preventScroll: true });
+    grid?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
 
 }
