@@ -459,6 +459,10 @@ export class ManagerDashboard {
     }
   }
 
+  async notifyEscalationDecision(conversationId: string): Promise<'sent' | 'failed'> {
+    return this.sendSupportNotification('support-escalation-decision-notification', { conversationId });
+  }
+
   async notifySupportResolved(conversationId: string): Promise<'sent' | 'failed'> {
     return this.sendSupportNotification('support-resolution-notification', { conversationId });
   }
