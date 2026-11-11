@@ -139,6 +139,7 @@ export interface SupportConversation {
   status: 'open' | 'waiting_customer' | 'resolved' | 'escalated';
   assigned_support_id: string | null;
   escalation_reason: string | null;
+  escalation_target: 'admin' | 'manager' | null;
   escalated_at: string | null;
   created_at: string;
   updated_at: string;
@@ -377,7 +378,7 @@ export class ManagerDashboard {
       this.client
         .from('support_conversations')
         .select(
-          'id,customer_first_name,customer_last_name,customer_email,subject,status,assigned_support_id,escalation_reason,escalated_at,created_at,updated_at',
+          'id,customer_first_name,customer_last_name,customer_email,subject,status,assigned_support_id,escalation_reason,escalation_target,escalated_at,created_at,updated_at',
         )
         .order('updated_at', { ascending: false }),
       this.client.from('support_ratings').select('conversation_id,rating,feedback'),
@@ -400,10 +401,11 @@ export class ManagerDashboard {
 
   async updateConversation(
     id: string,
-    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null },
+    changes: { assigned_support_id?: string | null; status?: SupportConversation['status']; escalation_reason?: string | null; escalation_target?: 'admin' | 'manager' | null },
   ): Promise<void> {
-    const { error } = await this.client.from('support_conversations').update(changes).eq('id', id);
+    const { data, error } = await this.client.from('support_conversations').update(changes).eq('id', id).select('id').maybeSingle();
     if (error) throw error;
+    if (!data) throw new Error('Update denied: this conversation is not assigned to your account or you lack permission.');
   }
 
   async notifySupportEscalated(conversationId: string): Promise<'sent' | 'failed'> {
