@@ -1,4 +1,4 @@
-import { afterNextRender, Component, computed, DestroyRef, ElementRef, HostListener, inject, signal } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, effect, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { SUPABASE_CLIENT } from '../../services/supabase';
@@ -47,7 +47,7 @@ import { SUPABASE_CLIENT } from '../../services/supabase';
     .rate-card textarea{box-sizing:border-box;width:100%;padding:13px;border:1px solid #cbdde9;border-radius:10px;resize:vertical}
     .rate-submit{display:block;box-sizing:border-box;width:100%;border:0;background:#8fd0f5;color:#17324d;padding:15px;border-radius:30px;font-weight:700;text-decoration:none;cursor:pointer;margin-top:18px}
     .rate-submit:disabled{opacity:.5;cursor:not-allowed}
-    .rate-error{color:#b42318}.rate-success{color:#18794e}
+    .rate-home{display:inline-block;margin-top:16px;color:#527e9f}.rate-error{color:#b42318}.rate-success{color:#18794e}
     @media(max-width:480px){.rate-card{padding:34px 20px}}
     @media(prefers-reduced-motion:reduce){.rate-stars button{transition:none}.rate-stars button:hover{transform:none}}
   `],
@@ -66,6 +66,10 @@ export class SupportRatingPage {
   readonly alreadyRated = signal<number | null>(null);
   readonly feedback = signal('');
   readonly eligible = signal(false);
+  readonly accountMismatch = signal(false);
+  readonly switching = signal(false);
+  private authRevision = 0;
+  private lastUserId: string | null | undefined = undefined;
   readonly choice = signal(0);
   readonly hoveredRating = signal(0);
   readonly displayedRating = computed(() => this.hoveredRating() || this.choice());
@@ -83,7 +87,33 @@ export class SupportRatingPage {
     });
     const stars = Number(this.route.snapshot.queryParamMap.get('stars'));
     if (Number.isInteger(stars) && stars >= 1 && stars <= 5) this.choice.set(stars);
+    effect(() => {
+      const userId = this.auth.user()?.id ?? null;
+      if (this.lastUserId === undefined) { this.lastUserId = userId; return; }
+      if (this.lastUserId === userId) return;
+      this.lastUserId = userId;
+      this.authRevision++;
+      this.clearRatingState();
+      // A session switch must not carry an email rating link into another account.
+      void this.router.navigateByUrl('/');
+    });
     void this.load();
+  }
+  private clearRatingState(): void {
+    this.choice.set(0); this.hoveredRating.set(0); this.feedback.set('');
+    this.alreadyRated.set(null); this.eligible.set(false); this.accountMismatch.set(false);
+    this.error.set(''); this.subject.set('');
+  }
+  async switchAccount(): Promise<void> {
+    if (this.switching()) return;
+    this.switching.set(true);
+    const destination = this.returnPath;
+    try {
+      await this.auth.signOut();
+      this.clearRatingState();
+      await this.router.navigate(['/login'], { queryParams: { returnUrl: destination } });
+    } catch { this.error.set('Unable to switch accounts. Please try again.'); }
+    finally { this.switching.set(false); }
   }
   close(): void { void this.router.navigateByUrl('/'); }
   onBackdrop(event: MouseEvent): void { if (event.target === event.currentTarget) this.close(); }
@@ -102,25 +132,31 @@ export class SupportRatingPage {
     }
   }
   async load(): Promise<void> {
+    const revision = ++this.authRevision;
     this.loading.set(true);
     this.eligible.set(false);
+    this.accountMismatch.set(false);
     this.error.set('');
     try {
       await this.auth.ready;
       if (!this.auth.isAuthenticated()) { this.loading.set(false); return; }
+      const expectedUserId = this.auth.user()?.id;
       const { data: conversation, error } = await this.client.from('support_conversations')
-        .select('id,subject,status').eq('id', this.conversationId).maybeSingle();
-      if (error || !conversation) this.error.set('Conversation not found or you do not have access.');
+        .select('id,subject,status,customer_user_id').eq('id', this.conversationId).maybeSingle();
+      if (revision !== this.authRevision || expectedUserId !== this.auth.user()?.id) return;
+      if (error) throw error;
+      if (!conversation || conversation.customer_user_id !== expectedUserId) this.accountMismatch.set(true);
       else if (conversation.status !== 'resolved') this.error.set('This conversation has not been resolved yet.');
       else {
         this.subject.set(conversation.subject || 'Support request');
         const { data: rating, error: ratingError } = await this.client.from('support_ratings').select('rating').eq('conversation_id', this.conversationId).maybeSingle();
+        if (revision !== this.authRevision || expectedUserId !== this.auth.user()?.id) return;
         if (ratingError) throw ratingError;
         if (rating) this.alreadyRated.set(rating.rating);
         this.eligible.set(true);
       }
-    } catch { this.error.set('Unable to load this rating. Check your connection and reopen the rating link.'); }
-    finally { this.loading.set(false); }
+    } catch { if (revision === this.authRevision) this.error.set('Unable to load this rating. Check your connection and reopen the rating link.'); }
+    finally { if (revision === this.authRevision) this.loading.set(false); }
   }
   async submit(): Promise<void> {
     if (!this.eligible() || !this.auth.isAuthenticated() || this.saving() || this.alreadyRated() || this.choice() < 1 || this.choice() > 5) return;
