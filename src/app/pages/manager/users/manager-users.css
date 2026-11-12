@@ -99,16 +99,65 @@
   }
 }
 .user-controls select {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
   min-width: 0;
   width: min(360px, 100%);
   max-width: 100%;
+  min-height: 46px;
   box-sizing: border-box;
-  font: inherit;
+  padding: 11px 42px 11px 14px;
+  border: 1px solid var(--workspace-line, #ccd8e8);
+  border-radius: 11px;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  font: 500 0.82rem 'Montserrat', sans-serif;
+  line-height: 1.5;
   color: var(--workspace-text, #17233b);
+  background-color: var(--workspace-surface, #fff);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--workspace-muted, #718097) 50%),
+    linear-gradient(135deg, var(--workspace-muted, #718097) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 15px) 50%;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+.user-controls select:has(option[value='']:checked) {
+  color: var(--workspace-muted, #718097);
+}
+.user-controls select:hover:not(:disabled) {
+  border-color: var(--workspace-accent-text, #2868ff);
+  background-color: var(--workspace-subtle, #f4f8ff);
+}
+.user-controls select:focus {
+  border-color: var(--workspace-accent-text, #2868ff);
+  box-shadow: 0 0 0 3px var(--workspace-accent-bg, #eaf0ff);
+}
+.user-controls select:focus-visible {
+  outline-color: var(--workspace-accent-text, #2868ff);
+}
+.user-controls select option {
   background: var(--workspace-surface, #fff);
-  border: 1px solid var(--workspace-line, #d5dfec);
-  border-radius: 10px;
-  padding: 11px;
+  color: var(--workspace-text, #17233b);
+}
+.user-controls select:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+@media (max-width: 650px) {
+  .user-controls select {
+    width: 100%;
+    font-size: 16px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .user-controls select {
+    transition: none;
+  }
 }
 .request-row > div:first-child {
   min-width: min(220px, 100%);
