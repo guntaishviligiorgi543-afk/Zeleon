@@ -49,6 +49,18 @@ export class Signup {
     this.destroyRef.onDestroy(() => clearInterval(this.cooldownTimer));
   }
 
+  async googleSignIn(): Promise<void> {
+    if (this.pending()) return;
+    this.pending.set(true);
+    this.status.set('');
+    try {
+      await this.auth.signInWithGoogle();
+    } catch (error) {
+      this.status.set(authErrorMessage(error));
+      this.pending.set(false);
+    }
+  }
+
   async submit(): Promise<void> {
     if (this.pending()) return;
     this.submitted.set(true);
