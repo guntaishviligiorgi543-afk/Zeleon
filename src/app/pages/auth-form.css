@@ -53,3 +53,12 @@ button:focus-visible, a:focus-visible { outline: 2px solid currentColor; outline
   .brand-panel img { display: none; }
   .brand-panel h2 { font-size: 28px; }
 }
+
+/* Google sign-in — shared by login and signup */
+.oauth-divider { display:flex; align-items:center; gap:14px; margin:20px 0 14px; color:#667085; font-size:13px; }
+.oauth-divider::before,.oauth-divider::after { content:""; flex:1; height:1px; background:#d7dce3; }
+.google-oauth-button { display:flex; align-items:center; justify-content:center; gap:12px; width:100%; min-height:48px; padding:11px 16px; border:1px solid #c9cdd5; border-radius:8px; background:#fff; color:#202124; font:inherit; font-weight:600; cursor:pointer; transition:background .2s,border-color .2s; }
+.google-oauth-button:hover:not(:disabled) { background:#f5f7fa; border-color:#a6acb6; }
+.google-oauth-button:focus-visible { outline:3px solid #4285f4; outline-offset:3px; }
+.google-oauth-button:disabled { opacity:.6; cursor:wait; }
+.google-oauth-button svg { flex-shrink:0; }
