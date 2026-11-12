@@ -1,17 +1,146 @@
 <section class="page users-page">
-<header class="page-header"><div><h1>Users</h1><p>Customer accounts · Manager approval required for all Admin account actions.</p></div><button class="button" type="button" (click)="load()" [disabled]="loading()">Refresh</button></header>
-@if(error()){<div class="notice error" role="alert">{{error()}}</div>}
-@if(success()){<div class="notice success" role="status">{{success()}}</div>}
-<article class="surface user-surface"><div class="surface-heading"><div><h2>Customer directory</h2><p>Email, registration date and account status</p></div><input aria-label="Search customers by email" placeholder="Search email…" [ngModel]="search()" (ngModelChange)="search.set($event)" /></div>
-<div class="user-list">
-@for(u of filtered();track u.id){<div class="user-row"><div class="user-identity"><strong>{{u.email}}</strong><small>Registered {{u.created_at | date:'MMM d, y, HH:mm'}}</small></div><span class="user-status">{{u.status}}</span>
-@if(!isManager && u.status==='active'){<div class="user-controls"><select aria-label="Reason category" [ngModel]="reasonCategory()[u.id] || ''" (ngModelChange)="setReasonCategory(u.id,$event)"><option value="" disabled>Select reason</option>@for(option of reasonOptions;track option.value){<option [value]="option.value">{{option.label}}</option>}</select><textarea rows="2" maxlength="1700" placeholder="Supporting details (minimum 10 characters)" [ngModel]="reason()[u.id] || ''" (ngModelChange)="setReason(u.id,$event)"></textarea><button type="button" class="button" [disabled]="busy()" (click)="request(u,'suspend')">Request suspension</button><button type="button" class="button" [disabled]="busy()" (click)="request(u,'deactivate')">Request deactivation</button></div>}
-</div>} @empty {<p class="empty">No matching customers.</p>}
-</div></article>
-<article class="surface user-surface"><div class="surface-heading"><div><h2>{{isManager?'Manager approvals':'My approval requests'}}</h2><p>All actions are logged; only an approved request can be executed by its requesting Admin.</p></div></div>
-<div class="user-list">
-@for(r of requests();track r.id){<div class="request-row"><div><strong>{{r.action}} · {{email(r.target_user_id)}}</strong><small>{{r.created_at | date:'MMM d, y, HH:mm'}} · {{r.status}}</small><p>{{r.reason}}</p>@if(r.manager_reply){<p><strong>Manager reply:</strong> {{r.manager_reply}}</p>}</div>
-@if(isManager && r.status==='pending'){<div class="request-controls"><textarea rows="2" maxlength="2000" placeholder="Decision / explanation" [ngModel]="decision()[r.id] || ''" (ngModelChange)="setDecision(r.id,$event)"></textarea><button class="button primary" type="button" [disabled]="busy()" (click)="decide(r,'approved')">Approve</button><button class="button" type="button" [disabled]="busy()" (click)="decide(r,'rejected')">Reject</button></div>}
-@if(!isManager && r.status==='approved'){<button class="button primary" type="button" [disabled]="busy()" (click)="execute(r)">Execute approved action</button>}
-</div>} @empty {<p class="empty">No requests yet.</p>}
-</div></article></section>
+  <header class="page-header">
+    <div>
+      <h1>Users</h1>
+      <p>Customer accounts · Manager approval required for all Admin account actions.</p>
+    </div>
+    <button class="button" type="button" (click)="load()" [disabled]="loading() || busy()">
+      Refresh
+    </button>
+  </header>
+  @if (error()) {
+    <div class="notice error" role="alert">{{ error() }}</div>
+  }
+  @if (success()) {
+    <div class="notice success" role="status">{{ success() }}</div>
+  }
+  <article class="surface user-surface">
+    <div class="surface-heading">
+      <div>
+        <h2>Customer directory</h2>
+        <p>Email, registration date and account status</p>
+      </div>
+      <input
+        aria-label="Search customers by email"
+        placeholder="Search email…"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+      />
+    </div>
+    <div class="user-list" [attr.aria-busy]="loading()">
+      @if (loading()) {
+        <p class="empty" role="status">Loading customers…</p>
+      } @else {
+        @for (u of filtered(); track u.id) {
+          <div class="user-row">
+            <div class="user-identity">
+              <strong>{{ u.email }}</strong
+              ><small>Registered {{ u.created_at | date: 'MMM d, y, HH:mm' }}</small>
+            </div>
+            <span class="user-status">{{ u.status }}</span>
+            @if (!isManager && u.status === 'active') {
+              <div class="user-controls">
+                <select
+                  aria-label="Reason category"
+                  [ngModel]="reasonCategory()[u.id] || ''"
+                  (ngModelChange)="setReasonCategory(u.id, $event)"
+                >
+                  <option value="" disabled>Select reason</option>
+                  @for (option of reasonOptions; track option.value) {
+                    <option [value]="option.value">{{ option.label }}</option>
+                  }</select
+                ><textarea
+                  aria-label="Supporting details"
+                  required
+                  minlength="10"
+                  rows="2"
+                  maxlength="1700"
+                  placeholder="Supporting details (minimum 10 characters)"
+                  [ngModel]="reason()[u.id] || ''"
+                  (ngModelChange)="setReason(u.id, $event)"
+                ></textarea
+                ><button
+                  type="button"
+                  class="button"
+                  [disabled]="busy()"
+                  (click)="request(u, 'suspend')"
+                >
+                  Request suspension</button
+                ><button
+                  type="button"
+                  class="button"
+                  [disabled]="busy()"
+                  (click)="request(u, 'deactivate')"
+                >
+                  Request deactivation
+                </button>
+              </div>
+            }
+          </div>
+        } @empty {
+          <p class="empty">No matching customers.</p>
+        }
+      }
+    </div>
+  </article>
+  <article class="surface user-surface">
+    <div class="surface-heading">
+      <div>
+        <h2>{{ isManager ? 'Manager approvals' : 'My approval requests' }}</h2>
+        <p>
+          All actions are logged; only an approved request can be executed by its requesting Admin.
+        </p>
+      </div>
+    </div>
+    <div class="user-list" [attr.aria-busy]="loading()">
+      @for (r of requests(); track r.id) {
+        <div class="request-row">
+          <div>
+            <strong>{{ r.action }} · {{ email(r.target_user_id) }}</strong
+            ><small>{{ r.created_at | date: 'MMM d, y, HH:mm' }} · {{ r.status }}</small>
+            <p>{{ r.reason }}</p>
+            @if (r.manager_reply) {
+              <p><strong>Manager reply:</strong> {{ r.manager_reply }}</p>
+            }
+          </div>
+          @if (isManager && r.status === 'pending') {
+            <div class="request-controls">
+              <textarea
+                aria-label="Decision explanation"
+                required
+                minlength="10"
+                rows="2"
+                maxlength="2000"
+                placeholder="Decision / explanation"
+                [ngModel]="decision()[r.id] || ''"
+                (ngModelChange)="setDecision(r.id, $event)"
+              ></textarea
+              ><button
+                class="button primary"
+                type="button"
+                [disabled]="busy()"
+                (click)="decide(r, 'approved')"
+              >
+                Approve</button
+              ><button
+                class="button"
+                type="button"
+                [disabled]="busy()"
+                (click)="decide(r, 'rejected')"
+              >
+                Reject
+              </button>
+            </div>
+          }
+          @if (canExecute(r)) {
+            <button class="button primary" type="button" [disabled]="busy()" (click)="execute(r)">
+              Execute approved action
+            </button>
+          }
+        </div>
+      } @empty {
+        <p class="empty">No requests yet.</p>
+      }
+    </div>
+  </article>
+</section>
