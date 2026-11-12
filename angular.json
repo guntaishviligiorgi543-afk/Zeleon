@@ -24,7 +24,7 @@
                 "input": "public"
               },
               {
-                "glob": "zeeleon favicon.png",
+                "glob": "Navy_Z_with_Yellow_Lightning_Bolt-removebg-preview [(]1[)]_edited.png",
                 "input": "src/app/images",
                 "output": "/"
               }
