@@ -23,6 +23,18 @@ export class Login {
     password: ['', [Validators.required, Validators.pattern(/^[\s\S]{8,128}$/)]],
   });
 
+  async googleSignIn(): Promise<void> {
+    if (this.pending()) return;
+    this.pending.set(true);
+    this.status.set('');
+    try {
+      await this.auth.signInWithGoogle();
+    } catch (error) {
+      this.status.set(authErrorMessage(error));
+      this.pending.set(false);
+    }
+  }
+
   async submit(): Promise<void> {
     if (this.pending()) return;
     this.submitted.set(true);
