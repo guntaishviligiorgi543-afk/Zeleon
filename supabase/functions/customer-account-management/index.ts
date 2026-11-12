@@ -1,6 +1,16 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.118.0';
 
-const origins = new Set(['https://zeleon.store', 'https://www.zeleon.store', 'http://localhost:4200']);
+const productionOrigins = new Set(['https://zeleon.store', 'https://www.zeleon.store']);
+function isAllowedOrigin(origin: string): boolean {
+  if (productionOrigins.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    return url.protocol === 'http:' &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1') &&
+      url.username === '' && url.password === '' &&
+      url.pathname === '/' && url.search === '' && url.hash === '';
+  } catch { return false; }
+}
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
 
 export async function handleRequest(request: Request, makeClient = createClient, send = fetch): Promise<Response> {
@@ -10,9 +20,9 @@ export async function handleRequest(request: Request, makeClient = createClient,
     'Access-Control-Allow-Headers': 'authorization,apikey,content-type,x-client-info,x-supabase-api-version',
     'Access-Control-Allow-Methods': 'POST,OPTIONS',
   };
-  if (origin && origins.has(origin)) headers['Access-Control-Allow-Origin'] = origin;
+  if (origin && isAllowedOrigin(origin)) headers['Access-Control-Allow-Origin'] = origin;
   const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers });
-  if (origin && !origins.has(origin)) return json({ error: 'Origin not allowed' }, 403);
+  if (origin && !isAllowedOrigin(origin)) return json({ error: 'Origin not allowed' }, 403);
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers });
   if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
   try {
