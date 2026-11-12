@@ -95,6 +95,7 @@ try {
         let body;
         if (url.pathname === '/auth/v1/token') {
           exchanges++;
+          await new Promise(resolve => setTimeout(resolve, 250));
           body = { access_token: jwt, refresh_token: 'test-refresh-token', expires_in: 3600, token_type: 'bearer', user };
         } else if (url.pathname === '/auth/v1/user') body = user;
         else if (url.pathname === '/rest/v1/staff_roles') body = role ? [{ user_id: user.id, role, status: 'active' }] : [];
@@ -105,11 +106,18 @@ try {
         }
         return route.fulfill({ contentType: 'application/json', body: JSON.stringify(body) });
       });
-      await context.addInitScript(() => localStorage.setItem('sb-nunxmgltzvknnmkdvjsw-auth-token-code-verifier', JSON.stringify('test-code-verifier')));
+      await context.addInitScript(() => {
+        localStorage.setItem('sb-nunxmgltzvknnmkdvjsw-auth-token-code-verifier', JSON.stringify('test-code-verifier'));
+        globalThis.callbackConfirmationFlashed = false;
+        new MutationObserver(() => {
+          if (location.pathname === '/auth/callback' && document.querySelector('app-auth-callback .form-panel')) globalThis.callbackConfirmationFlashed = true;
+        }).observe(document, { childList: true, subtree: true });
+      });
       const page = await context.newPage();
       await page.goto(base + '/auth/callback?code=mock-oauth-code', { waitUntil: 'domcontentloaded' });
       await page.waitForURL(/\/profile(?:\/info)?$/, { timeout: 30_000 });
       assert.equal(exchanges, 1);
+      assert.equal(await page.evaluate(() => globalThis.callbackConfirmationFlashed), false, 'Confirmation form flashed during callback processing');
       assert.equal(new URL(page.url()).search, '');
       await page.reload({ waitUntil: 'domcontentloaded' });
       await page.waitForURL(/\/profile(?:\/info)?$/);
@@ -120,7 +128,7 @@ try {
         assert.equal(new URL(page.url()).searchParams.get('returnUrl'), '/' + role);
         assert.equal(restrictedWrites, 0);
       }
-      results.push({ mockedGoogleCallback: true, role: role ?? 'customer', exchanges, refreshDoesNotReplay: true, staffMfaStillRequired: !!role });
+      results.push({ mockedGoogleCallback: true, role: role ?? 'customer', exchanges, refreshDoesNotReplay: true, noConfirmationFlash: true, staffMfaStillRequired: !!role });
       await context.close();
     }
     const context = await browser.newContext();

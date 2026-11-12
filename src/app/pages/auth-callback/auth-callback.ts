@@ -7,7 +7,12 @@ import { Auth } from '../../services/auth';
   selector: 'app-auth-callback',
   imports: [RouterLink],
   styleUrl: '../auth-form.css',
-  template: `<section class="auth-page"><div class="brand-panel"><h2>Your ZELEON<br />account.</h2></div><div class="form-panel"><h1>{{ failed() ? 'Sign-in unavailable' : 'Confirming your account' }}</h1><p class="form-status" role="status">{{ status() }}</p>@if (verified()) { <p class="account-link"><a routerLink="/profile">Continue to Profile</a></p> } @if (failed()) { <p class="account-link"><a routerLink="/login">Return to Login</a></p><p class="account-link"><a routerLink="/forgot-password">Request a new recovery email</a></p> }</div></section>`,
+  styles: `.callback-loading { display: grid; min-height: 60vh; margin: 0; padding: 150px 24px 64px; place-content: center; color: #fff; font: 500 14px 'Montserrat', sans-serif; }`,
+  template: `@if (verified() || failed()) {
+    <section class="auth-page"><div class="brand-panel"><h2>Your ZELEON<br />account.</h2></div><div class="form-panel"><h1>{{ failed() ? 'Sign-in unavailable' : 'Email confirmed' }}</h1><p class="form-status" role="status">{{ status() }}</p>@if (verified()) { <p class="account-link"><a routerLink="/profile">Continue to Profile</a></p> } @if (failed()) { <p class="account-link"><a routerLink="/login">Return to Login</a></p><p class="account-link"><a routerLink="/forgot-password">Request a new recovery email</a></p> }</div></section>
+  } @else {
+    <p class="callback-loading" role="status" aria-live="polite">Signing you in…</p>
+  }`,
 })
 export class AuthCallback {
   readonly status = signal('Checking your link…');
