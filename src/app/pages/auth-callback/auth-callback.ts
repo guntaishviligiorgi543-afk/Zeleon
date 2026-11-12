@@ -26,6 +26,7 @@ export class AuthCallback {
     const url = new URL(view.location.href);
     const code = url.searchParams.get('code');
     const flowId = url.searchParams.get('sb_flow_id') ?? undefined;
+    const isGoogle = url.searchParams.has('code') && !flowId;
     const hasError = url.searchParams.has('error') || new URLSearchParams(url.hash.slice(1)).has('error');
     // Remove credentials and provider error details from address/history before rendering feedback.
     view.history.replaceState(view.history.state, '', url.pathname);
@@ -35,6 +36,8 @@ export class AuthCallback {
       if (this.destroyRef.destroyed) return;
       if (type === 'recovery') {
         await this.router.navigateByUrl('/reset-password', { replaceUrl: true });
+      } else if (isGoogle) {
+        await this.router.navigateByUrl('/profile', { replaceUrl: true });
       } else {
         this.verified.set(true);
         this.status.set('Your email has been verified. Your account is ready.');
