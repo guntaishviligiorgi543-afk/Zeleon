@@ -14,6 +14,8 @@ describe('Auth', () => {
   let supabase: any;
 
   beforeEach(() => {
+    sessionStorage.removeItem('zeleon.oauth.destination');
+    const upsert = vi.fn().mockResolvedValue({ error: null });
     supabase = {
       auth: {
         onAuthStateChange: vi.fn(() => ({ data: { subscription: { unsubscribe: vi.fn() } } })),
@@ -21,6 +23,7 @@ describe('Auth', () => {
         getUser: vi.fn().mockResolvedValue({ data: { user }, error: null }),
         signUp: vi.fn().mockResolvedValue({ data: { user, session: { user } }, error: null }),
         signInWithPassword: vi.fn().mockResolvedValue({ data: { user, session: { user } }, error: null }),
+        signInWithOAuth: vi.fn().mockResolvedValue({ data: { provider: 'google', url: 'https://accounts.google.com/o/oauth2/v2/auth' }, error: null }),
         signOut: vi.fn().mockResolvedValue({ error: null }),
         resetPasswordForEmail: vi.fn().mockResolvedValue({ error: null }),
         updateUser: vi.fn().mockResolvedValue({ data: { user }, error: null }),
@@ -29,7 +32,7 @@ describe('Auth', () => {
         exchangeCodeForSession: vi.fn().mockResolvedValue({ data: { session: { user } }, error: null }),
       },
       from: vi.fn(() => ({
-        upsert: vi.fn().mockResolvedValue({ error: null }),
+        upsert,
         select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }) })) })),
       })),
       functions: { invoke: vi.fn().mockResolvedValue({ error: null }) },
@@ -182,7 +185,70 @@ describe('Auth', () => {
     await auth.ready;
     expect(supabase.from).toHaveBeenCalledWith('user_preferred_names');
     expect(auth.displayName()).toBe('Nini');
-    expect(supabase.from().upsert).toHaveBeenCalledWith(expect.objectContaining({ preferred_name: 'Nini' }), { onConflict: 'user_id' });
+    expect(supabase.from().upsert).toHaveBeenCalledWith(expect.objectContaining({ preferred_name: 'Nini' }), { onConflict: 'user_id', ignoreDuplicates: true });
+  });
+
+  it('keeps an existing profile preference when restoring a Google-linked account', async () => {
+    const restored = { ...user, user_metadata: { preferred_name: 'Old name', given_name: 'Nino', family_name: 'Example' } };
+    supabase.auth.getSession.mockResolvedValueOnce({ data: { session: { user: restored } }, error: null });
+    supabase.auth.getUser.mockResolvedValueOnce({ data: { user: restored }, error: null });
+    supabase.from.mockReturnValue({ upsert: vi.fn(), select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { preferred_name: 'Current name' }, error: null }) }) }) });
+    const auth = TestBed.inject(Auth);
+    await auth.ready;
+    expect(auth.displayName()).toBe('Current name');
+    expect(supabase.from().upsert).not.toHaveBeenCalled();
+    expect(auth.user()?.firstName).toBe('Nino');
+  });
+
+  it('starts Google PKCE with the current origin callback and preserves only a validated destination', async () => {
+    const auth = TestBed.inject(Auth);
+    await auth.signInWithGoogle('/profile/security');
+    expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({ provider: 'google', options: { redirectTo: new URL('/auth/callback', window.location.origin).toString() } });
+    expect(auth.consumeGoogleDestination()).toBe('/profile/security');
+    expect(auth.consumeGoogleDestination()).toBe('/profile');
+    await auth.signInWithGoogle('//evil.test');
+    expect(auth.consumeGoogleDestination()).toBe('/profile');
+    expect(supabase.auth.signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it('clears stale redirect intent and reports OAuth startup errors', async () => {
+    const auth = TestBed.inject(Auth);
+    supabase.auth.signInWithOAuth.mockResolvedValueOnce({ data: { url: null }, error: new Error('Provider unavailable') });
+    await expect(auth.signInWithGoogle('/profile/security')).rejects.toThrow('Provider unavailable');
+    expect(auth.consumeGoogleDestination()).toBe('/profile');
+    sessionStorage.setItem('zeleon.oauth.destination', JSON.stringify({ path: '/profile/security', startedAt: Date.now() - 16 * 60_000 }));
+    expect(auth.consumeGoogleDestination()).toBe('/profile');
+  });
+
+  it('exchanges a callback code only once across duplicate requests', async () => {
+    const auth = TestBed.inject(Auth);
+    const first = auth.completeCallback('google-code');
+    const second = auth.completeCallback('google-code');
+    expect(second).toBe(first);
+    await Promise.all([first, second]);
+    expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledExactlyOnceWith('google-code', undefined);
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(supabase.from).not.toHaveBeenCalled();
+  });
+
+  it('preserves the recovery event during a PKCE exchange', async () => {
+    const auth = TestBed.inject(Auth);
+    await auth.ready;
+    const handler = supabase.auth.onAuthStateChange.mock.calls[0][0];
+    supabase.auth.exchangeCodeForSession.mockImplementationOnce(async () => {
+      handler('PASSWORD_RECOVERY', { user });
+      return { data: { session: { user } }, error: null };
+    });
+    expect(await auth.completeCallback('recovery-code', 'flow')).toBe('recovery');
+    expect(auth.recovering()).toBe(true);
+  });
+
+  it('rejects a callback error even with an older authenticated session', async () => {
+    const auth = TestBed.inject(Auth);
+    await auth.signIn('person@example.com', 'password');
+    supabase.auth.exchangeCodeForSession.mockResolvedValueOnce({ data: { session: null }, error: new Error('Code expired') });
+    await expect(auth.completeCallback('expired')).rejects.toThrow('Code expired');
+    expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledOnce();
   });
 
   it('clears app state on local logout even when the provider reports an error', async () => {

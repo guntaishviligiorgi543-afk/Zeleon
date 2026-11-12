@@ -1,5 +1,5 @@
 import { computed, DestroyRef, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { AuthChangeEvent, Session, User } from '@supabase/supabase-js';
 import { SUPABASE_CLIENT } from './supabase';
 
@@ -43,6 +43,8 @@ export function profileDestination(value: string | null): string {
 export class Auth {
   private readonly client = inject(SUPABASE_CLIENT);
   private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly document = inject(DOCUMENT);
+  private callbackExchange: { key: string; promise: Promise<'recovery' | 'confirmation'> } | null = null;
   private readonly sessionState = signal<Session | null>(null);
   readonly user = computed(() => this.toAuthUser(this.sessionState()?.user ?? null));
   readonly preferredName = signal('');
@@ -94,12 +96,24 @@ export class Auth {
   }
 
   private async importSignupPreferredName(): Promise<void> {
+    const userId = this.user()?.id;
     const initialName = this.sessionState()?.user.user_metadata?.['preferred_name'];
-    if (typeof initialName !== 'string' || !initialName.trim()) return;
+    if (!userId || typeof initialName !== 'string' || !initialName.trim()) return;
     try {
-      await this.loadPreferredName();
-      // Import only when the dedicated record is absent; never overwrite a later setting.
-      if (!this.preferredName()) await this.savePreferredName(initialName);
+      // Initialization cannot call methods that await this.ready: that is the
+      // promise currently executing. Preserve any existing preference record.
+      const { data, error } = await this.client.from('user_preferred_names')
+        .select('preferred_name').eq('user_id', userId).maybeSingle();
+      if (error) throw error;
+      if (data) {
+        if (this.user()?.id === userId) this.preferredName.set(data.preferred_name ?? '');
+        return;
+      }
+      const imported = await this.client.from('user_preferred_names').upsert({
+        user_id: userId, preferred_name: initialName.trim(), updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id', ignoreDuplicates: true });
+      if (imported.error) throw imported.error;
+      if (this.user()?.id === userId) this.preferredName.set(initialName.trim());
     } catch {
       // The database migration may not be deployed yet; retain metadata for a future session.
     }
@@ -135,15 +149,36 @@ export class Auth {
     this.recovering.set(false);
   }
 
-  async signInWithGoogle(): Promise<void> {
+  async signInWithGoogle(returnUrl: string | null = null): Promise<void> {
     await this.ready;
     if (!this.browser) return;
-    const redirectTo = new URL('/auth/callback', window.location.origin).toString();
-    const { error } = await this.client.auth.signInWithOAuth({
+    const view = this.document.defaultView;
+    if (!view) throw new Error('Google sign-in requires a browser.');
+    // Store only a validated local destination; leave callback URLs exact so
+    // existing Supabase allowlist entries work in production and on any dev port.
+    try { view.sessionStorage.setItem('zeleon.oauth.destination', JSON.stringify({ path: profileDestination(returnUrl), startedAt: Date.now() })); } catch { /* Default to Profile when session storage is unavailable. */ }
+    const redirectTo = new URL('/auth/callback', view.location.origin).toString();
+    const { data, error } = await this.client.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo },
     });
-    if (error) throw error;
+    if (error || !data.url) {
+      this.consumeGoogleDestination();
+      throw error ?? new Error('Google sign-in did not return a redirect URL.');
+    }
+  }
+
+  consumeGoogleDestination(): string {
+    try {
+      const storage = this.document.defaultView?.sessionStorage;
+      const raw = storage?.getItem('zeleon.oauth.destination');
+      storage?.removeItem('zeleon.oauth.destination');
+      if (raw) {
+        const value = JSON.parse(raw);
+        if (typeof value.startedAt === 'number' && Date.now() - value.startedAt >= 0 && Date.now() - value.startedAt < 15 * 60_000) return profileDestination(typeof value.path === 'string' ? value.path : null);
+      }
+    } catch { /* Untrusted or unavailable browser storage must not block login. */ }
+    return '/profile';
   }
 
   async signOut(): Promise<void> {
@@ -298,13 +333,21 @@ export class Auth {
     if (error) throw error;
   }
 
-  async completeCallback(code: string, flowId?: string): Promise<'recovery' | 'confirmation'> {
+  completeCallback(code: string, flowId?: string): Promise<'recovery' | 'confirmation'> {
+    const key = JSON.stringify([code, flowId]);
+    if (this.callbackExchange?.key === key) return this.callbackExchange.promise;
+    const promise = this.exchangeCallback(code, flowId);
+    this.callbackExchange = { key, promise };
+    return promise;
+  }
+
+  private async exchangeCallback(code: string, flowId?: string): Promise<'recovery' | 'confirmation'> {
     await this.ready;
     this.recovering.set(false);
     const { data, error } = await this.client.auth.exchangeCodeForSession(code, flowId ? { flowId } : undefined);
     if (error || !data.session) throw error ?? new Error('Invalid authentication link');
     const verified = await this.client.auth.getUser();
-    if (verified.error || !verified.data.user) throw verified.error ?? new Error('Invalid session');
+    if (verified.error || !verified.data.user || verified.data.user.id !== data.session.user.id) throw verified.error ?? new Error('Invalid session');
     this.sessionState.set({ ...data.session, user: verified.data.user });
     return this.recovering() ? 'recovery' : 'confirmation';
   }
@@ -315,8 +358,8 @@ export class Auth {
     return {
       id: user.id,
       email: user.email ?? null,
-      firstName: typeof metadata['first_name'] === 'string' ? metadata['first_name'] : '',
-      lastName: typeof metadata['last_name'] === 'string' ? metadata['last_name'] : '',
+      firstName: typeof metadata['first_name'] === 'string' ? metadata['first_name'] : typeof metadata['given_name'] === 'string' ? metadata['given_name'] : typeof metadata['full_name'] === 'string' ? metadata['full_name'] : '',
+      lastName: typeof metadata['last_name'] === 'string' ? metadata['last_name'] : typeof metadata['given_name'] === 'string' && typeof metadata['family_name'] === 'string' ? metadata['family_name'] : '',
       phoneNumber: typeof metadata['phone_number'] === 'string' ? metadata['phone_number'] : '',
     };
   }

@@ -62,3 +62,4 @@ button:focus-visible, a:focus-visible { outline: 2px solid currentColor; outline
 .google-oauth-button:focus-visible { outline:3px solid #4285f4; outline-offset:3px; }
 .google-oauth-button:disabled { opacity:.6; cursor:wait; }
 .google-oauth-button svg { flex-shrink:0; }
+@media (prefers-reduced-motion: reduce) { .google-oauth-button { transition:none; } }

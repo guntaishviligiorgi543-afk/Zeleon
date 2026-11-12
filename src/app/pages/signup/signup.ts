@@ -46,7 +46,11 @@ export class Signup {
   }, { validators: passwordsMatch });
 
   constructor() {
-    this.destroyRef.onDestroy(() => clearInterval(this.cooldownTimer));
+    this.destroyRef.onDestroy(() => {
+      clearInterval(this.cooldownTimer);
+      this.closeResult(false);
+      this.closeVerification(false);
+    });
   }
 
   async googleSignIn(): Promise<void> {
@@ -54,11 +58,17 @@ export class Signup {
     this.pending.set(true);
     this.status.set('');
     try {
-      await this.auth.signInWithGoogle();
+      const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
+      await this.auth.signInWithGoogle(typeof returnUrl === 'string' ? returnUrl : null);
     } catch (error) {
       this.status.set(authErrorMessage(error));
       this.pending.set(false);
     }
+  }
+
+  @HostListener('window:pageshow', ['$event'])
+  restoreAfterBackNavigation(event: PageTransitionEvent): void {
+    if (event.persisted) this.pending.set(false);
   }
 
   async submit(): Promise<void> {
@@ -160,16 +170,20 @@ export class Signup {
   }
 
   private showResult(result: { success: boolean; title: string; message: string }): void {
-    this.previousFocus = this.document.activeElement instanceof HTMLElement ? this.document.activeElement : null;
-    this.previousOverflow = this.document.body.style.overflow;
+    if (!this.result() && !this.verificationOpen()) {
+      this.previousFocus = this.document.activeElement instanceof HTMLElement ? this.document.activeElement : null;
+      this.previousOverflow = this.document.body.style.overflow;
+    }
     this.document.body.style.overflow = 'hidden';
     this.result.set(result);
     queueMicrotask(() => this.resultAction()?.nativeElement.focus());
   }
 
   private openVerification(email: string): void {
-    this.previousFocus = this.document.activeElement instanceof HTMLElement ? this.document.activeElement : null;
-    this.previousOverflow = this.document.body.style.overflow;
+    if (!this.result() && !this.verificationOpen()) {
+      this.previousFocus = this.document.activeElement instanceof HTMLElement ? this.document.activeElement : null;
+      this.previousOverflow = this.document.body.style.overflow;
+    }
     this.document.body.style.overflow = 'hidden';
     this.verificationEmail.set(email);
     this.verificationCode.set('');

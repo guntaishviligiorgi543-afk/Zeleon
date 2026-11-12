@@ -125,4 +125,14 @@ describe('Signup', () => {
     expect(component.verificationOpen()).toBe(false);
     expect(document.body.style.overflow).toBe('');
   });
+
+  it('restores page scrolling when navigating away from an open OTP dialog', async () => {
+    const previous = document.body.style.overflow;
+    auth.signUp.mockResolvedValueOnce({ hasSession: false });
+    component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
+    await component.submit();
+    expect(document.body.style.overflow).toBe('hidden');
+    fixture.destroy();
+    expect(document.body.style.overflow).toBe(previous);
+  });
 });

@@ -33,6 +33,21 @@ describe('AuthCallback', () => {
     expect(navigate).toHaveBeenCalledWith('/reset-password', { replaceUrl: true });
   });
 
+  it('sends Google sign-in to Profile without claiming email verification', async () => {
+    const { navigate, component } = await setup('/auth/callback?code=google-code');
+    expect(navigate).toHaveBeenCalledWith('/profile', { replaceUrl: true });
+    expect(component.verified()).toBe(false);
+    expect(window.location.search).toBe('');
+  });
+
+  it('handles cancellation and clears fragment credentials without exchanging', async () => {
+    const { auth, component } = await setup('/auth/callback#error=access_denied&error_description=private&access_token=secret');
+    expect(auth.completeCallback).not.toHaveBeenCalled();
+    expect(component.status()).toContain('cancelled');
+    expect(component.status()).not.toContain('private');
+    expect(window.location.hash).toBe('');
+  });
+
   it('rejects an expired link even when a prior session might exist', async () => {
     const { component, navigate } = await setup('/auth/callback?code=expired', 'confirmation', true);
     expect(component.failed()).toBe(true);

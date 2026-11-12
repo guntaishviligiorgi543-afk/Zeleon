@@ -35,7 +35,7 @@ describe('ForgotPassword', () => {
 
   it('verifies the recovery code before navigating to password change', async () => {
     const component = fixture.componentInstance;
-    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     component.form.controls.email.setValue('person@example.com');
     await component.submit();
     fixture.detectChanges();
@@ -47,7 +47,7 @@ describe('ForgotPassword', () => {
     await fixture.whenStable();
     expect(auth.verifyEmailOtp).toHaveBeenCalledWith('person@example.com', '12345678', 'recovery');
     expect(auth.recovering()).toBe(true);
-    expect(navigate).toHaveBeenCalledWith('/reset-password');
+    expect(navigate).toHaveBeenCalledWith(['/reset-password'], { queryParams: {} });
   });
 
   it('keeps recovery open when the code is invalid or expired', async () => {

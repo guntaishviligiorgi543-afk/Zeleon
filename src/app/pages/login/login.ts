@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, HostListener, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Auth, authErrorMessage, profileDestination } from '../../services/auth';
@@ -28,11 +28,17 @@ export class Login {
     this.pending.set(true);
     this.status.set('');
     try {
-      await this.auth.signInWithGoogle();
+      const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
+      await this.auth.signInWithGoogle(typeof returnUrl === 'string' ? returnUrl : null);
     } catch (error) {
       this.status.set(authErrorMessage(error));
       this.pending.set(false);
     }
+  }
+
+  @HostListener('window:pageshow', ['$event'])
+  restoreAfterBackNavigation(event: PageTransitionEvent): void {
+    if (event.persisted) this.pending.set(false);
   }
 
   async submit(): Promise<void> {
