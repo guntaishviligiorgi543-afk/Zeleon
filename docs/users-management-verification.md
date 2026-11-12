@@ -17,7 +17,7 @@ The reported missing page could not be reproduced against current production ass
 - `src/app/pages/manager/manager-shell.spec.ts`: Admin/Manager navigation order, Users URL/icon and mobile menu behavior.
 - `supabase/functions/customer-account-management/index.ts`: bring the previously deployed-only function into source control; paginate Auth and database reads; fail closed on lookup errors; expose only the requesting Admin's requests; validate caller claims, AAL2, active assignment and staff grant; use atomic database transitions; preserve separate request/decision/execution notifications and report email failure honestly.
 - `supabase/functions/customer-account-management/index_test.ts`: 12 mocked security/workflow/email tests.
-- `supabase/migrations/20261112104539_customer_account_workflow_hardening.sql`: reconcile existing account tables; restrict direct browser access; implement transactionally locked, audited transitions; preserve Auth users and history; enforce restrictions for existing JWTs on nine protected database write paths.
+- `supabase/migrations/20261112105226_customer_account_workflow_hardening.sql`: reconcile existing account tables; restrict direct browser access; implement transactionally locked, audited transitions; preserve Auth users and history; enforce restrictions for existing JWTs on nine protected database write paths.
 - `supabase/tests/customer_account_workflow.sql`: generated test-only Auth/staff/session fixtures and transaction rollback, including approved suspension and deactivation scenarios.
 
 ## Verification
@@ -25,7 +25,7 @@ The reported missing page could not be reproduced against current production ass
 - `npm ci`: passed in an isolated worktree. The first attempt in the main checkout was blocked by an already-running `esbuild.exe` holding a Windows file lock.
 - Production Angular build: passed; includes `manager-users` lazy chunk. Existing bundle-size, Home CSS-size and AOS CommonJS warnings remain.
 - Focused Angular tests: **28 passed**, including Users, sidebar, staff/manager guards and StaffAccess.
-- Full Angular suite with changes: **188 passed, 33 failed**. Failures are in unmodified auth, support-rating, navigation, signup, forgot-password and support tests. Some failures vary with timing.
+- Full Angular suite with changes: **188 passed, 33 failed**. Failures are in unmodified auth, support-rating, navigation, signup, forgot-password and support tests. The clean baseline at `51cd8d6` also produced the same 33 failures (180 passing tests), confirming these failures predate this change. Some failures vary with timing.
 - Customer-account Edge Function tests: **12 passed**, with mocked Resend and no real customer actions or emails.
 - Existing staff-management Edge tests: **6 passed, 2 failed** in unchanged validation/handler expectations.
 - SQL workflow test: passed on the connected database in a rolled-back transaction. Covers AAL1/Support denial, valid structured reasons, duplicate requests, mandatory explanation, approval without execution, Manager/other-Admin execution denial, requesting-Admin execution, duplicate execution denial, rejected requests, preserved Auth user after deactivation, existing-token write denial, audit records, authenticated-role RPC access and expired staff grants. Zero test fixture users remain.
