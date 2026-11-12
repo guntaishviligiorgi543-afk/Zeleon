@@ -15,6 +15,9 @@ export class ManagerUsers implements OnInit {
  readonly requests=signal<Request[]>([]);
  readonly search=signal('');
  readonly reason=signal<Record<string,string>>({});
+ readonly reasonCategory=signal<Record<string,string>>({});
+ readonly reasonOptions=[{value:'abusive_support',label:'Abusive or offensive language toward Support'},{value:'suspected_payment_fraud',label:'Suspected payment falsification or fraud attempt'}] as const;
+ setReasonCategory(id:string,value:string){this.reasonCategory.update(x=>({...x,[id]:value}));}
  readonly decision=signal<Record<string,string>>({});
  readonly busy=signal(false);
  readonly loading=signal(false);
@@ -44,8 +47,13 @@ export class ManagerUsers implements OnInit {
   finally{this.busy.set(false);}
  }
  request(u:Customer,kind:'suspend'|'deactivate'){
-  const reason=(this.reason()[u.id]??'').trim();
-  if(reason.length<10){this.error.set('Provide a reason of at least 10 characters.');return;}
+  const category=this.reasonCategory()[u.id];
+  const detail=(this.reason()[u.id]??'').trim();
+  if(!category){this.error.set('Select a reason category.');return;}
+  if(detail.length<10){this.error.set('Provide supporting details of at least 10 characters.');return;}
+  const label=this.reasonOptions.find(option=>option.value===category)?.label;
+  if(!label){this.error.set('Invalid reason category.');return;}
+  const reason=label+' — '+detail;
   void this.perform('request',{targetUserId:u.id,kind,reason},'Manager approval requested.');
  }
  decide(r:Request,decision:'approved'|'rejected'){void this.perform('decide',{requestId:r.id,decision,reply:this.decision()[r.id]??''},'Decision saved.');}
