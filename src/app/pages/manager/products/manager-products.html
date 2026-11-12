@@ -150,7 +150,7 @@
             ×
           </button>
         </div>
-        <form (ngSubmit)="save()">
+        <form [formGroup]="form" (ngSubmit)="save()">
           <div class="form-grid">
             <div class="field">
               <label for="product-name">Product name</label
