@@ -27,18 +27,24 @@ export class Shop {
 
   constructor() {
     const destroyRef = inject(DestroyRef);
-    inject(ActivatedRoute).queryParamMap.pipe(takeUntilDestroyed(destroyRef)).subscribe((params) => {
-      const category = params.get('category');
-      this.selectedCategory = ['classic', 'boost-blends', 'zero-sugar'].includes(category ?? '') ? category as Category : 'all';
-      this.currentPage.set(1);
+    inject(ActivatedRoute)
+      .queryParamMap.pipe(takeUntilDestroyed(destroyRef))
+      .subscribe((params) => {
+        const category = params.get('category');
+        this.selectedCategory = ['classic', 'boost-blends', 'zero-sugar'].includes(category ?? '')
+          ? (category as Category)
+          : 'all';
+        this.currentPage.set(1);
+      });
+    afterNextRender(() => {
+      void this.loadProducts();
     });
-    afterNextRender(() => { void this.loadProducts(); });
     destroyRef.onDestroy(() => this.request?.abort());
   }
 
   async loadProducts(): Promise<void> {
     this.request?.abort();
-    const request = this.request = new AbortController();
+    const request = (this.request = new AbortController());
     this.loading.set(true);
     this.error.set('');
     try {
@@ -48,13 +54,16 @@ export class Shop {
         this.currentPage.set(this.pageNumber);
       }
     } catch (error) {
-      if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'Products could not be loaded.');
+      if (!request.signal.aborted)
+        this.error.set(error instanceof Error ? error.message : 'Products could not be loaded.');
     } finally {
       if (!request.signal.aborted) this.loading.set(false);
     }
   }
 
-  navigateToProduct(id: string | number): void { void this.router.navigate(['/product', id]); }
+  navigateToProduct(id: string | number): void {
+    void this.router.navigate(['/product', id]);
+  }
   selectedCategory: Category = 'all';
   selectedSort: Sort = 'default';
   readonly sortOpen = signal(false);
@@ -67,7 +76,9 @@ export class Shop {
     { value: 'nameZToA', label: 'Name: Z to A' },
   ];
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
-  get sortLabel(): string { return this.sortOptions.find((option) => option.value === this.selectedSort)!.label; }
+  get sortLabel(): string {
+    return this.sortOptions.find((option) => option.value === this.selectedSort)!.label;
+  }
 
   toggleSort(): void {
     this.activeSort.set(this.sortOptions.findIndex((option) => option.value === this.selectedSort));
@@ -81,16 +92,25 @@ export class Shop {
   }
 
   closeSortOutside(event: MouseEvent): void {
-    if (!this.element.nativeElement.querySelector('.sort')?.contains(event.target as Node)) this.sortOpen.set(false);
+    if (!this.element.nativeElement.querySelector('.sort')?.contains(event.target as Node))
+      this.sortOpen.set(false);
   }
 
   sortFocusOut(event: FocusEvent): void {
-    if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) this.sortOpen.set(false);
+    if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null))
+      this.sortOpen.set(false);
   }
 
   sortKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Tab') { this.sortOpen.set(false); return; }
-    if (event.key === 'Escape') { this.sortOpen.set(false); event.preventDefault(); return; }
+    if (event.key === 'Tab') {
+      this.sortOpen.set(false);
+      return;
+    }
+    if (event.key === 'Escape') {
+      this.sortOpen.set(false);
+      event.preventDefault();
+      return;
+    }
     if (['Enter', ' '].includes(event.key)) {
       event.preventDefault();
       if (this.sortOpen()) this.chooseSort(this.sortOptions[this.activeSort()].value);
@@ -99,29 +119,44 @@ export class Shop {
     }
     if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
     event.preventDefault();
-    if (!this.sortOpen()) { this.toggleSort(); return; }
+    if (!this.sortOpen()) {
+      this.toggleSort();
+      return;
+    }
     const length = this.sortOptions.length;
-    this.activeSort.set(event.key === 'Home' ? 0 : event.key === 'End' ? length - 1 :
-      (this.activeSort() + (event.key === 'ArrowDown' ? 1 : -1) + length) % length);
+    this.activeSort.set(
+      event.key === 'Home'
+        ? 0
+        : event.key === 'End'
+          ? length - 1
+          : (this.activeSort() + (event.key === 'ArrowDown' ? 1 : -1) + length) % length,
+    );
   }
 
   get selectedCategoryName(): string {
     return {
-      all: 'All Products', classic: 'Classic',
-      'boost-blends': 'Boost Blends', 'zero-sugar': 'Zero Sugar',
+      all: 'All Products',
+      classic: 'Classic',
+      'boost-blends': 'Boost Blends',
+      'zero-sugar': 'Zero Sugar',
     }[this.selectedCategory];
   }
 
   get displayedProducts(): Product[] {
-    const products = this.products().filter((product) =>
-      this.selectedCategory === 'all' || product.category === this.selectedCategory,
+    const products = this.products().filter(
+      (product) => this.selectedCategory === 'all' || product.category === this.selectedCategory,
     );
     switch (this.selectedSort) {
-      case 'priceLowToHigh': return products.sort((a, b) => a.price - b.price);
-      case 'priceHighToLow': return products.sort((a, b) => b.price - a.price);
-      case 'nameAToZ': return products.sort((a, b) => a.name.localeCompare(b.name));
-      case 'nameZToA': return products.sort((a, b) => b.name.localeCompare(a.name));
-      default: return products;
+      case 'priceLowToHigh':
+        return products.sort((a, b) => a.price - b.price);
+      case 'priceHighToLow':
+        return products.sort((a, b) => b.price - a.price);
+      case 'nameAToZ':
+        return products.sort((a, b) => a.name.localeCompare(b.name));
+      case 'nameZToA':
+        return products.sort((a, b) => b.name.localeCompare(a.name));
+      default:
+        return products;
     }
   }
 
@@ -130,12 +165,23 @@ export class Shop {
     this.currentPage.set(1);
   }
 
-  get totalPages(): number { return Math.max(1, Math.ceil(this.displayedProducts.length / this.pageSize)); }
-  get pageNumber(): number { return Math.min(this.currentPage(), this.totalPages); }
-  get pageStart(): number { return this.displayedProducts.length ? (this.pageNumber - 1) * this.pageSize + 1 : 0; }
-  get pageEnd(): number { return Math.min(this.pageNumber * this.pageSize, this.displayedProducts.length); }
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.displayedProducts.length / this.pageSize));
+  }
+  get pageNumber(): number {
+    return Math.min(this.currentPage(), this.totalPages);
+  }
+  get pageStart(): number {
+    return this.displayedProducts.length ? (this.pageNumber - 1) * this.pageSize + 1 : 0;
+  }
+  get pageEnd(): number {
+    return Math.min(this.pageNumber * this.pageSize, this.displayedProducts.length);
+  }
   get paginatedProducts(): Product[] {
-    return this.displayedProducts.slice((this.pageNumber - 1) * this.pageSize, this.pageNumber * this.pageSize);
+    return this.displayedProducts.slice(
+      (this.pageNumber - 1) * this.pageSize,
+      this.pageNumber * this.pageSize,
+    );
   }
   get paginationItems(): (number | null)[] {
     const pages = new Set([1, this.totalPages]);
@@ -158,5 +204,4 @@ export class Shop {
     grid?.focus({ preventScroll: true });
     grid?.scrollIntoView({ block: 'start', behavior: 'instant' });
   }
-
 }
