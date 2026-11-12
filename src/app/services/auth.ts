@@ -135,6 +135,17 @@ export class Auth {
     this.recovering.set(false);
   }
 
+  async signInWithGoogle(): Promise<void> {
+    await this.ready;
+    if (!this.browser) return;
+    const redirectTo = new URL('/auth/callback', window.location.origin).toString();
+    const { error } = await this.client.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo },
+    });
+    if (error) throw error;
+  }
+
   async signOut(): Promise<void> {
     await this.ready;
     try {
