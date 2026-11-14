@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Cart } from '../../services/cart';
 import { ProductCard } from './product-card';
 import { vi } from 'vitest';
+import { provideRouter } from '@angular/router';
 
 describe('ProductCard', () => {
   let component: ProductCard;
@@ -10,7 +11,7 @@ describe('ProductCard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ProductCard],
-      providers: [Cart],
+      providers: [Cart, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductCard);
@@ -30,6 +31,7 @@ describe('ProductCard', () => {
     expect(fixture.nativeElement.querySelector('img').getAttribute('src')).toBe('https://example.com/product.jpg');
     expect(fixture.nativeElement.querySelector('.prodNam').textContent).toBe('Test product');
     expect(fixture.nativeElement.querySelector('.prodPrice').textContent.trim()).toBe('$15.00');
+    expect(fixture.nativeElement.querySelector('a').getAttribute('href')).toBe('/product/1');
   });
 
   it('adds and removes the product through the shared cart service', async () => {

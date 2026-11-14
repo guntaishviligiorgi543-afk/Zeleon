@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, dirname, join } from 'node:path';
+import { metadata, serializeJson } from '../src/app/seo-metadata.mjs';
 
 export const ORIGIN = 'https://zeleon.store';
 export const NAMESPACE = 'http://www.sitemaps.org/schemas/sitemap/0.9';
@@ -36,14 +37,14 @@ export function renderSitemap(entries) {
   return xml;
 }
 
-export async function fetchProducts(url, key, request = fetch, pageSize = 500) {
+export async function fetchProducts(url, key, request = fetch, pageSize = 500, select = 'id,is_active,updated_at') {
   assert(key?.startsWith('sb_publishable_'), 'Only a public Supabase publishable key is permitted');
   const base = new URL(url);
   assert(base.protocol === 'https:', 'Supabase API must use HTTPS');
   const products = [];
   for (let offset = 0; ;) {
     const endpoint = new URL('/rest/v1/products', base);
-    endpoint.search = new URLSearchParams({ select: 'id,is_active,updated_at', is_active: 'eq.true', order: 'id.asc', offset: String(offset), limit: String(pageSize) });
+    endpoint.search = new URLSearchParams({ select, is_active: 'eq.true', order: 'id.asc', offset: String(offset), limit: String(pageSize) });
     let response;
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
@@ -75,8 +76,19 @@ export async function generate() {
   await checkRoutes();
   const config = await readFile(join(root, 'src/environments/environment.ts'), 'utf8');
   const setting = name => config.match(new RegExp(`${name}:\\s*'([^']+)'`))?.[1];
-  const products = await fetchProducts(process.env.SUPABASE_URL || setting('supabaseUrl'), process.env.SUPABASE_PUBLISHABLE_KEY || setting('supabasePublishableKey'));
+  const api = process.env.SUPABASE_URL || setting('supabaseUrl');
+  const products = await fetchProducts(api, process.env.SUPABASE_PUBLISHABLE_KEY || setting('supabasePublishableKey'), fetch, 500,
+    'id,is_active,updated_at,name,slug,price,currency,category:categories(name),images:product_images(storage_path,is_primary,created_at)');
   const entries = entriesFor(products);
+  const catalog = products.filter(row => row.is_active === true).map(row => {
+    const images = [...(row.images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.created_at.localeCompare(b.created_at) || a.storage_path.localeCompare(b.storage_path));
+    const path = images[0]?.storage_path;
+    return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), currency: row.currency, categoryName: row.category?.name ?? '',
+      image: path ? `${api}/storage/v1/object/public/${setting('productImagesBucket')}/${path.split('/').map(encodeURIComponent).join('/')}` : '' };
+  });
+  assert(catalog.every(product => typeof product.name === 'string' && product.name.trim() && Number.isFinite(product.price)), 'Public product metadata is incomplete');
+  await mkdir(join(root, 'tmp'), { recursive: true });
+  await writeFile(join(root, 'tmp/seo-catalog.json'), JSON.stringify(catalog), 'utf8');
   await writeFile(join(root, 'public/sitemap.xml'), renderSitemap(entries), 'utf8');
   console.log(JSON.stringify({ sitemapUrls: entries.length, productUrls: entries.length - publicPages.length, access: 'anonymous/public RLS' }));
   return entries;
@@ -105,21 +117,53 @@ export async function readEntries(file) {
   return entries;
 }
 
-export function withHead(html, { loc, index = true }) {
+export function withHead(html, { loc, index = true }, product = null) {
   html = html.replace(/<meta\b(?=[^>]*\bname=["']robots["'])[^>]*>\s*/gi, '').replace(/<link\b(?=[^>]*\brel=["']canonical["'])[^>]*>\s*/gi, '');
-  const tags = `<meta name="robots" content="${index ? 'index, follow' : 'noindex, nofollow'}">\n${loc ? `<link rel="canonical" href="${escapeXml(loc)}">\n` : ''}`;
+  html = html.replace(/<title>[^<]*<\/title>/gi, '').replace(/<meta\b(?=[^>]*(?:name=["'](?:description|twitter:[^"']+)["']|property=["']og:[^"']+["']))[^>]*>\s*/gi, '').replace(/<script\b[^>]*data-zeleon-seo[^>]*>[\s\S]*?<\/script>\s*/gi, '');
+  const page = metadata(loc ? new URL(loc).pathname : '/private/', product);
+  const tag = (name, value, attribute = 'name') => `<meta ${attribute}="${name}" content="${escapeXml(value)}">\n`;
+  let tags = `<title>${escapeXml(page.title)}</title>\n` + tag('robots', index ? 'index, follow' : 'noindex, nofollow');
+  if (loc && index) {
+    tags += `<link rel="canonical" href="${escapeXml(loc)}">\n` + tag('description', page.description);
+    for (const [name, value] of Object.entries({ 'og:title': page.title, 'og:description': page.description, 'og:type': 'website', 'og:url': loc, 'og:image': page.image, 'og:site_name': 'ZELEON', 'og:image:alt': product?.name ?? 'ZELEON logo' })) tags += tag(name, value, 'property');
+    for (const [name, value] of Object.entries({ 'twitter:card': 'summary_large_image', 'twitter:title': page.title, 'twitter:description': page.description, 'twitter:image': page.image, 'twitter:image:alt': product?.name ?? 'ZELEON logo' })) tags += tag(name, value);
+    for (const schema of page.schemas) tags += `<script type="application/ld+json" data-zeleon-seo>${serializeJson(schema)}</script>\n`;
+  }
   return html.replace('</head>', tags + '</head>');
 }
 
 export async function prepare(directory = join(root, 'dist/zeleon/browser')) {
   const entries = await readEntries(join(directory, 'sitemap.xml'));
   const shell = await readFile(join(directory, 'index.html'), 'utf8');
+  const catalog = JSON.parse(await readFile(join(root, 'tmp/seo-catalog.json'), 'utf8'));
   for (const entry of entries) {
     const target = join(directory, new URL(entry.loc).pathname.slice(1), 'index.html');
     await mkdir(dirname(target), { recursive: true });
-    await writeFile(target, withHead(shell, entry), 'utf8');
+    const path = new URL(entry.loc).pathname;
+    const product = path.startsWith('/product/') ? catalog.find(product => String(product.id) === path.slice(9, -1)) : null;
+    assert(!path.startsWith('/product/') || product, 'Sitemap product has no public metadata');
+    assert.equal(metadata(path, product).canonical, entry.loc, 'Static metadata and sitemap disagree');
+    let html = withHead(shell, entry, product);
+    // Useful public fallback when scripts are disabled; Angular's visual UI is untouched.
+    const links = publicPages.map(path => `<a href="${path}">${escapeXml(metadata(path).title)}</a>`).join(' ');
+    const products = product ? [product] : (path === '/' || path === '/shop/' ? catalog : []);
+    const content = `<noscript data-zeleon-seo-content><nav>${links}</nav><h1>${escapeXml(product?.name ?? metadata(path).title)}</h1><p>${escapeXml(metadata(path, product).description)}</p>${products.map(item => `<p><a href="/product/${encodeURIComponent(String(item.id))}/">${escapeXml(item.name)}</a> ${escapeXml(item.price)} ${escapeXml(item.currency)}</p>`).join('')}</noscript>`;
+    html = html.replace('</app-root>', content + '</app-root>');
+    await writeFile(target, html, 'utf8');
+  }
+  // Static public metadata must never leak into private or unknown SPA fallback URLs.
+  const privateShell = withHead(shell, { index: false });
+  const routes = ['login', 'signup', 'profile', 'cart', 'checkout', 'forgot-password', 'reset-password', 'auth/callback', 'staff-auth', 'manager', 'admin', 'support'];
+  for (const path of routes) {
+    await mkdir(join(directory, path), { recursive: true });
+    await writeFile(join(directory, path, 'index.html'), privateShell, 'utf8');
   }
   await validate(directory);
+}
+
+export async function fallback(directory = join(root, 'dist/zeleon/browser')) {
+  const html = await readFile(join(directory, '404.html'), 'utf8');
+  await writeFile(join(directory, '404.html'), withHead(html, { index: false }).replace(/<noscript\b[^>]*data-zeleon-seo-content[^>]*>[\s\S]*?<\/noscript>/gi, ''), 'utf8');
 }
 
 export async function validate(directory = join(root, 'dist/zeleon/browser')) {
@@ -145,5 +189,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   if (action === 'generate') await generate();
   else if (action === 'prepare') await prepare();
   else if (action === 'validate') await validate();
+  else if (action === 'fallback') await fallback();
   else throw new Error(`Unknown sitemap command: ${action}`);
 }

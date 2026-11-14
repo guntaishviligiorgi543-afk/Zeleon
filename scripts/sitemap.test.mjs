@@ -4,6 +4,47 @@ import { entriesFor, escapeXml, fetchProducts, renderSitemap, readEntries, withH
 import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { metadata, serializeJson, safeImage, BRAND_IMAGE } from '../src/app/seo-metadata.mjs';
+
+test('metadata uses actual product data, currency and omits unsupported claims', () => {
+  const item = { id: 7, name: 'Citrus & Lime', price: 9.75, currency: 'GEL', categoryName: 'Classic', image: 'https://example.com/can.png' };
+  const page = metadata('/product/citrus/', item);
+  assert.equal(page.title, 'Citrus & Lime | ZELEON');
+  assert.equal(page.canonical, ORIGIN + '/product/7/');
+  assert(page.description.includes(item.name));
+  const product = page.schemas[0];
+  assert.equal(product.offers.price, 9.75);
+  assert.equal(product.offers.priceCurrency, 'GEL');
+  for (const name of ['description', 'sku', 'aggregateRating', 'review']) assert(!Object.hasOwn(product, name));
+  assert(!Object.hasOwn(product.offers, 'availability'));
+  assert(!Object.hasOwn(metadata('/product/7/', { ...item, price: NaN }).schemas[0], 'offers'));
+  assert.equal(metadata('/product/missing/').schemas.length, 0);
+  assert.equal(metadata('/login/').canonical, null);
+});
+
+test('static product social metadata is parseable, injection safe and private heads contain no stale data', async () => {
+  const { JSDOM } = await import('jsdom');
+  const item = { id: 7, name: '</script><script>alert("x")</script>', price: 1, currency: 'EUR', image: 'javascript:alert(1)' };
+  const html = withHead('<html><head><title>Old</title></head><body></body></html>', { loc: ORIGIN + '/product/7/' }, item);
+  const document = new JSDOM(html).window.document;
+  assert.equal(document.title, item.name + ' | ZELEON');
+  assert.equal(document.querySelectorAll('script').length, 1);
+  assert.equal(JSON.parse(document.querySelector('script').textContent).name, item.name);
+  assert.equal(document.querySelector('meta[property="og:image"]').content, BRAND_IMAGE);
+  const privateDocument = new JSDOM(withHead(html, { index: false })).window.document;
+  assert.equal(privateDocument.querySelectorAll('script,link[rel="canonical"],meta[property^="og:"]').length, 0);
+  assert.equal(privateDocument.querySelector('meta[name="robots"]').content, 'noindex, nofollow');
+  assert.equal(safeImage('http://unsafe.example/image'), BRAND_IMAGE);
+  assert(!serializeJson({ name: item.name }).includes('<'));
+});
+
+test('public pages have unique titles/descriptions and only home carries organization/site schema', () => {
+  const pages = ['/', '/shop/', '/our-story/', '/contact/'].map(path => metadata(path));
+  assert.equal(new Set(pages.map(page => page.title)).size, 4);
+  assert.equal(new Set(pages.map(page => page.description)).size, 4);
+  assert.deepEqual(pages[0].schemas.map(schema => schema['@type']), ['Organization', 'WebSite']);
+  assert(pages.slice(1).every(page => page.schemas.length === 0));
+});
 
 test('includes only real public paths and unique published product IDs', () => {
   const entries = entriesFor([

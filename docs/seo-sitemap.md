@@ -1,5 +1,8 @@
 # SEO sitemap
 
+See [on-page SEO implementation](seo-optimization.md) for the subsequent static
+metadata, social sharing, structured data and private fallback improvements.
+
 The canonical origin is `https://zeleon.store`. The public page list in
 `src/app/seo-pages.json` contains home, shop, our-story and contact. Active,
 anonymously accessible Supabase products add `/product/{id}/` entries. IDs match

@@ -1,6 +1,6 @@
 @if (product().image) {
   <div class="product-image">
-    <img [src]="product().image" [alt]="product().name" />
+    <img [src]="product().image" [alt]="product().name" loading="lazy" decoding="async" />
     <button
       class="cart-action"
       type="button"
@@ -41,5 +41,5 @@
     </button>
   </div>
 }
-<p class="prodNam">{{ product().name }}</p>
+<p class="prodNam"><a class="product-name-link" [routerLink]="['/product', product().id]" (click)="$event.stopPropagation()">{{ product().name }}</a></p>
 <p class="prodPrice">{{ product().price | currency: product().currency }}</p>

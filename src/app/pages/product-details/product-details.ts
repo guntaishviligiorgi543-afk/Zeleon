@@ -89,7 +89,7 @@ export class ProductDetails {
       const product = await this.catalog.getProduct(id, request.signal);
       if (!request.signal.aborted) {
         this.product.set(product);
-        this.seo.productLoaded(product?.id ?? null);
+        this.seo.productLoaded(product);
       }
     } catch (error) {
       if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'This product could not be loaded.');
