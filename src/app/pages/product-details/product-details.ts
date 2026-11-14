@@ -5,6 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Products } from '../../services/products';
 import { Product } from '../../models/product';
 import { Cart } from '../../services/cart';
+import { Seo } from '../../services/seo';
 
 @Component({
   imports: [RouterLink, CurrencyPipe],
@@ -26,6 +27,7 @@ export class ProductDetails {
   readonly totalPrice = computed(() => (this.product()?.price ?? 0) * (this.validQuantity() ? this.quantity() : 0));
   private cartFeedbackTimer?: ReturnType<typeof setTimeout>;
   private readonly router = inject(Router);
+  private readonly seo = inject(Seo);
 
   validQuantity(): boolean {
     return Number.isInteger(this.quantity()) && this.quantity() >= 1 && this.quantity() <= 99;
@@ -74,6 +76,7 @@ export class ProductDetails {
   retry(): void { void this.loadProduct(this.route.snapshot.paramMap.get('id') ?? ''); }
 
   async loadProduct(id: string): Promise<void> {
+    this.seo.productLoaded(null);
     clearTimeout(this.cartFeedbackTimer);
     this.cartBusy.set(false);
     this.request?.abort();
@@ -84,7 +87,10 @@ export class ProductDetails {
     this.quantity.set(1);
     try {
       const product = await this.catalog.getProduct(id, request.signal);
-      if (!request.signal.aborted) this.product.set(product);
+      if (!request.signal.aborted) {
+        this.product.set(product);
+        this.seo.productLoaded(product?.id ?? null);
+      }
     } catch (error) {
       if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'This product could not be loaded.');
     } finally {

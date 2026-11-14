@@ -5,6 +5,10 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "prebuild": "node scripts/sitemap.mjs generate",
+    "postbuild": "node scripts/sitemap.mjs prepare",
+    "sitemap": "node scripts/sitemap.mjs generate",
+    "test:seo": "node --test scripts/sitemap.test.mjs",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
