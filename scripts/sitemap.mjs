@@ -78,7 +78,7 @@ export async function generate() {
   const setting = name => config.match(new RegExp(`${name}:\\s*'([^']+)'`))?.[1];
   const api = process.env.SUPABASE_URL || setting('supabaseUrl');
   const products = await fetchProducts(api, process.env.SUPABASE_PUBLISHABLE_KEY || setting('supabasePublishableKey'), fetch, 500,
-    'id,is_active,updated_at,name,slug,price,currency,category:categories(name),images:product_images(storage_path,is_primary,created_at)');
+    'id,is_active,updated_at,created_at,name,slug,price,currency,category:categories(name,slug),images:product_images(storage_path,is_primary,created_at)');
   const entries = entriesFor(products);
   const catalog = products.filter(row => row.is_active === true).map(row => {
     const images = [...(row.images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.created_at.localeCompare(b.created_at) || a.storage_path.localeCompare(b.storage_path));
@@ -88,6 +88,8 @@ export async function generate() {
   });
   assert(catalog.every(product => typeof product.name === 'string' && product.name.trim() && Number.isFinite(product.price)), 'Public product metadata is incomplete');
   await mkdir(join(root, 'tmp'), { recursive: true });
+  // Build-only, anonymous catalog snapshot; never copied into the Pages artifact.
+  await writeFile(join(root, 'tmp/prerender-products.json'), JSON.stringify(products), 'utf8');
   await writeFile(join(root, 'tmp/seo-catalog.json'), JSON.stringify(catalog), 'utf8');
   await writeFile(join(root, 'public/sitemap.xml'), renderSitemap(entries), 'utf8');
   console.log(JSON.stringify({ sitemapUrls: entries.length, productUrls: entries.length - publicPages.length, access: 'anonymous/public RLS' }));
@@ -132,6 +134,32 @@ export function withHead(html, { loc, index = true }, product = null) {
   return html.replace('</head>', tags + '</head>');
 }
 
+export function productAliases(catalog) {
+  const ids = new Set(catalog.map(product => String(product.id).toLowerCase()));
+  const slugs = new Set();
+  return catalog.flatMap(product => {
+    const slug = product.slug;
+    if (slug === null || slug === undefined || slug === '' || slug === String(product.id)) return [];
+    // Reject unsafe/ambiguous paths rather than inventing or rewriting catalog slugs.
+    assert(typeof slug === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug), 'Unsupported public product slug');
+    assert(!idPattern.test(slug) && !ids.has(slug) && !slugs.has(slug), 'Product slug conflicts with another product route');
+    assert(!/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(slug), 'Product slug is not a portable directory name');
+    slugs.add(slug);
+    return [{ path: `/product/${slug}/`, canonical: `${ORIGIN}/product/${encodeURIComponent(String(product.id))}/`, product }];
+  });
+}
+
+export function redirectPage(shell, { canonical, product }) {
+  const path = new URL(canonical).pathname;
+  let html = withHead(shell, { loc: canonical }, product)
+    .replace('content="index, follow"', 'content="noindex, follow"')
+    .replace(/<script\b[^>]*\bsrc=[^>]*>[\s\S]*?<\/script>/gi, '');
+  // Pages cannot configure a per-product HTTP 301. A zero-delay refresh also works
+  // without JavaScript; replace() preserves campaign queries/fragments in browsers.
+  html = html.replace('</head>', `<meta http-equiv="refresh" content="0;url=${escapeXml(path)}">\n<script>{const target = ${serializeJson(path)} + location.search + location.hash; document.querySelector('meta[http-equiv="refresh"]').content = '0;url=' + target; location.replace(target);}</script>\n</head>`);
+  return html.replace('<app-root></app-root>', `<p><a href="${escapeXml(path)}">Continue to ${escapeXml(product.name)}</a></p>`);
+}
+
 export async function prepare(directory = join(root, 'dist/zeleon/browser')) {
   const entries = await readEntries(join(directory, 'sitemap.xml'));
   const shell = await readFile(join(directory, 'index.html'), 'utf8');
@@ -143,16 +171,17 @@ export async function prepare(directory = join(root, 'dist/zeleon/browser')) {
     const product = path.startsWith('/product/') ? catalog.find(product => String(product.id) === path.slice(9, -1)) : null;
     assert(!path.startsWith('/product/') || product, 'Sitemap product has no public metadata');
     assert.equal(metadata(path, product).canonical, entry.loc, 'Static metadata and sitemap disagree');
-    let html = withHead(shell, entry, product);
-    // Useful public fallback when scripts are disabled; Angular's visual UI is untouched.
-    const links = publicPages.map(path => `<a href="${path}">${escapeXml(metadata(path).title)}</a>`).join(' ');
-    const products = product ? [product] : (path === '/' || path === '/shop/' ? catalog : []);
-    const content = `<noscript data-zeleon-seo-content><nav>${links}</nav><h1>${escapeXml(product?.name ?? metadata(path).title)}</h1><p>${escapeXml(metadata(path, product).description)}</p>${products.map(item => `<p><a href="/product/${encodeURIComponent(String(item.id))}/">${escapeXml(item.name)}</a> ${escapeXml(item.price)} ${escapeXml(item.currency)}</p>`).join('')}</noscript>`;
-    html = html.replace('</app-root>', content + '</app-root>');
-    await writeFile(target, html, 'utf8');
+    await writeFile(target, withHead(shell, entry, product), 'utf8');
+  }
+  for (const alias of productAliases(catalog)) {
+    const target = join(directory, alias.path.slice(1), 'index.html');
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, redirectPage(shell, alias), 'utf8');
   }
   // Static public metadata must never leak into private or unknown SPA fallback URLs.
   const privateShell = withHead(shell, { index: false });
+  // Always use the untouched browser shell, never the prerendered homepage.
+  await writeFile(join(directory, '404.html'), privateShell, 'utf8');
   const routes = ['login', 'signup', 'profile', 'cart', 'checkout', 'forgot-password', 'reset-password', 'auth/callback', 'staff-auth', 'manager', 'admin', 'support'];
   for (const path of routes) {
     await mkdir(join(directory, path), { recursive: true });
@@ -163,7 +192,11 @@ export async function prepare(directory = join(root, 'dist/zeleon/browser')) {
 
 export async function fallback(directory = join(root, 'dist/zeleon/browser')) {
   const html = await readFile(join(directory, '404.html'), 'utf8');
-  await writeFile(join(directory, '404.html'), withHead(html, { index: false }).replace(/<noscript\b[^>]*data-zeleon-seo-content[^>]*>[\s\S]*?<\/noscript>/gi, ''), 'utf8');
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM(withHead(html, { index: false }));
+  dom.window.document.querySelector('app-root')?.replaceChildren();
+  await writeFile(join(directory, '404.html'), dom.serialize(), 'utf8');
+  dom.window.close();
 }
 
 export async function validate(directory = join(root, 'dist/zeleon/browser')) {

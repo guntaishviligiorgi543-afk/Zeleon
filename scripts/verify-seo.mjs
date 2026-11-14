@@ -3,6 +3,7 @@ import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import { ORIGIN, publicPages, NAMESPACE } from './sitemap.mjs';
 import { metadata } from '../src/app/seo-metadata.mjs';
+import { browserOptions } from './prerender.mjs';
 
 const base = process.env.SEO_TEST_BASE_URL || ORIGIN;
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
@@ -16,6 +17,7 @@ assert.equal(document.documentElement.namespaceURI, NAMESPACE);
 const locations = [...document.getElementsByTagNameNS(NAMESPACE, 'loc')].map(element => element.textContent);
 const socialImages = new Set();
 const staticProducts = new Map();
+console.log('Checking initial HTML for all public sitemap URLs...');
 assert.equal(new Set(locations).size, locations.length);
 const robots = await fetch(base + '/robots.txt');
 assert.equal(robots.status, 200);
@@ -36,7 +38,8 @@ for (const loc of locations) {
   for (const selector of ['meta[name="description"]', 'meta[property="og:title"]', 'meta[property="og:description"]', 'meta[property="og:url"]', 'meta[property="og:image"]', 'meta[name="twitter:card"]']) assert.equal(head.querySelectorAll(selector).length, 1, `${selector}: ${loc}`);
   assert(head.querySelector('meta[property="og:image"]').content.startsWith('https://'));
   socialImages.add(head.querySelector('meta[property="og:image"]').content);
-  assert(head.querySelector('noscript[data-zeleon-seo-content]'), 'No public no-JavaScript fallback');
+  assert(!head.querySelector('noscript[data-zeleon-seo-content]'), 'A noscript fallback is not prerendering');
+  assert(head.querySelector('app-root main router-outlet + *')?.textContent.trim().length > 100, `Missing prerendered page: ${loc}`);
   if (url.pathname.startsWith('/product/')) {
     const schema = JSON.parse(head.querySelector('script[data-zeleon-seo]').textContent);
     assert.equal(schema['@type'], 'Product');
@@ -45,16 +48,19 @@ for (const loc of locations) {
     staticProducts.set(url.pathname, schema);
   }
 }
+console.log('Checking public image URLs...');
 for (const url of socialImages) {
   const response = await fetch(url, { method: 'HEAD', signal: AbortSignal.timeout(30_000) });
   assert(response.ok, `Social image unavailable: ${url}`);
   assert.match(response.headers.get('content-type'), /^image\//);
 }
+console.log('Checking private shells and current product aliases...');
 for (const path of ['/login/', '/signup/', '/cart/', '/checkout/', '/forgot-password/', '/reset-password/', '/auth/callback/', '/staff-auth/', '/profile/', '/manager/', '/admin/', '/support/', '/unknown-seo-route/']) {
   const response = await fetch(base + path);
   const head = new JSDOM(await response.text()).window.document;
   assert.equal(head.querySelector('meta[name="robots"]').content, 'noindex, nofollow', path);
   assert.equal(head.querySelectorAll('link[rel="canonical"],script[data-zeleon-seo]').length, 0, path);
+  assert.equal(head.querySelector('app-root')?.innerHTML, '', `Private route contains public snapshot: ${path}`);
 }
 const config = await readFile(new URL('../src/environments/environment.ts', import.meta.url), 'utf8');
 const setting = name => config.match(new RegExp(`${name}:\\s*'([^']+)'`))[1];
@@ -68,17 +74,38 @@ for (const product of products) {
   assert.equal(schema.name, product.name);
   assert.equal(schema.offers.price, Number(product.price));
   assert.equal(schema.offers.priceCurrency, product.currency);
+  if (product.slug && product.slug !== String(product.id)) {
+    const response = await fetch(base + '/product/' + encodeURIComponent(product.slug) + '/', { redirect: 'manual' });
+    assert.equal(response.status, 200, `Slug returned HTTP ${response.status}: ${product.slug}`);
+    const head = new JSDOM(await response.text()).window.document;
+    assert.equal(head.querySelector('meta[name="robots"]').content, 'noindex, follow');
+    assert.equal(head.querySelector('link[rel="canonical"]').href, `${ORIGIN}/product/${product.id}/`);
+    assert.equal(head.querySelector('meta[http-equiv="refresh"]').content, `0;url=/product/${product.id}/`);
+    assert(!locations.includes(`${ORIGIN}/product/${product.slug}/`));
+  }
 }
 
-const browser = await chromium.launch({ channel: 'chrome', headless: true });
+for (const path of ['/product/zeleon-no-such-public-product/', '/product/999999999/', '/unknown-seo-route/']) {
+  const response = await fetch(base + path, { redirect: 'manual' });
+  assert.equal(response.status, 404, `Missing route must return HTTP 404: ${path}`);
+}
+
+const browser = await chromium.launch(browserOptions());
 try {
+  console.log('Checking Angular bootstrap and navigation...');
   const page = await browser.newPage();
+  page.setDefaultTimeout(30_000);
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  const booted = async () => page.waitForFunction(() => document.querySelector('app-root main:not([data-zeleon-prerender]) router-outlet + *'));
   for (const path of publicPages) {
+    console.log(`Browser: ${path}`);
     await page.goto(base + path, { waitUntil: 'domcontentloaded' });
-    await page.locator('app-root router-outlet + *').first().waitFor({ state: 'attached' });
+    await booted();
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), ORIGIN + path);
     assert.equal(await page.title(), metadata(path).title);
+    assert.equal(await page.locator('[data-zeleon-prerender]').count(), 0, 'Snapshot must be replaced by the interactive app');
   }
   for (const path of ['/login', '/signup', '/cart', '/checkout', '/forgot-password', '/reset-password', '/auth/callback?error=access_denied']) {
     await page.goto(base + path, { waitUntil: 'domcontentloaded' });
@@ -89,8 +116,9 @@ try {
   await page.locator('a[href="/shop"]').first().click();
   await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop');
   await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
-  for (const value of [String(products[0].id), products[0].slug, ...products.slice(1, 2).map(product => String(product.id))]) {
+  for (const value of products.length ? [String(products[0].id), products[0].slug, ...products.slice(1, 2).map(product => String(product.id))].filter(Boolean) : []) {
     await page.goto(base + '/product/' + value + '/', { waitUntil: 'domcontentloaded' });
+    await booted();
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
     const expected = products.find(product => String(product.id) === value || product.slug === value);
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `${ORIGIN}/product/${expected.id}/`);
@@ -99,13 +127,54 @@ try {
     assert.equal(await page.locator('meta[property="og:title"]').getAttribute('content'), await page.title());
     assert.equal(await page.locator('script[data-zeleon-seo]').count(), 1);
   }
+  if (products.length && products[0].slug && products[0].slug !== String(products[0].id)) {
+    await page.goto(base + '/product/' + products[0].slug + '/?campaign=seo-check#details', { waitUntil: 'domcontentloaded' });
+    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === `/product/${products[0].id}` && url.search === '?campaign=seo-check' && url.hash === '#details', { waitUntil: 'domcontentloaded' });
+    await booted();
+  }
   await page.goto(base + '/product/zeleon-no-such-public-product/', { waitUntil: 'domcontentloaded' });
   await page.getByText('Product not found', { exact: false }).waitFor();
   assert.equal(await page.locator('meta[name="robots"]').getAttribute('content'), 'noindex, nofollow');
   assert.equal(await page.locator('script[data-zeleon-seo]').count(), 0);
   await page.goto(base + '/shop/', { waitUntil: 'domcontentloaded' });
-  await page.locator('.product-name-link').first().click();
-  await page.waitForURL(url => url.pathname.startsWith('/product/'));
-  await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
-  console.log(JSON.stringify({ sitemapHttp: 200, robotsHttp: 200, urls: locations.length, products: products.length, allPublicPagesHttp200: true, googleVerificationPreserved: true, initialHtmlMetadata: true, jsonLd: true, privateInitialNoindex: true, privateNoindex: true, navigationUpdates: true, idAndSlugCanonical: true, missingProductNoindex: true, productLinks: true }, null, 2));
+  await booted();
+  if (products.length) {
+    await page.locator('.product-name-link').first().click();
+    await page.waitForURL(url => url.pathname.startsWith('/product/'));
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
+    await page.locator('#product-quantity').fill('2');
+    await page.locator('.add-cart').click();
+    await page.waitForFunction(() => document.querySelector('.add-cart')?.textContent.includes('Added to Cart'));
+    // In-memory cart interaction only; no checkout, orders or database writes.
+    await page.locator('.add-cart').click();
+    await page.waitForFunction(() => document.querySelector('.add-cart')?.textContent.trim() === 'Add to Cart');
+    const id = String(products[0].id);
+    const slug = products[0].slug;
+    if (slug && slug !== id) {
+      await page.goto(base + `/product/${id}/`, { waitUntil: 'domcontentloaded' });
+      await booted();
+      // Exercise the existing Angular route directly without a document request.
+      await page.evaluate(slug => { history.pushState({}, '', '/product/' + slug); dispatchEvent(new PopStateEvent('popstate')); }, slug);
+      await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
+      assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `${ORIGIN}/product/${id}/`);
+    }
+  }
+  for (const path of ['/profile/info', '/manager/users', '/admin/users', '/support/', '/staff-auth/']) {
+    await page.goto(base + path, { waitUntil: 'domcontentloaded' });
+    await page.waitForURL(url => url.pathname.replace(/\/$/, '') === '/login');
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, nofollow');
+    assert.equal(await page.locator('.manager-launcher').count(), 0);
+  }
+  console.log('Checking every public page with JavaScript disabled...');
+  const noScript = await browser.newContext({ javaScriptEnabled: false });
+  const staticPage = await noScript.newPage();
+  for (const path of [...publicPages, ...products.map(product => `/product/${product.id}/`)]) {
+    await staticPage.goto(base + path, { waitUntil: 'domcontentloaded' });
+    assert((await staticPage.locator('app-root main').innerText()).trim().length > 100);
+    assert.equal(await staticPage.locator('app-root main [role="alert"]').count(), 0);
+    if (path === '/our-story/') assert(await staticPage.locator('h1').isVisible());
+  }
+  await noScript.close();
+  assert.deepEqual(pageErrors, [], 'Browser encountered runtime errors');
+  console.log(JSON.stringify({ sitemapHttp: 200, robotsHttp: 200, urls: locations.length, products: products.length, allPublicPagesHttp200: true, googleVerificationPreserved: true, initialHtmlMetadata: true, renderedAngularBody: true, noJavaScriptContent: true, jsonLd: true, slugHttp200: true, slugRedirect: true, missingHttp404: true, privateInitialNoindex: true, privateNoindex: true, anonymousGuards: true, navigationUpdates: true, idAndSlugCanonical: true, missingProductNoindex: true, productLinks: true, cartInteraction: true }, null, 2));
 } finally { await browser.close(); }

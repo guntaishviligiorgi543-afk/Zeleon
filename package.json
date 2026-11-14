@@ -6,9 +6,13 @@
     "start": "ng serve",
     "build": "ng build",
     "prebuild": "node scripts/sitemap.mjs generate",
-    "postbuild": "node scripts/sitemap.mjs prepare",
+    "postbuild": "node scripts/sitemap.mjs prepare && node scripts/prerender.mjs",
     "sitemap": "node scripts/sitemap.mjs generate",
     "test:seo": "node --test scripts/sitemap.test.mjs",
+    "test:seo:browser": "node scripts/verify-seo.mjs",
+    "test:seo:local": "node scripts/verify-local.mjs",
+    "test:prerender": "node scripts/prerender.mjs validate",
+    "test:public-safety": "ng test --watch=false --include=src/app/services/seo.spec.ts --include=src/app/services/products.spec.ts --include=src/app/services/cart.spec.ts --include=src/app/services/auth*.spec.ts --include=src/app/services/staff-access.spec.ts --include=src/app/guards/*.spec.ts --include=src/app/pages/product-details/*.spec.ts --include=src/app/components/product-card/*.spec.ts --include=src/app/pages/shop/*.spec.ts --include=src/app/pages/auth-callback/*.spec.ts --include=src/app/pages/staff-auth/*.spec.ts",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
@@ -31,6 +35,7 @@
     "@angular/cli": "^22.2.1",
     "@angular/compiler-cli": "^22.2.0",
     "jsdom": "^30.0.0",
+    "playwright": "1.65.1",
     "prettier": "^3.8.1",
     "typescript": "~6.0.2",
     "vitest": "^5.0.0"

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { entriesFor, escapeXml, fetchProducts, renderSitemap, readEntries, withHead, ORIGIN } from './sitemap.mjs';
+import { entriesFor, escapeXml, fetchProducts, renderSitemap, readEntries, withHead, ORIGIN, productAliases, redirectPage } from './sitemap.mjs';
 import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -127,5 +127,39 @@ test('deployment runs generation hooks on pushes, manual dispatch and scheduled 
   assert.match(workflow, /workflow_dispatch:/);
   assert.match(workflow, /cron: '17 \*\/6 \* \* \*'/);
   assert.match(workflow, /npm run build -- --configuration production --base-href \//);
-  assert.match(workflow, /cp dist\/zeleon\/browser\/index.html dist\/zeleon\/browser\/404.html/);
+  assert(!workflow.includes('cp dist/zeleon/browser/index.html'), 'Never copy a public snapshot into the private fallback');
+  assert.match(workflow, /npm run test:seo:local/);
+  assert.match(workflow, /playwright install --with-deps chromium/);
+});
+
+test('slug compatibility pages preserve ID canonicals and cannot create duplicate indexable pages', async () => {
+  const { JSDOM } = await import('jsdom');
+  const product = { id: 1, slug: 'paradise-boost', name: 'Paradise & Boost', price: 15, currency: 'USD' };
+  const aliases = productAliases([product]);
+  assert.equal(aliases[0].path, '/product/paradise-boost/');
+  const html = redirectPage('<html><head><meta name="google-site-verification" content="keep"></head><body><app-root></app-root><script src="main.js" type="module"></script></body></html>', aliases[0]);
+  const dom = new JSDOM(html);
+  const document = dom.window.document;
+  assert.equal(document.querySelector('link[rel="canonical"]').href, ORIGIN + '/product/1/');
+  assert.equal(document.querySelector('meta[name="robots"]').content, 'noindex, follow');
+  assert.equal(document.querySelector('meta[http-equiv="refresh"]').content, '0;url=/product/1/');
+  assert.equal(document.querySelector('meta[name="google-site-verification"]').content, 'keep');
+  assert.equal(document.querySelector('a').textContent, 'Continue to Paradise & Boost');
+  assert.equal(document.querySelectorAll('script[src]').length, 0);
+  assert(html.includes('location.search + location.hash'));
+  assert.equal(JSON.parse(document.querySelector('script[data-zeleon-seo]').textContent).offers.price, 15);
+  dom.window.close();
+});
+
+test('slug generation rejects traversal, ID collisions and duplicate aliases without changing data', () => {
+  for (const slug of ['../login', 'a/b', 'a\\b', '%2e%2e', 'a?b', 'a#b', 'a;b', '2', 'CON', 'nul', '00000000-0000-0000-0000-000000000000']) {
+    assert.throws(() => productAliases([{ id: 1, slug }]));
+  }
+  assert.throws(() => productAliases([{ id: 1, slug: 'same' }, { id: 2, slug: 'same' }]));
+  assert.deepEqual(productAliases([{ id: 1, slug: null }, { id: 2, slug: '2' }]), []);
+  const catalog = [{ id: 1, slug: 'real-slug' }];
+  const before = JSON.stringify(catalog);
+  productAliases(catalog);
+  assert.equal(JSON.stringify(catalog), before);
+  assert(!entriesFor([{ ...catalog[0], is_active: true }]).some(entry => entry.loc.includes('real-slug')));
 });

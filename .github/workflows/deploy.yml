@@ -36,14 +36,17 @@ jobs:
       - name: Test sitemap generation
         run: npm run test:seo
 
+      - name: Test public pages and authentication protections
+        run: npm run test:public-safety
+
+      - name: Install prerender browser
+        run: npx playwright install --with-deps chromium
+
       - name: Build Angular application
         run: npm run build -- --configuration production --base-href /
 
-      - name: Configure SPA fallback
-        run: cp dist/zeleon/browser/index.html dist/zeleon/browser/404.html
-
-      - name: Apply noindex to SPA fallback
-        run: node scripts/sitemap.mjs fallback
+      - name: Verify prerendered Pages artifact and browser navigation
+        run: npm run test:seo:local
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
