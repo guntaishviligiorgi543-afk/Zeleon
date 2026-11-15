@@ -25,4 +25,15 @@ export class Cart {
   }
 
   clear(): void { this.lines.set([]); }
+
+  changeQuantity(id: string | number, delta: -1 | 1): boolean {
+    if (delta !== -1 && delta !== 1) return false;
+    const line = this.lines().find((item) => item.product.id === id);
+    if (!line) return false;
+    const quantity = line.quantity + delta;
+    if (quantity < 1 || (delta === 1 && quantity > 99)) return false;
+    this.lines.update((items) => items.map((item) => item.product.id === id
+      ? { ...item, quantity } : item));
+    return true;
+  }
 }

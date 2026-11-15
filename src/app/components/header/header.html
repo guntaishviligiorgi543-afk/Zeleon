@@ -73,14 +73,22 @@
         <span class="cart-count"></span>
       </button>
     </div>
-    <app-burger-menu
-      [links]="navigationLinks"
-      [authenticated]="!!auth.user()"
-      [signingOut]="signingOut()"
-      [authError]="authError()"
-      (logoutRequested)="logout()"
-      (cartRequested)="cartSidebar.open()"
-    ></app-burger-menu>
+    <div class="mobile-header-actions">
+      <button class="mobile-cart-toggle" type="button" aria-label="Open cart" aria-controls="cart-sidebar"
+        [attr.aria-expanded]="cartSidebar.opened()" (click)="cartSidebar.open()">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="currentColor" d="M8 18a2 2 0 1 0 0 4a2 2 0 1 0 0-4m9 0a2 2 0 1 0 0 4a2 2 0 1 0 0-4M6 15c0 .55.45 1 1 1h12c.46 0 .86-.31.97-.76l2-8c.07-.3 0-.62-.18-.86S21.31 6 21 6H8V3c0-.55-.45-1-1-1H2v2h4zm2-7h11.72l-1.5 6H8z" />
+        </svg>
+      </button>
+      <app-burger-menu
+        [links]="navigationLinks"
+        [authenticated]="!!auth.user()"
+        [signingOut]="signingOut()"
+        [authError]="authError()"
+        (logoutRequested)="logout()"
+        (cartRequested)="cartSidebar.open()"
+      ></app-burger-menu>
+    </div>
     <app-cart-sidebar #cartSidebar></app-cart-sidebar>
   </div>
 </header>

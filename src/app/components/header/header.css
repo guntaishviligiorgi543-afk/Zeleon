@@ -259,7 +259,22 @@ header {
     max-width: 180px;
 }
 
+.mobile-header-actions { display: none; }
+.mobile-cart-toggle {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    color: #fff;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.mobile-cart-toggle svg { width: 28px; height: 28px; }
+.mobile-cart-toggle:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
 @media (max-width: 900px) {
+    .mobile-header-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
     .navbar,
     .headerIcons {
         display: none;

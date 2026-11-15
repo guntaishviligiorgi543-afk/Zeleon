@@ -1,32 +1,69 @@
-<dialog #drawer id="cart-sidebar" aria-labelledby="cart-sidebar-title" (cancel)="cancel($event)"
-  (close)="finishClose()" (click)="outside($event)">
-  <div class="cart-panel">
-    <div class="cart-heading">
-      <h2 id="cart-sidebar-title">Your Cart</h2>
+<dialog #drawer id="cart-sidebar" class="cart-dialog" aria-labelledby="cart-sidebar-title" aria-modal="true"
+  [class.is-closing]="phase() === 'closing'" (cancel)="cancel($event)" (close)="finishClose()" (click)="outside($event)">
+  <div class="cart-panel" (animationend)="panelAnimationEnd($event)">
+    <header class="cart-heading">
+      <h2 id="cart-sidebar-title">Cart <span class="cart-count" [attr.aria-label]="itemCount() + ' items'">{{ itemCount() }}</span></h2>
       <button type="button" class="cart-close" aria-label="Close cart" autofocus (click)="close()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
-    </div>
-    @if (cart.items().length) {
-      <div class="cart-items">
-        @for (line of cart.items(); track line.product.id) {
-          <div class="cart-line">
-            @if (line.product.image) { <img [src]="line.product.image" [alt]="line.product.name" /> }
-            <div>
-              <p>{{ line.product.name }}</p>
-              <p>Quantity: {{ line.quantity }}</p>
-              <p>{{ line.product.price * line.quantity | currency: line.product.currency }}</p>
-              <button type="button" class="remove-item" [attr.aria-label]="'Remove ' + line.product.name" (click)="cart.remove(line.product.id)">Remove</button>
+    </header>
+
+    <div class="cart-items" tabindex="0" aria-label="Cart items">
+      @for (line of cart.items(); track line.product.id; let index = $index) {
+        <article class="cart-line" [attr.data-product-id]="line.product.id"
+          [class.is-removing]="removingIds().has(line.product.id)" [style.--item-delay]="(index < 6 ? index * 45 : 225) + 'ms'">
+          <div class="cart-line-body">
+            <div class="cart-product">
+              <div class="cart-image">
+                @if (line.product.image) {
+                  <img [src]="line.product.image" [alt]="line.product.name" decoding="async" />
+                } @else { <span class="image-placeholder">Image unavailable</span> }
+              </div>
+              <div class="cart-details">
+                <h3 class="product-name">{{ line.product.name }}</h3>
+                <div class="quantity-control" role="group" [attr.aria-label]="'Quantity for ' + line.product.name">
+                  <button type="button" class="quantity-minus" [attr.aria-label]="'Decrease ' + line.product.name + ' quantity'"
+                    [disabled]="line.quantity <= 1 || removingIds().has(line.product.id)" (click)="changeQuantity(line, -1)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+                  </button>
+                  <span class="quantity-value" [attr.aria-label]="'Quantity: ' + line.quantity">{{ line.quantity }}</span>
+                  <button type="button" class="quantity-plus" [attr.aria-label]="'Increase ' + line.product.name + ' quantity'"
+                    [disabled]="line.quantity >= 99 || removingIds().has(line.product.id)" (click)="changeQuantity(line, 1)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>
+                  </button>
+                </div>
+                <p class="line-price">{{ line.product.price * line.quantity | currency: line.product.currency }}</p>
+              </div>
+              <button type="button" class="remove-item" [attr.aria-label]="'Remove ' + line.product.name"
+                [disabled]="removingIds().has(line.product.id)" (click)="removeLine(line)">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg>
+                <span>Remove product</span>
+              </button>
             </div>
           </div>
-        }
-      </div>
-    } @else {
-    <div class="cart-empty">
-      <p>Your cart is currently empty.</p>
-      <a routerLink="/shop" (click)="close()">Continue shopping</a>
+        </article>
+      } @empty {
+        <div class="cart-empty">
+          <svg class="empty-cart-icon" viewBox="0 0 48 48" aria-hidden="true"><path d="M5 8h5l6 24h22l5-18H12M18 40h.01M36 40h.01" /></svg>
+          <p>Your cart is currently empty.</p>
+          <a class="continue-shopping" routerLink="/shop" (click)="navigateAfterClose($event, '/shop')">Continue shopping</a>
+        </div>
+      }
     </div>
-    }
-    <a class="view-cart" routerLink="/cart" (click)="close()">View Cart</a>
+
+    <footer class="cart-footer">
+      <div class="estimated-total">
+        <span>Estimated total</span>
+        <span class="total-values">
+          @for (total of totals(); track total.currency) {
+            <span>{{ total.amount | currency: total.currency }}</span>
+          }
+        </span>
+      </div>
+      <button class="checkout-button" type="button" disabled aria-describedby="cart-checkout-note">Checkout</button>
+      <p class="checkout-note" id="cart-checkout-note">Checkout is currently unavailable.</p>
+      <a class="view-cart" routerLink="/cart" (click)="navigateAfterClose($event, '/cart')">View Cart</a>
+    </footer>
+    <p class="cart-status visually-hidden" role="status" aria-live="polite" aria-atomic="true">{{ status() }}</p>
   </div>
 </dialog>
