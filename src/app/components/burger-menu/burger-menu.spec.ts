@@ -11,6 +11,7 @@ describe('BurgerMenu', () => {
   let component: BurgerMenu;
   let fixture: ComponentFixture<BurgerMenu>;
   let mobile: boolean;
+  let reducedMotion: boolean;
   let resized: () => void;
   let removed: ReturnType<typeof vi.fn>;
   let dialog: HTMLDialogElement;
@@ -22,9 +23,10 @@ describe('BurgerMenu', () => {
 
   beforeEach(async () => {
     mobile = true;
+    reducedMotion = true;
     removed = vi.fn();
-    vi.stubGlobal('matchMedia', () => ({
-      get matches() { return mobile; },
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      get matches() { return query.includes('prefers-reduced-motion') ? reducedMotion : mobile; },
       addEventListener: (_: string, callback: () => void) => { resized = callback; },
       removeEventListener: removed,
     }));
@@ -55,6 +57,8 @@ describe('BurgerMenu', () => {
   afterEach(() => {
     fixture.destroy();
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('should create', () => {
@@ -134,5 +138,65 @@ describe('BurgerMenu', () => {
     (dialog.querySelector('.cart-link') as HTMLButtonElement).click();
     expect(component.opened()).toBe(false);
     expect(requested).toHaveBeenCalledOnce();
+  });
+
+  function enableAnimatedClose(): void {
+    reducedMotion = false;
+    vi.spyOn(window, 'getComputedStyle').mockImplementation(() => ({
+      transform: 'matrix(1, 0, 0, 1, 80, 0)', opacity: '0.7',
+    }) as CSSStyleDeclaration);
+  }
+
+  function finishExit(target = dialog.querySelector('.menu-panel')!): void {
+    const event = new Event('animationend', { bubbles: true });
+    Object.defineProperty(event, 'animationName', { value: 'menu-exit' });
+    target.dispatchEvent(event);
+  }
+
+  it('keeps focus and scroll locked until the panel finishes exiting, including an interrupted entrance', () => {
+    enableAnimatedClose();
+    component.open();
+    component.close();
+    fixture.detectChanges();
+    expect(component.closing()).toBe(true);
+    expect(dialog.open).toBe(true);
+    expect(document.body.style.overflow).toBe('hidden');
+    expect((dialog.querySelector('.menu-panel') as HTMLElement).style.getPropertyValue('--menu-exit-from'))
+      .toBe('matrix(1, 0, 0, 1, 80, 0)');
+    finishExit(dialog.querySelector('.menu-heading span')!);
+    expect(component.opened()).toBe(true);
+    finishExit();
+    expect(component.opened()).toBe(false);
+    expect(component.closing()).toBe(false);
+    expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.menu-toggle'));
+  });
+
+  it('opens the cart once after the animated menu has closed', () => {
+    enableAnimatedClose();
+    const requested = vi.fn();
+    component.cartRequested.subscribe(requested);
+    component.open();
+    component.openCart();
+    component.openCart();
+    expect(requested).not.toHaveBeenCalled();
+    finishExit();
+    expect(dialog.open).toBe(false);
+    expect(requested).toHaveBeenCalledOnce();
+  });
+
+  it('releases the modal if animationend is missing and cancels the fallback on destruction', () => {
+    enableAnimatedClose();
+    vi.useFakeTimers();
+    component.open();
+    component.close();
+    vi.advanceTimersByTime(400);
+    expect(component.opened()).toBe(false);
+    component.open();
+    component.close();
+    fixture.destroy();
+    const calls = vi.mocked(dialog.close).mock.calls.length;
+    vi.advanceTimersByTime(1000);
+    expect(dialog.close).toHaveBeenCalledTimes(calls);
+    expect(document.body.style.overflow).not.toBe('hidden');
   });
 });

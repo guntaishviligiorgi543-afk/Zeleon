@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class BurgerMenu {
   readonly links = input<readonly { path: string; label: string }[]>([]);
   readonly opened = signal(false);
+  readonly closing = signal(false);
   readonly cartRequested = output<void>();
   readonly authenticated = input(false);
   readonly signingOut = input(false);
@@ -18,14 +19,20 @@ export class BurgerMenu {
   readonly logoutRequested = output<void>();
 
   openCart(): void {
+    if (!this.opened()) {
+      this.cartRequested.emit();
+      return;
+    }
+    this.cartAfterClose = true;
     this.close();
-    this.cartRequested.emit();
   }
   private readonly dialog = viewChild.required<ElementRef<HTMLDialogElement>>('menuDialog');
   private readonly toggle = viewChild.required<ElementRef<HTMLButtonElement>>('menuToggle');
   private readonly destroyRef = inject(DestroyRef);
   private mobile?: MediaQueryList;
   private restoreScroll?: () => void;
+  private closeTimer?: ReturnType<typeof setTimeout>;
+  private cartAfterClose = false;
 
   constructor() {
     inject(Router).events.pipe(takeUntilDestroyed()).subscribe((event) => {
@@ -35,11 +42,13 @@ export class BurgerMenu {
     afterNextRender(() => {
       if (typeof window.matchMedia !== 'function') return;
       this.mobile = window.matchMedia('(max-width: 900px)');
-      const resize = () => { if (!this.mobile?.matches) this.close(); };
+      const resize = () => { if (!this.mobile?.matches) this.close(true); };
       this.mobile.addEventListener('change', resize);
       this.destroyRef.onDestroy(() => this.mobile?.removeEventListener('change', resize));
     });
     this.destroyRef.onDestroy(() => {
+      clearTimeout(this.closeTimer);
+      this.cartAfterClose = false;
       this.restoreScroll?.();
       // Removing a native modal also releases its focus trap and inert background.
       if (this.dialog().nativeElement.open) this.dialog().nativeElement.close();
@@ -64,18 +73,48 @@ export class BurgerMenu {
     });
   }
 
-  close(): void {
+  close(immediate = false): void {
     if (!this.opened()) return;
+    if (immediate || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      this.completeClose();
+      return;
+    }
+    if (this.closing()) return;
+    const dialog = this.dialog().nativeElement;
+    const panel = dialog.querySelector<HTMLElement>('.menu-panel')!;
+    // Closing during the entrance must continue from its current position.
+    const transform = getComputedStyle(panel).transform;
+    panel.style.setProperty('--menu-exit-from', transform === 'none' ? 'translate3d(0, 0, 0)' : transform);
+    dialog.style.setProperty('--menu-backdrop-exit-from', getComputedStyle(dialog, '::backdrop').opacity);
+    this.closing.set(true);
+    // Keep the modal, focus trap and scroll lock until the exit has finished.
+    this.closeTimer = setTimeout(() => this.completeClose(), 400);
+  }
+
+  panelAnimationEnd(event: AnimationEvent): void {
+    if (this.closing() && event.target === event.currentTarget && event.animationName === 'menu-exit') {
+      this.completeClose();
+    }
+  }
+
+  private completeClose(): void {
     this.dialog().nativeElement.close();
     this.finishClose();
   }
 
   finishClose(): void {
     if (!this.opened()) return;
+    clearTimeout(this.closeTimer);
+    this.closeTimer = undefined;
+    this.closing.set(false);
     this.opened.set(false);
     this.restoreScroll?.();
     this.restoreScroll = undefined;
     if (this.mobile?.matches) this.toggle().nativeElement.focus({ preventScroll: true });
+    if (this.cartAfterClose) {
+      this.cartAfterClose = false;
+      this.cartRequested.emit();
+    }
   }
 
   cancel(event: Event): void {

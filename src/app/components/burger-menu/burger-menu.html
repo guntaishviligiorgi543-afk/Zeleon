@@ -4,8 +4,9 @@
 </button>
 
 <dialog #menuDialog id="zeleon-mobile-menu" class="menu-dialog" aria-labelledby="mobile-menu-title"
+  [class.is-closing]="closing()"
   (cancel)="cancel($event)" (close)="finishClose()" (click)="outside($event)">
-  <div class="menu-panel">
+  <div class="menu-panel" (animationend)="panelAnimationEnd($event)">
     <div class="menu-heading">
       <span id="mobile-menu-title">ZELEON</span>
       <button class="menu-close" type="button" aria-label="Close navigation menu" autofocus (click)="close()">

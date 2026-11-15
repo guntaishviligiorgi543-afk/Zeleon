@@ -1,3 +1,14 @@
+.hero h1,
+.heroBox h3,
+.heroBox h4,
+.subscriptionForm h4 {
+    font-family: 'Climate Crisis', sans-serif;
+    font-optical-sizing: auto;
+    text-align: center;
+    font-style: normal;
+    font-variation-settings: 'YEAR' 1979;
+}
+
 .hero {
     background: linear-gradient( to bottom, #001f3f 0%, #003b8e 15%, #007bff 30%, #00bfff 42%, #f68458 100%);
     min-height: 140vh;
@@ -16,15 +27,9 @@
 }
 
 .hero h1 {
-    font-family: 'Climate Crisis', sans-serif;
-    font-optical-sizing: auto;
     font-weight: 400;
-    text-align: center;
     font-size: 6rem;
     transform: translateY(10%);
-    font-style: normal;
-    background-color: none !important;
-    font-variation-settings: 'YEAR' 1979;
 }
 
 .heroImages {
@@ -108,25 +113,15 @@
 }
 
 .heroBox h3 {
-    font-family: 'Climate Crisis', sans-serif;
-    font-optical-sizing: auto;
     font-weight: 400;
-    text-align: center;
     font-size: 3rem;
-    font-style: normal;
     min-height: fit-content;
     background-color: rebeccapurple;
-    font-variation-settings: 'YEAR' 1979;
 }
 
 .heroBox h4 {
-    font-family: 'Climate Crisis', sans-serif;
-    font-optical-sizing: auto;
     font-weight: 300;
-    text-align: center;
     font-size: 1.5rem;
-    font-style: normal;
-    font-variation-settings: 'YEAR' 1979;
 }
 
 .heroBox p {
@@ -156,7 +151,6 @@
 
 .heroBtns button:hover {
     text-decoration: underline;
-    transition: transform 0.3s ease;
 }
 
 .learnMoreBtn {
@@ -489,10 +483,6 @@
     border: none;
 }
 
-.sec4 img {
-    scale: 1.3em;
-}
-
 .sec4img1 {
     position: absolute;
     top: 90%;
@@ -633,15 +623,10 @@
 }
 
 .subscriptionForm h4 {
-    font-family: 'Climate Crisis', sans-serif;
-    font-optical-sizing: auto;
     font-weight: 400;
-    text-align: center;
     font-size: 2rem;
     text-transform: capitalize;
-    font-style: normal;
     min-height: fit-content;
-    font-variation-settings: 'YEAR' 1979;
 }
 
 .subscriptionForm p {
@@ -750,41 +735,54 @@
     }
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
     .hero {
         min-height: 100svh;
         margin: 24px 8px;
         border-radius: 32px;
+        overflow: clip;
     }
     .hero-content {
-        height: 100svh;
-        min-height: 640px;
+        height: auto;
+        min-height: 100svh;
+        box-sizing: border-box;
+        padding: 116px 0 32px;
+        justify-content: flex-start;
+        gap: 32px;
     }
     .hero h1 {
         width: 100%;
-        margin: 48px 0 0;
+        margin: 0;
         font-size: clamp(3.2rem, 11vw, 5rem);
         line-height: 0.95;
+        transform: none;
     }
     .heroImages {
-        top: 29%;
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
         width: 100%;
+        margin-block: 40px;
     }
     .heroImages img {
         width: clamp(125px, 28vw, 220px);
         margin: 0 -10px;
     }
     .heroBox {
-        top: 54%;
+        position: relative;
+        top: auto;
         width: min(450px, calc(100% - 32px));
         box-sizing: border-box;
         padding: 1.5rem;
     }
     .heroBox h3 {
         font-size: clamp(2rem, 7vw, 3rem);
+        margin: 0 0 24px;
     }
     .heroBox h4 {
         font-size: clamp(1.15rem, 4vw, 1.5rem);
+        margin: 0 0 24px;
     }
     .heroBox p {
         font-size: clamp(1rem, 2.8vw, 1.2rem);
@@ -803,6 +801,10 @@
     .productCategoriesText {
         font-size: clamp(1.1rem, 3vw, 1.7rem);
     }
+    .productCategories > a { min-width: 0; flex: 1; }
+    .productCategories img { width: 100%; height: auto; }
+    .productCategoriesText { gap: 12px; padding-inline: 16px; }
+    .productCategoriesText svg { flex-shrink: 0; }
     .sec4 {
         min-height: 130svh;
         margin: 0 16px;
@@ -819,13 +821,6 @@
     .sec4img2 {
         width: clamp(150px, 28vw, 300px);
         height: auto;
-    }
-    .sec5 {
-        min-height: 90svh;
-    }
-    .sec5img1,
-    .sec5img2 {
-        height: 90svh;
     }
     .sec5 .reviewBox {
         width: min(520px, calc(100% - 40px));
@@ -847,6 +842,11 @@
         font-size: clamp(1rem, 3vw, 1.4rem);
     }
     .subscriptionForm {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        margin-inline: auto;
         width: min(560px, calc(100% - 32px));
         box-sizing: border-box;
         padding: 24px;
@@ -854,6 +854,10 @@
     .subscriptionForm h4 {
         font-size: clamp(1.5rem, 5vw, 2rem);
     }
+    .sec6 { min-height: 78svh; padding-block: 64px; box-sizing: border-box; display: grid; align-items: center; }
+    .mailInp input { box-sizing: border-box; min-width: 0; }
+    .sec5 { min-height: max(78svh, 560px); }
+    .sec5img1, .sec5img2 { height: 100%; object-fit: cover; }
     .sec3-content {
         grid-template-columns: minmax(0, 1fr);
         align-content: center;
@@ -873,26 +877,18 @@
 }
 
 @media (max-width: 600px) {
-    .hero {
-        min-height: 90svh;
-    }
     .hero-content {
-        height: 90svh;
-        min-height: 560px;
+        min-height: 90svh;
+        gap: 24px;
     }
     .hero h1 {
-        margin-top: 32px;
         font-size: clamp(2.8rem, 14vw, 4rem);
     }
-    .heroImages {
-        top: 27%;
-    }
     .heroImages img {
-        width: clamp(105px, 30vw, 150px);
+        width: clamp(80px, 27vw, 150px);
         margin: 0 -14px;
     }
     .heroBox {
-        top: 51%;
         padding: 1.25rem;
     }
     .heroBox p {
@@ -925,7 +921,8 @@
         min-height: 115svh;
     }
     .sec4text h1 {
-        font-size: clamp(2rem, 10vw, 3rem);
+        font-size: clamp(1.6rem, 8vw, 3rem);
+        overflow-wrap: anywhere;
     }
     .sec4text p {
         width: 100%;
@@ -941,11 +938,11 @@
         right: -8%;
     }
     .sec5 {
-        min-height: 78svh;
+        min-height: max(78svh, 560px);
     }
     .sec5img1,
     .sec5img2 {
-        height: 78svh;
+        height: 100%;
     }
     .sec5 .reviewBox {
         bottom: 3%;
@@ -964,9 +961,6 @@
     .reviewBox .lastp {
         margin-bottom: 4px;
     }
-    .sec6 {
-        min-height: 78svh;
-    }
     .subscriptionForm {
         width: calc(100% - 24px);
         min-height: auto;
@@ -980,11 +974,8 @@
     .subscriptionForm .chekbox {
         align-items: flex-start;
     }
-    .sec3Slider {
-        gap: 8px;
-    }
     .sec3Slider .card {
-        flex-basis: calc((100% - 8px) / 2);
+        flex-basis: 100%;
         padding: 12px 4px;
         gap: 8px;
     }
@@ -1006,12 +997,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    [data-aos] { opacity: 1; transform: none; transition: none !important; }
     .sec3Slider {
         scroll-behavior: auto;
     }
-    .sec3Slider .card {
-        transition: none;
-    }
+    .sec3Slider .card,
     .sec3Slider .card img {
         transition: none;
     }

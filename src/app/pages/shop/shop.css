@@ -155,8 +155,30 @@ section {
   .pagination { justify-content: center; gap: 6px; }
   .pagination button { padding-inline: 10px; }
 }
+
+@media (max-width: 1024px) {
+  .productsContainer { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters { flex-wrap: wrap; gap: 12px; }
+  .filterdsQuantity-sort { flex-wrap: wrap; align-items: center; gap: 12px; }
+  .productCard { min-width: 0; box-sizing: border-box; overflow-wrap: anywhere; }
+  .filters button, .sort-toggle, .sort-options button { min-height: 44px; }
+}
+
+@media (max-width: 600px) {
+  .shop-section { padding: 132px 16px 40px; }
+  .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .filters button { padding-inline: 12px; font-size: 1rem; }
+  .filterdsQuantity-sort { margin-top: 20px; }
+  .sort { width: 100%; min-width: 0; }
+  .sort > p { flex-shrink: 0; }
+  .sort-toggle { flex: 1; min-width: 0; justify-content: space-between; }
+  .sort-options { box-sizing: border-box; max-width: 100%; }
+  .productsContainer { grid-template-columns: minmax(0, 1fr); margin-top: 24px; }
+}
+
+.filters button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) {
-  .pagination button { transition: none; }
+  .pagination button, .filters button { transition: none; }
 }
 
 .productCard {

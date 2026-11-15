@@ -234,11 +234,19 @@ export class Home {
     let autoplay: number | undefined;
     const scheduleAutoplay = () => {
       window.clearInterval(autoplay);
+      if (motion.matches || carousel?.matches(':hover, :focus-within')) return;
       autoplay = window.setInterval(() => {
         if (track.querySelectorAll('.card:not([data-loop-clone])').length < 2) return;
         move(1);
       }, 5000);
     };
+    const pauseAutoplay = () => window.clearInterval(autoplay);
+    const resumeAutoplay = () => queueMicrotask(scheduleAutoplay);
+    carousel?.addEventListener('pointerenter', pauseAutoplay);
+    carousel?.addEventListener('pointerleave', resumeAutoplay);
+    carousel?.addEventListener('focusin', pauseAutoplay);
+    carousel?.addEventListener('focusout', resumeAutoplay);
+    motion.addEventListener('change', scheduleAutoplay);
     const wheel = (event: WheelEvent) => {
       if (event.ctrlKey) return;
       const isShiftScroll = event.shiftKey && Math.abs(event.deltaY) > Math.abs(event.deltaX);
@@ -338,6 +346,11 @@ export class Home {
       observer.disconnect();
       cardsObserver.disconnect();
       window.clearInterval(autoplay);
+      carousel?.removeEventListener('pointerenter', pauseAutoplay);
+      carousel?.removeEventListener('pointerleave', resumeAutoplay);
+      carousel?.removeEventListener('focusin', pauseAutoplay);
+      carousel?.removeEventListener('focusout', resumeAutoplay);
+      motion.removeEventListener('change', scheduleAutoplay);
       window.clearTimeout(movementTimer);
     });
   }

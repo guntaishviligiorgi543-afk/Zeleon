@@ -193,6 +193,13 @@ img {
   .firstnam-lastNam, .contacInfo { grid-template-columns: minmax(0, 1fr); }
   .firstnam-lastNam { gap: 24px; }
   .contacInfo { padding: 48px 20px; }
+  .hero h1 { font-size: clamp(1.8rem, 7vw, 2.8rem); }
+  .contactUsForm, .faqAcordion { padding: clamp(16px, 5vw, 24px); }
+  .contactUsForm input, .contactUsForm textarea { font-size: 1rem; min-height: 44px; }
+  .faqItem h5 button, .share-button { min-height: 44px; }
+  .share-button { min-width: 44px; }
+  .socIcons > a { flex-basis: 44px; height: 44px; }
+  .faqAcordion { scroll-margin-top: 132px; }
 }
 
 .faq-arrow {
@@ -217,6 +224,7 @@ img {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  [data-aos] { opacity: 1; transform: none; transition: none !important; }
   .faq-arrow {
     transition: none;
   }
