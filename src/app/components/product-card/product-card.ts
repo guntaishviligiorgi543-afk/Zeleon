@@ -20,6 +20,7 @@ export class ProductCard {
     event.stopPropagation();
     if (this.cartBusy()) return;
 
+    if (!this.cart.requestAccess()) return;
     this.cartBusy.set(true);
     try {
       await Promise.resolve(this.inCart()

@@ -30,3 +30,9 @@ export function createAuthStub() {
     completeCallback: vi.fn().mockResolvedValue('confirmation'),
   };
 }
+
+export function createAuthenticatedAuthStub() {
+  const auth = createAuthStub();
+  auth.user.set({ id: 'user-1' });
+  return auth;
+}

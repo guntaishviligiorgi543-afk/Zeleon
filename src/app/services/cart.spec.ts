@@ -1,3 +1,5 @@
+import { Auth } from './auth';
+import { createAuthenticatedAuthStub } from '../testing/auth-stub';
 import { TestBed } from '@angular/core/testing';
 import { Cart } from './cart';
 
@@ -5,7 +7,7 @@ describe('Cart', () => {
   let service: Cart;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({});
+    TestBed.configureTestingModule({ providers: [{ provide: Auth, useFactory: createAuthenticatedAuthStub }] });
     service = TestBed.inject(Cart);
   });
 
@@ -48,4 +50,30 @@ describe('Cart', () => {
     service.remove(1);
     expect(service.items()).toEqual([]);
   });
+  it('rejects every mutation while logged out or initializing, without exposing old items', () => {
+    const auth = TestBed.inject(Auth) as unknown as ReturnType<typeof createAuthenticatedAuthStub>;
+    const product = { id: 1, name: 'Test', slug: 'test', price: 12, currency: 'USD', category: 'classic', categoryName: 'Classic', image: '' };
+    const requests: number[] = [];
+    service.loginRequests.subscribe(() => requests.push(1));
+    service.add(product, 2);
+    auth.initialized.set(false);
+    expect(service.items()).toEqual([]);
+    expect(service.add(product, 1)).toBe(false);
+    expect(service.changeQuantity(1, 1)).toBe(false);
+    service.remove(1); service.clear();
+    expect(requests.length).toBe(1);
+    TestBed.tick();
+    auth.initialized.set(true); auth.user.set(null);
+    TestBed.tick();
+    auth.user.set({ id: 'user-2' });
+    expect(service.items()).toEqual([]);
+    service.add(product, 1);
+    expect(service.items()[0].quantity).toBe(1);
+    auth.user.set({ id: 'user-3' });
+    expect(service.items()).toEqual([]);
+    TestBed.tick();
+    auth.user.set({ id: 'user-2' });
+    expect(service.items()).toEqual([]);
+  });
+
 });

@@ -22,6 +22,7 @@ describe('App', () => {
           { path: 'admin', component: RoutedPage },
           { path: 'admin/staff', component: RoutedPage },
           { path: 'support', component: RoutedPage },
+          { path: 'checkout', component: RoutedPage },
           { path: 'rate-support/:id', loadComponent: () => import('./pages/support-rating/support-rating').then(m => m.SupportRatingPage) },
         ]),
         { provide: Auth, useValue: createAuthStub() },
@@ -54,6 +55,24 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
     expect(app).toBeTruthy();
+  });
+
+  it('uses the existing logo on the right in checkout and restores the storefront header afterward', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const router = TestBed.inject(Router);
+    await router.navigateByUrl('/checkout?from=cart');
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.querySelector('header h1')?.textContent).toBe('Checkout');
+    expect(root.querySelectorAll('header .logo')).toHaveLength(1);
+    expect(root.querySelector('header .logo')?.getAttribute('href')).toBe('/');
+    expect(root.querySelector('.headerContainer')).toBeNull();
+    expect(root.querySelector('app-customer-chat')).toBeNull();
+    await router.navigateByUrl('/');
+    fixture.detectChanges();
+    expect(root.querySelector('.headerContainer')).not.toBeNull();
+    expect(root.querySelector('app-footer')).not.toBeNull();
   });
 
   it('should render the ZELEON application shell', async () => {

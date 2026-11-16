@@ -1,1 +1,93 @@
-<p>cart works!</p>
+<section class="checkout-page" aria-labelledby="cart-title">
+  <a class="back-link" routerLink="/shop"><span aria-hidden="true">&larr;</span> Continue shopping</a>
+  <div class="cart-shell">
+    <div class="section-heading">
+      <div><p class="eyebrow">YOUR SELECTION</p><h1 id="cart-title">Shopping cart</h1></div>
+      <span class="item-count">{{ itemCount() }} {{ itemCount() === 1 ? 'item' : 'items' }}</span>
+    </div>
+    <div class="cart-layout">
+      @if (lines().length) {
+        <section class="cart-viewer" aria-label="Cart products">
+          <div class="carousel" role="region" aria-roledescription="carousel" aria-label="Cart products"
+            (touchstart)="startSwipe($event)" (touchend)="endSwipe($event)" (touchcancel)="endSwipe($event)">
+            <div class="carousel-track" [style.transform]="'translate3d(-' + index() * 100 + '%,0,0)'">
+              @for (line of lines(); track line.product.id; let i = $index) {
+                <article class="product-slide" role="group" aria-roledescription="slide"
+                  [attr.aria-label]="(i + 1) + ' of ' + lines().length + ': ' + line.product.name"
+                  [attr.aria-hidden]="!visible(i)" [attr.inert]="!visible(i) ? '' : null">
+                  <div class="product-stage">
+                    @if (line.discount && !loading() && !error()) { <span class="sale-badge">SALE &minus;{{ line.discount }}%</span> }
+                    @if (line.checked && (!line.available || line.stock === 0)) { <span class="stock-badge">OUT OF STOCK</span> }
+                    @if (line.product.image) { <img [src]="line.product.image" [alt]="line.product.name" draggable="false" /> }
+                    @else { <span class="no-image">Image unavailable</span> }
+                  </div>
+                  <div class="product-info">
+                    <p class="eyebrow category">{{ line.product.categoryName || line.product.category }}</p>
+                    <h3>{{ line.product.name }}</h3>
+                    <div class="product-price"><strong>{{ line.price | currency:line.currency }}</strong>
+                      @if (line.discount) { <del>{{ line.original | currency:line.currency }}</del> }
+                    </div>
+                    <p class="stock" [class.unavailable]="line.stockProblem">
+                      @if (loading()) { Checking availability... }
+                      @else if (error()) { Availability could not be checked }
+                      @else if (!line.available) { Product unavailable }
+                      @else if (line.stock === 0) { Out of stock }
+                      @else if (line.stockProblem) { Only {{ line.stock }} available. Reduce the quantity. }
+                      @else if (line.stock !== null) { In stock &middot; {{ line.stock }} available }
+                      @else { Availability confirmed at checkout }
+                    </p>
+                  </div>
+                  <div class="product-actions">
+                    <div class="quantity" role="group" [attr.aria-label]="'Quantity of ' + line.product.name">
+                      <button type="button" aria-label="Decrease quantity" [disabled]="line.quantity <= 1" (click)="changeQuantity(line.product.id, -1)">&minus;</button>
+                      <output>{{ line.quantity }}</output>
+                      <button type="button" aria-label="Increase quantity" [disabled]="!canIncrease(line)" (click)="changeQuantity(line.product.id, 1)">+</button>
+                    </div>
+                    <button class="remove-button" type="button" [attr.aria-label]="'Delete ' + line.product.name" (click)="remove(line.product.id)">Delete</button>
+                  </div>
+                </article>
+              }
+            </div>
+          </div>
+          <div class="carousel-controls">
+            <button class="arrow" type="button" aria-label="Previous cart products" [disabled]="index() === 0" (click)="move(-1)">&larr;</button>
+            <p class="slide-status" aria-live="polite">Products {{ first() + 1 }}&ndash;{{ last() }} of {{ lines().length }}</p>
+            <button class="arrow" type="button" aria-label="Next cart products" [disabled]="index() >= pages() - 1" (click)="move(1)">&rarr;</button>
+          </div>
+        </section>
+      } @else {
+        <section class="empty-cart" aria-labelledby="empty-title">
+          <h2 id="empty-title">Your cart is empty.</h2><p>Add something you love to get started.</p>
+          <a class="shop-button" routerLink="/shop">Continue shopping <span aria-hidden="true">&nearr;</span></a>
+        </section>
+      }
+      <aside class="cart-summary" aria-labelledby="summary-title">
+        <section class="summary-panel" [attr.aria-busy]="loading()">
+          <div class="summary-heading"><h2 id="summary-title">Cart summary</h2>
+            <button class="refresh" type="button" [disabled]="loading()" (click)="refresh()">{{ loading() ? 'Checking...' : 'Refresh prices' }}</button>
+          </div>
+          <dl><div class="quantity-total"><dt>Total quantity</dt><dd>{{ itemCount() }}</dd></div></dl>
+          @for (total of totals(); track total.currency) {
+            <dl>
+              @if (total.discount) {
+                <div><dt>Subtotal</dt><dd>{{ total.subtotal | currency:total.currency }}</dd></div>
+                <div class="discount-row"><dt>Discount</dt><dd>&minus;{{ total.discount | currency:total.currency }}</dd></div>
+              }
+              <div class="summary-total"><dt>Total price</dt><dd>{{ total.total | currency:total.currency }}</dd></div>
+            </dl>
+          } @empty { <dl><div class="summary-total"><dt>Total price</dt><dd>$0.00</dd></div></dl> }
+          <p class="estimate-note">Item totals include active discounts. Shipping and tax are calculated separately.</p>
+          @if (error()) { <p class="checkout-error" role="alert">{{ error() }}</p> }
+          @if (lines().length && !loading() && !error() && blocked()) {
+            <p class="checkout-error" role="alert">Update unavailable items, quantities, or unsupported currencies before checkout.</p>
+          }
+        </section>
+        <div class="summary-panel summary-actions">
+          <button class="clear-button" type="button" [disabled]="!lines().length" (click)="clear()">Clear cart</button>
+          <button class="place-order" type="button" [disabled]="blocked()" (click)="checkout()">Checkout <span aria-hidden="true">&nearr;</span></button>
+        </div>
+      </aside>
+    </div>
+  </div>
+  <p class="visually-hidden" role="status" aria-atomic="true">{{ message() }}</p>
+</section>

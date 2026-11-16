@@ -67,4 +67,15 @@ describe('Login', () => {
       expect(navigate).toHaveBeenCalledWith(destination);
     });
   }
+  for (const path of ['/cart', '/checkout', '/checkout?source=cart']) {
+    it(`returns to ${path} after password login`, async () => {
+      const router = TestBed.inject(Router);
+      vi.spyOn(router, 'url', 'get').mockReturnValue('/login?returnUrl=' + encodeURIComponent(path));
+      const navigate = vi.spyOn(router, 'navigateByUrl').mockResolvedValue(true);
+      component.form.setValue({ email: 'person@example.com', password: 'valid passphrase' });
+      await component.submit();
+      expect(navigate).toHaveBeenCalledWith(path);
+    });
+  }
+
 });

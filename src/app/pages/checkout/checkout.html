@@ -1,1 +1,115 @@
-<p>checkout works!</p>
+<section class="checkout-page" aria-label="Checkout">
+  <a class="back-link" routerLink="/shop"><span aria-hidden="true">←</span> Continue shopping</a>
+  @if (lines().length) {
+    <div class="checkout-layout">
+      <section class="cart-viewer" aria-labelledby="cart-viewer-title">
+        <div class="section-heading">
+          <div><p class="eyebrow">YOUR SELECTION</p><h2 id="cart-viewer-title">Shopping cart</h2></div>
+          <span class="item-count">{{ itemCount() }} {{ itemCount() === 1 ? 'item' : 'items' }}</span>
+        </div>
+        <div class="carousel" role="region" aria-roledescription="carousel" aria-label="Cart products"
+          (touchstart)="startSwipe($event)" (touchend)="endSwipe($event)">
+          <div class="carousel-track" [style.transform]="'translate3d(-' + index() * 100 + '%, 0, 0)'">
+            @for (line of lines(); track line.product.id; let i = $index) {
+              <article class="product-slide" role="group" aria-roledescription="slide"
+                [attr.aria-label]="(i + 1) + ' of ' + lines().length + ': ' + line.product.name"
+                [attr.aria-hidden]="i !== index()" [attr.inert]="i !== index() ? '' : null">
+                <div class="product-stage">
+                  @if (line.checked && !loading() && !error() && line.discount) { <span class="sale-badge">−{{ line.discount }}%</span> }
+                  @if (line.product.image) {
+                    <img [src]="line.product.image" [alt]="line.product.name" draggable="false" />
+                  } @else { <span class="no-image">Image unavailable</span> }
+                </div>
+                <div class="product-info">
+                  <p class="eyebrow category">{{ line.product.categoryName || 'ZELEON' }}</p>
+                  <h3>{{ line.product.name }}</h3>
+                  <div class="product-price">
+                    <strong>{{ line.price | currency:line.currency }}</strong>
+                    @if (line.discount) { <del>{{ line.original | currency:line.currency }}</del> }
+                    <span class="per-unit">/ each</span>
+                  </div>
+                  <p class="stock" [class.unavailable]="line.stockProblem">
+                    @if (loading()) { Checking availability… }
+                    @else if (error()) { Availability could not be checked }
+                    @else if (!line.available) { <span class="stock-dot"></span> Product unavailable }
+                    @else if (line.stock === 0) { <span class="stock-dot"></span> OUT OF STOCK }
+                    @else if (line.stockProblem) { Only {{ line.stock }} available. Please reduce the quantity. }
+                    @else if (line.stock !== null) { <span class="stock-dot"></span> In stock · {{ line.stock }} available }
+                    @else { Availability confirmed when ordering opens }
+                  </p>
+                  <div class="product-actions">
+                    <div class="quantity" role="group" [attr.aria-label]="'Quantity of ' + line.product.name">
+                      <button type="button" aria-label="Decrease quantity" [disabled]="line.quantity <= 1" (click)="changeQuantity(-1)">−</button>
+                      <output [attr.aria-label]="'Quantity: ' + line.quantity">{{ line.quantity }}</output>
+                      <button type="button" aria-label="Increase quantity" [disabled]="!canIncrease(line)" (click)="changeQuantity(1)">+</button>
+                    </div>
+                    <button class="remove-button" type="button" (click)="removeCurrent()">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7" /></svg> Remove
+                    </button>
+                  </div>
+                </div>
+              </article>
+            }
+          </div>
+        </div>
+        <div class="carousel-controls">
+          <button class="arrow" type="button" aria-label="Previous cart product" [disabled]="index() === 0" (click)="move(-1)">←</button>
+          <div class="pagination" aria-label="Choose a cart product">
+            @for (line of lines(); track line.product.id; let i = $index) {
+              <button type="button" [attr.aria-label]="'Show ' + line.product.name" [attr.aria-current]="i === index() ? 'true' : null" (click)="select(i)"><span></span></button>
+            }
+          </div>
+          <button class="arrow" type="button" aria-label="Next cart product" [disabled]="index() >= lines().length - 1" (click)="move(1)">→</button>
+        </div>
+        <p class="slide-status" aria-live="polite" aria-atomic="true">Product {{ index() + 1 }} of {{ lines().length }} · {{ current()?.product?.name }}</p>
+      </section>
+      <section class="checkout-details" aria-labelledby="delivery-title">
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <p class="eyebrow">THE FINAL DETAILS</p>
+          <h2 id="delivery-title">Shipping information</h2>
+          <p class="section-description">Where should your next boost arrive?</p>
+          <div class="fields">
+            @for (field of fields; track field.key) {
+              <div class="field" [class.wide]="field.wide">
+                <label [for]="'checkout-' + field.key">{{ field.label }}</label>
+                <input [id]="'checkout-' + field.key" [type]="field.type" [formControlName]="field.key"
+                  [autocomplete]="field.autocomplete" [placeholder]="field.placeholder"
+                  [attr.required]="['fullName', 'email', 'address', 'city'].includes(field.key) ? '' : null"
+                  [attr.maxlength]="field.key === 'email' ? 254 : field.key === 'address' ? 300 : field.key === 'fullName' ? 160 : field.key === 'city' ? 100 : field.key === 'phone' ? 30 : 20"
+                  [attr.aria-invalid]="validationMessage(field.key) ? 'true' : null"
+                  [attr.aria-describedby]="validationMessage(field.key) ? 'checkout-' + field.key + '-error' : null" />
+                @if (validationMessage(field.key)) { <p class="field-error" [id]="'checkout-' + field.key + '-error'">{{ validationMessage(field.key) }}</p> }
+              </div>
+            }
+          </div>
+          <section class="order-summary" aria-labelledby="summary-title" [attr.aria-busy]="loading()">
+            <div class="summary-heading"><h2 id="summary-title">Order summary</h2><button type="button" class="refresh" [disabled]="loading()" (click)="refresh()">{{ loading() ? 'Checking…' : 'Refresh prices' }}</button></div>
+            @for (total of totals(); track total.currency) {
+              <dl>
+                <div><dt>Subtotal</dt><dd>{{ total.subtotal | currency:total.currency }}</dd></div>
+                <div class="discount-row"><dt>Discount</dt><dd>−{{ total.discount | currency:total.currency }}</dd></div>
+                <div><dt>Shipping &amp; tax</dt><dd class="pending-cost">Not calculated</dd></div>
+                <div class="summary-total"><dt>Estimated total</dt><dd>{{ total.total | currency:total.currency }}</dd></div>
+              </dl>
+            }
+            <p class="estimate-note">Item totals include active discounts. Shipping and tax are not included.</p>
+          </section>
+          @if (error()) { <p class="checkout-error" role="alert">{{ error() }}</p> }
+          @if (!loading() && !error() && blocked()) { <p class="checkout-error" role="alert">Some items are unavailable, exceed available stock, or cannot be ordered in their current currency. Update your cart before ordering.</p> }
+          <button class="place-order" type="submit" [disabled]="!checkoutAvailable || blocked()" aria-describedby="ordering-status">
+            <span>{{ loading() ? 'Checking cart…' : 'Place Order' }}</span><span aria-hidden="true">↗</span>
+          </button>
+          <p class="ordering-status" id="ordering-status">Online ordering is not available yet. No order will be placed or payment taken.</p>
+        </form>
+      </section>
+    </div>
+  } @else {
+    <section class="empty-cart" aria-labelledby="empty-title">
+      <p class="eyebrow">READY FOR YOUR NEXT BOOST?</p>
+      <h2 id="empty-title">Your cart is empty.</h2>
+      <p>Add something you love to start your checkout.</p>
+      <a routerLink="/shop" class="shop-button">Explore the shop <span aria-hidden="true">↗</span></a>
+    </section>
+  }
+  <p class="visually-hidden" role="status" aria-atomic="true">{{ message() }}</p>
+</section>

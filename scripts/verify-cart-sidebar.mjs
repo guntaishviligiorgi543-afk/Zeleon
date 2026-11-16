@@ -72,7 +72,7 @@ try {
       assert.ok(metrics.radii.every(value => parseFloat(value) >= 12 && parseFloat(value) <= 16));
       assert.ok(metrics.controls.every(r => r.width >= 43 && r.height >= 43 && r.left >= -1 && r.right <= width + 1));
       assert.equal(metrics.imageFits,true);
-      assert.equal(await dialog.locator('.checkout-button').isDisabled(),true);
+      assert.equal(await dialog.locator('.checkout-button').getAttribute('href'), '/checkout');
       const total = () => dialog.locator('.total-values').textContent().then(amount);
       const initial = prices[0]+prices[1]+prices[2];
       assert.equal(await total(),initial);

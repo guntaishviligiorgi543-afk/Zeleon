@@ -19,7 +19,10 @@ export class Login {
   private readonly auth = inject(Auth);
   private readonly router = inject(Router);
   readonly form = inject(FormBuilder).nonNullable.group({
-    email: ['', [Validators.required, Validators.pattern(EMAIL_PATTERN), Validators.maxLength(254)]],
+    email: [
+      '',
+      [Validators.required, Validators.pattern(EMAIL_PATTERN), Validators.maxLength(254)],
+    ],
     password: ['', [Validators.required, Validators.pattern(/^[\s\S]{8,128}$/)]],
   });
 
@@ -59,13 +62,20 @@ export class Login {
         await this.router.navigateByUrl(ratingPath);
       } else if (typeof supportChat === 'string' && /^[0-9a-f-]{36}$/i.test(supportChat)) {
         await this.router.navigate(['/'], { queryParams: { supportChat } });
-      } else if (typeof returnUrl === 'string' && /^\/rate-support\/[0-9a-f-]{36}(?:\?stars=[1-5])?$/i.test(returnUrl)) {
+      } else if (
+        typeof returnUrl === 'string' &&
+        /^\/rate-support\/[0-9a-f-]{36}(?:\?stars=[1-5])?$/i.test(returnUrl)
+      ) {
         await this.router.navigateByUrl(returnUrl);
       } else {
-        await this.router.navigateByUrl(typeof returnUrl === 'string' ? profileDestination(returnUrl) : '/');
+        await this.router.navigateByUrl(
+          typeof returnUrl === 'string' ? profileDestination(returnUrl) : '/',
+        );
       }
     } catch (error) {
       this.status.set(authErrorMessage(error));
-    } finally { this.pending.set(false); }
+    } finally {
+      this.pending.set(false);
+    }
   }
 }

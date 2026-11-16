@@ -89,6 +89,24 @@ header {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
+.checkout-header {
+    height: var(--checkout-header-height, 148px);
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 24px;
+    width: min(1240px, 100%);
+    margin-inline: auto;
+    padding: 52px 32px 36px;
+    font-family: 'Montserrat', Arial, sans-serif;
+}
+.checkout-header h1 { margin: 0; font-size: clamp(28px, 4vw, 48px); font-weight: 650; letter-spacing: -0.04em; }
+.checkout-header .logo { flex-shrink: 0; animation: none; }
+.checkout-header .logo:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
+@media (max-width: 600px) {
+    .checkout-header { padding: 28px 20px 24px; gap: 12px; }
+    .checkout-header .logo { font-size: clamp(20px, 5vw, 28px); }
+}
+
 .navbar {
     display: flex;
     align-items: center;

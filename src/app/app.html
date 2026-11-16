@@ -1,14 +1,16 @@
 @if (!workspaceRoute()) {
-  <app-header [attr.inert]="ratingRoute() ? '' : null"></app-header>
+  <app-header [checkout]="checkoutRoute()" [class.checkout-header-sticky]="checkoutRoute()" [attr.inert]="ratingRoute() ? '' : null"></app-header>
 }
 <main>
   @if (ratingRoute()) { <app-home inert></app-home> }
   <router-outlet></router-outlet>
 </main>
-@if (!workspaceRoute()) {
+@if (!workspaceRoute() && !checkoutRoute()) {
   <app-footer [attr.inert]="ratingRoute() ? '' : null"></app-footer>
 }
 <app-manager-navigation [attr.inert]="ratingRoute() ? '' : null"></app-manager-navigation>
-@if (!workspaceRoute() && !ratingRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
+@if (!workspaceRoute() && !checkoutRoute() && !ratingRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
   <app-customer-chat></app-customer-chat>
 }
+
+<app-cart-login-dialog></app-cart-login-dialog>

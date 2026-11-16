@@ -1,3 +1,5 @@
+import { Auth } from '../../services/auth';
+import { createAuthenticatedAuthStub } from '../../testing/auth-stub';
 import { TestBed } from '@angular/core/testing';
 import { ProductDetails } from './product-details';
 import { provideRouter, Router } from '@angular/router';
@@ -17,7 +19,7 @@ describe('ProductDetails', () => {
     getProduct = vi.fn(async (id: string) => id === 'missing' ? null : item);
     await TestBed.configureTestingModule({
       imports: [ProductDetails],
-      providers: [provideRouter([{ path: 'product/:id', component: ProductDetails }]),
+      providers: [{ provide: Auth, useFactory: createAuthenticatedAuthStub }, provideRouter([{ path: 'product/:id', component: ProductDetails }]),
         { provide: Products, useValue: { getProduct } }],
     }).compileComponents();
 

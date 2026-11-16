@@ -69,10 +69,12 @@ export const routes: Routes = [
   },
   {
     path: 'cart',
+    canActivate: [authGuard],
     component: Cart,
   },
   {
     path: 'checkout',
+    canActivate: [authGuard],
     component: Checkout,
   },
   {

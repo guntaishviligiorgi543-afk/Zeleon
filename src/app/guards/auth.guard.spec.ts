@@ -15,6 +15,8 @@ describe('auth guards', () => {
   beforeEach(() => {
     auth = createAuthStub();
     TestBed.configureTestingModule({ providers: [{ provide: Auth, useValue: auth }, provideRouter([
+      { path: 'cart', component: Page, canActivate: [authGuard] },
+      { path: 'checkout', component: Page, canActivate: [authGuard] },
       { path: 'profile', component: Page, canActivate: [authGuard] },
       { path: 'login', component: Page, canActivate: [guestGuard] },
       { path: 'signup', component: Page, canActivate: [guestGuard] },
@@ -50,4 +52,15 @@ describe('auth guards', () => {
     await harness.navigateByUrl('/profile');
     expect(TestBed.inject(Router).url).toBe('/reset-password');
   });
+  for (const path of ['/cart', '/checkout']) {
+    it(`requires login for ${path} and allows a restored session`, async () => {
+      const harness = await RouterTestingHarness.create();
+      await harness.navigateByUrl(path);
+      expect(TestBed.inject(Router).url).toBe('/login?returnUrl=' + encodeURIComponent(path));
+      auth.user.set({ id: 'user-1' });
+      await harness.navigateByUrl(path);
+      expect(TestBed.inject(Router).url).toBe(path);
+    });
+  }
+
 });

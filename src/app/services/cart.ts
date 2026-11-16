@@ -1,18 +1,42 @@
-import { Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
+import { Auth } from './auth';
 import { Product } from '../models/product';
 
 export interface CartLine { product: Product; quantity: number; }
 
 @Injectable({ providedIn: 'root' })
 export class Cart {
-  private readonly lines = signal<readonly CartLine[]>([]);
-  readonly items = this.lines.asReadonly();
+  private readonly auth = inject(Auth);
+  readonly authenticated = computed(() => this.auth.initialized() && this.auth.isAuthenticated() && !this.auth.recovering());
+  private readonly owner = computed(() => this.authenticated() ? this.auth.user()?.id ?? null : null);
+  private readonly state = signal<{ owner: string | null; lines: readonly CartLine[] }>({ owner: null, lines: [] });
+  readonly items = computed(() => this.owner() && this.state().owner === this.owner() ? this.state().lines : []);
+  readonly loginRequests = new Subject<void>();
+  readonly accountChanges = new Subject<void>();
+
+  constructor() {
+    let previous = this.owner();
+    effect(() => {
+      const owner = this.owner();
+      if (this.state().owner !== owner) this.state.set({ owner, lines: [] });
+      if (previous !== owner) { previous = owner; this.accountChanges.next(); }
+    });
+  }
+  requestAccess(): boolean {
+    if (this.authenticated() && this.owner()) return true;
+    this.loginRequests.next();
+    return false;
+  }
+  private update(change: (items: readonly CartLine[]) => readonly CartLine[]): void {
+    this.state.set({ owner: this.owner(), lines: change(this.items()) });
+  }
   readonly openRequests = new Subject<void>();
 
   add(product: Product, quantity: number): boolean {
+    if (!this.requestAccess()) return false;
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) return false;
-    this.lines.update((items) => {
+    this.update((items) => {
       const existing = items.find((item) => item.product.id === product.id);
       return existing ? items.map((item) => item.product.id === product.id
         ? { product, quantity: item.quantity + quantity } : item) : [...items, { product, quantity }];
@@ -21,18 +45,20 @@ export class Cart {
   }
 
   remove(id: string | number): void {
-    this.lines.update((items) => items.filter((item) => item.product.id !== id));
+    if (!this.authenticated()) return;
+    this.update((items) => items.filter((item) => item.product.id !== id));
   }
 
-  clear(): void { this.lines.set([]); }
+  clear(): void { if (this.authenticated()) this.update(() => []); }
 
   changeQuantity(id: string | number, delta: -1 | 1): boolean {
+    if (!this.authenticated()) return false;
     if (delta !== -1 && delta !== 1) return false;
-    const line = this.lines().find((item) => item.product.id === id);
+    const line = this.items().find((item) => item.product.id === id);
     if (!line) return false;
     const quantity = line.quantity + delta;
     if (quantity < 1 || (delta === 1 && quantity > 99)) return false;
-    this.lines.update((items) => items.map((item) => item.product.id === id
+    this.update((items) => items.map((item) => item.product.id === id
       ? { ...item, quantity } : item));
     return true;
   }

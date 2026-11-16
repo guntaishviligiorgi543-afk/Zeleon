@@ -36,6 +36,7 @@ export function authErrorMessage(error: unknown): string {
 }
 
 export function profileDestination(value: string | null): string {
+  if (value && /^\/(?:cart|checkout)(?:[?#][^\\\s]*)?$/.test(value)) return value;
   return value && /^\/profile(?:\/[^\\\s]*|[?#][^\\\s]*)?$/.test(value) ? value : '/profile';
 }
 

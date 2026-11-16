@@ -1,16 +1,18 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, input, signal } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { BurgerMenu } from '../burger-menu/burger-menu';
 import { CartSidebar } from '../cart-sidebar/cart-sidebar';
 
 @Component({
-  imports: [RouterLink, RouterLinkActive, BurgerMenu, CartSidebar],
+  imports: [RouterLink, RouterLinkActive, BurgerMenu, CartSidebar, NgTemplateOutlet],
   selector: 'app-header',
   styleUrl: './header.css',
   templateUrl: './header.html',
 })
 export class Header {
+  readonly checkout = input(false);
   readonly auth = inject(Auth);
   readonly signingOut = signal(false);
   readonly authError = signal('');

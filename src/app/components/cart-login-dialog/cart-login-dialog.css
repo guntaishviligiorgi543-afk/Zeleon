@@ -1,0 +1,8 @@
+dialog { box-sizing: border-box; width: min(calc(100% - 40px), 420px); padding: 30px; border: 1px solid #ffffff45; border-radius: 16px; background: #181818; box-shadow: 0 25px 90px #000b; text-align: center; color: #fff; font-family: 'Montserrat', Arial, sans-serif; }
+dialog::backdrop { background: #000b; backdrop-filter: blur(8px); }
+h2 { margin: 0 0 16px; font-size: 24px; }
+p { color: #aaa; line-height: 1.6; }
+.actions { display: flex; justify-content: center; gap: 12px; margin-top: 24px; }
+button { min-width: 110px; min-height: 44px; padding: 12px 20px; border: 1px solid #ffffff45; border-radius: 8px; background: #fff; color: #111; font: inherit; cursor: pointer; }
+.cancel { background: transparent; color: #fff; }
+button:focus-visible { outline: 2px solid #d5b9ff; outline-offset: 4px; }

@@ -2,12 +2,20 @@
   [class.is-closing]="phase() === 'closing'" (cancel)="cancel($event)" (close)="finishClose()" (click)="outside($event)">
   <div class="cart-panel" (animationend)="panelAnimationEnd($event)">
     <header class="cart-heading">
-      <h2 id="cart-sidebar-title">Cart <span class="cart-count" [attr.aria-label]="itemCount() + ' items'">{{ itemCount() }}</span></h2>
+      <h2 id="cart-sidebar-title">Cart @if (cart.authenticated()) { <span class="cart-count" [attr.aria-label]="itemCount() + ' items'">{{ itemCount() }}</span> }</h2>
       <button type="button" class="cart-close" aria-label="Close cart" autofocus (click)="close()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
       </button>
     </header>
 
+    @if (!cart.authenticated()) {
+      <div class="cart-items cart-empty" aria-labelledby="locked-cart-title">
+        <h3 id="locked-cart-title">Your Cart Is Locked</h3>
+        <p>Please log in to view your cart and start shopping.</p>
+        <a class="checkout-button" routerLink="/login" [queryParams]="{ returnUrl: '/cart' }" (click)="navigateAfterClose($event, '/login?returnUrl=%2Fcart')">Log In</a>
+        <a class="continue-shopping" routerLink="/signup" (click)="navigateAfterClose($event, '/signup')">Create Account</a>
+      </div>
+    } @else {
     <div class="cart-items" tabindex="0" aria-label="Cart items">
       @for (line of cart.items(); track line.product.id; let index = $index) {
         <article class="cart-line" [attr.data-product-id]="line.product.id"
@@ -60,10 +68,15 @@
           }
         </span>
       </div>
-      <button class="checkout-button" type="button" disabled aria-describedby="cart-checkout-note">Checkout</button>
-      <p class="checkout-note" id="cart-checkout-note">Checkout is currently unavailable.</p>
+      @if (itemCount()) {
+        <a class="checkout-button" routerLink="/checkout" (click)="navigateAfterClose($event, '/checkout')" aria-describedby="cart-checkout-note">Checkout</a>
+      } @else {
+        <button class="checkout-button" type="button" disabled aria-describedby="cart-checkout-note">Checkout</button>
+      }
+      <p class="checkout-note" id="cart-checkout-note">Review your items and delivery details. Ordering is not available yet.</p>
       <a class="view-cart" routerLink="/cart" (click)="navigateAfterClose($event, '/cart')">View Cart</a>
     </footer>
+    }
     <p class="cart-status visually-hidden" role="status" aria-live="polite" aria-atomic="true">{{ status() }}</p>
   </div>
 </dialog>

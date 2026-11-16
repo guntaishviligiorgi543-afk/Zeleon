@@ -205,6 +205,8 @@ describe('Auth', () => {
     await auth.signInWithGoogle('/profile/security');
     expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({ provider: 'google', options: { redirectTo: new URL('/auth/callback', window.location.origin).toString() } });
     expect(auth.consumeGoogleDestination()).toBe('/profile/security');
+    await auth.signInWithGoogle('/checkout');
+    expect(auth.consumeGoogleDestination()).toBe('/checkout');
     expect(auth.consumeGoogleDestination()).toBe('/profile');
     await auth.signInWithGoogle('//evil.test');
     expect(auth.consumeGoogleDestination()).toBe('/profile');
@@ -261,7 +263,7 @@ describe('Auth', () => {
     expect(auth.isAuthenticated()).toBe(false);
   });
 
-  it('uses safe errors and restricts return destinations to Profile', () => {
+  it('uses safe errors and restricts return destinations to allowed local pages', () => {
     expect(authErrorMessage({ status: 429 })).toContain('Too many');
     expect(authErrorMessage({ message: 'registered-email@example.com' })).not.toContain('registered-email');
     for (const target of ['https://evil.test', '//evil.test', '/profile-evil', '/shop', '/profile\\evil']) {

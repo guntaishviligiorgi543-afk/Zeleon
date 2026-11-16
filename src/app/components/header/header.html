@@ -1,3 +1,12 @@
+<ng-template #brandLogo>
+  <a class="logo" routerLink="/" aria-label="Zeleon home"> <span>Zeleon</span></a>
+</ng-template>
+@if (checkout()) {
+  <header class="checkout-header">
+    <h1>Checkout</h1>
+    <ng-container [ngTemplateOutlet]="brandLogo"></ng-container>
+  </header>
+} @else {
 <header>
   <div class="infoslideWrapper">
     <div class="infoslideAnimation">
@@ -16,7 +25,7 @@
   </div>
 
   <div class="headerContainer">
-    <a class="logo" routerLink="/"> <span>Zeleon</span></a>
+    <ng-container [ngTemplateOutlet]="brandLogo"></ng-container>
     <nav class="navbar" aria-label="Main navigation">
       @for (link of navigationLinks; track link.path) {
         <a [routerLink]="link.path" routerLinkActive="active" ariaCurrentWhenActive="page">
@@ -92,3 +101,4 @@
     <app-cart-sidebar #cartSidebar></app-cart-sidebar>
   </div>
 </header>
+}

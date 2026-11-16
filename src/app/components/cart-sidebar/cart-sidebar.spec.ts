@@ -1,3 +1,5 @@
+import { Auth } from '../../services/auth';
+import { createAuthenticatedAuthStub } from '../../testing/auth-stub';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -17,7 +19,7 @@ describe('CartSidebar', () => {
   it('opens, locks scrolling, closes through each control, and restores focus and styles', async () => {
     await TestBed.configureTestingModule({
       imports: [CartSidebar],
-      providers: [provideRouter([{ path: 'shop', component: CartPage }, { path: 'cart', component: CartPage }])],
+      providers: [{ provide: Auth, useFactory: createAuthenticatedAuthStub }, provideRouter([{ path: 'shop', component: CartPage }, { path: 'cart', component: CartPage }])],
     }).compileComponents();
     const fixture = TestBed.createComponent(CartSidebar);
     await fixture.whenStable();
@@ -76,7 +78,7 @@ describe('CartSidebar', () => {
   async function setup(animated = false) {
     vi.stubGlobal('matchMedia', () => ({ matches: !animated }));
     await TestBed.configureTestingModule({
-      imports: [CartSidebar], providers: [provideRouter([{ path: 'cart', component: CartPage }])],
+      imports: [CartSidebar], providers: [{ provide: Auth, useFactory: createAuthenticatedAuthStub }, provideRouter([{ path: 'cart', component: CartPage }])],
     }).compileComponents();
     const fixture = TestBed.createComponent(CartSidebar);
     await fixture.whenStable();
@@ -109,7 +111,7 @@ describe('CartSidebar', () => {
     sidebar.changeQuantity(cart.items()[0], -1);
     expect(sidebar.totals()[0].amount).toBe(24);
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelector('.checkout-button').disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('.checkout-button').getAttribute('href')).toBe('/checkout');
     expect(fixture.nativeElement.querySelector('.view-cart').getAttribute('href')).toBe('/cart');
     fixture.destroy();
   });
@@ -192,4 +194,22 @@ describe('CartSidebar', () => {
     vi.advanceTimersByTime(1000);
     expect(cart.items()).toEqual([]);
   });
+  it('shows the locked state in the same drawer and closes on session loss', async () => {
+    const { fixture, sidebar, dialog, cart, product } = await setup();
+    const auth = TestBed.inject(Auth) as unknown as ReturnType<typeof createAuthenticatedAuthStub>;
+    cart.add(product, 2); sidebar.open();
+    await fixture.whenStable();
+    auth.user.set(null);
+    expect(cart.items()).toEqual([]);
+    await fixture.whenStable();
+    expect(sidebar.opened()).toBe(false);
+    sidebar.open(); fixture.detectChanges();
+    expect(dialog.textContent).toContain('Your Cart Is Locked');
+    expect(dialog.textContent).toContain('Please log in to view your cart and start shopping.');
+    expect(dialog.querySelector('.cart-line')).toBeNull();
+    expect(dialog.querySelector('.cart-footer')).toBeNull();
+    expect(dialog.querySelector('a[href="/signup"]')).toBeTruthy();
+    fixture.destroy();
+  });
+
 });

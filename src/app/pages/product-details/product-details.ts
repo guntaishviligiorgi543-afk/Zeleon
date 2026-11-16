@@ -40,6 +40,7 @@ export class ProductDetails {
   addToCart(): void {
     const product = this.product();
     if (!product || this.cartBusy() || (!this.inCart() && !this.validQuantity())) return;
+    if (!this.cart.requestAccess()) return;
     this.cartBusy.set(true);
     if (this.inCart()) {
       this.cart.remove(product.id);

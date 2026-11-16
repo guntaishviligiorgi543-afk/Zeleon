@@ -1,3 +1,5 @@
+import { Auth } from '../../services/auth';
+import { createAuthenticatedAuthStub } from '../../testing/auth-stub';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Cart } from '../../services/cart';
 import { ProductCard } from './product-card';
@@ -11,7 +13,7 @@ describe('ProductCard', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ProductCard],
-      providers: [Cart, provideRouter([])],
+      providers: [{ provide: Auth, useFactory: createAuthenticatedAuthStub }, Cart, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ProductCard);
@@ -54,4 +56,16 @@ describe('ProductCard', () => {
     expect(add).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }), 1);
     expect(component.cartBusy()).toBe(false);
   });
+  it('requests login without loading, navigation, or cart mutation for guests', async () => {
+    const auth = TestBed.inject(Auth) as unknown as ReturnType<typeof createAuthenticatedAuthStub>;
+    auth.user.set(null);
+    const cart = TestBed.inject(Cart);
+    const requested = vi.fn(); cart.loginRequests.subscribe(requested);
+    const request = component.toggleCart(new MouseEvent('click'));
+    expect(component.cartBusy()).toBe(false);
+    await request;
+    expect(requested).toHaveBeenCalledOnce();
+    expect(cart.items()).toEqual([]);
+  });
+
 });

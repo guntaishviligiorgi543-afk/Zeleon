@@ -1,9 +1,12 @@
+import { Auth } from './services/auth';
+import { CartLoginDialog } from './components/cart-login-dialog/cart-login-dialog';
 import {
   AfterRenderRef,
   AfterViewInit,
   afterNextRender,
   Component,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   Injector,
@@ -22,7 +25,7 @@ import { ManagerNavigation } from './components/manager-navigation/manager-navig
 import { legacyRatingPath } from './pages/support-rating/rating-link';
 
 @Component({
-  imports: [RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat, Home],
+  imports: [CartLoginDialog, RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat, Home],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
@@ -31,6 +34,7 @@ export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
   protected readonly router = inject(Router);
   protected readonly ratingRoute = signal(this.isRatingUrl(this.router.url));
+  protected readonly checkoutRoute = signal(/^\/checkout(?:[/?#;]|$)/.test(this.router.url));
   protected readonly workspaceRoute = signal(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(this.router.url));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -41,6 +45,18 @@ export class App implements AfterViewInit {
   private layoutObserver?: ResizeObserver;
   private layoutFrame: number | null = null;
 
+  constructor() {
+    const auth = inject(Auth);
+    effect(() => {
+      if (auth.initialized() && !auth.isAuthenticated() && this.checkoutOrCart()) {
+        void this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url }, replaceUrl: true });
+      }
+    });
+  }
+  private checkoutOrCart(): boolean {
+    return /^\/(cart|checkout)(?:[/?#;]|$)/.test(this.router.url);
+  }
+
   ngAfterViewInit(): void {
     this.refreshAfterRender();
     this.router.events
@@ -50,6 +66,7 @@ export class App implements AfterViewInit {
       )
       .subscribe((event) => {
         this.ratingRoute.set(this.isRatingUrl(event.urlAfterRedirects));
+        this.checkoutRoute.set(/^\/checkout(?:[/?#;]|$)/.test(event.urlAfterRedirects));
         this.workspaceRoute.set(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(event.urlAfterRedirects));
         this.refreshAfterRender();
       });

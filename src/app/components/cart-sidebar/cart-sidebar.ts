@@ -38,6 +38,11 @@ export class CartSidebar {
   private readonly removals = new Map<ProductId, { timer: ReturnType<typeof setTimeout>; finish: () => void }>();
 
   constructor() {
+    this.cart.accountChanges.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.pendingNavigation = undefined;
+      this.status.set('');
+      this.close();
+    });
     this.cart.openRequests.pipe(takeUntilDestroyed()).subscribe(() => this.open());
     this.router.events.pipe(takeUntilDestroyed()).subscribe((event) => {
       if (event instanceof NavigationEnd) this.close();
@@ -132,7 +137,7 @@ export class CartSidebar {
     if (destination) void this.router.navigateByUrl(destination);
   }
 
-  navigateAfterClose(event: MouseEvent, destination: '/cart' | '/shop'): void {
+  navigateAfterClose(event: MouseEvent, destination: '/cart' | '/shop' | '/checkout' | '/login?returnUrl=%2Fcart' | '/signup'): void {
     if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
     event.preventDefault();
     this.pendingNavigation = destination;

@@ -1,4 +1,4 @@
-.product-name-link {
+ .product-name-link {
   color: inherit;
   font: inherit;
   text-decoration: inherit;
@@ -23,7 +23,7 @@
   pointer-events: none;
   transition: opacity 240ms ease;
 }
-
+ 
 .product-image img {
   display: block;
   width: 100%;
