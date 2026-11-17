@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { entriesFor, escapeXml, fetchProducts, renderSitemap, readEntries, withHead, ORIGIN, productAliases, redirectPage } from './sitemap.mjs';
+import { entriesFor, escapeXml, fetchProducts, renderSitemap, readEntries, withHead, ORIGIN, publicPages, productAliases, redirectPage } from './sitemap.mjs';
 import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -10,6 +10,8 @@ test('metadata uses actual product data, currency and omits unsupported claims',
   const item = { id: 7, name: 'Citrus & Lime', price: 9.75, currency: 'GEL', categoryName: 'Classic', image: 'https://example.com/can.png' };
   const page = metadata('/product/citrus/', item);
   assert.equal(page.title, 'Citrus & Lime | ZELEON');
+  assert.equal(page.robots, 'noindex, follow');
+  assert.equal(metadata('/product/missing/').robots, 'noindex, follow');
   assert.equal(page.canonical, ORIGIN + '/product/7/');
   assert(page.description.includes(item.name));
   const product = page.schemas[0];
@@ -28,6 +30,7 @@ test('static product social metadata is parseable, injection safe and private he
   const html = withHead('<html><head><title>Old</title></head><body></body></html>', { loc: ORIGIN + '/product/7/' }, item);
   const document = new JSDOM(html).window.document;
   assert.equal(document.title, item.name + ' | ZELEON');
+  assert.equal(document.querySelector('meta[name="robots"]').content, 'noindex, follow');
   assert.equal(document.querySelectorAll('script').length, 1);
   assert.equal(JSON.parse(document.querySelector('script').textContent).name, item.name);
   assert.equal(document.querySelector('meta[property="og:image"]').content, BRAND_IMAGE);
@@ -39,36 +42,27 @@ test('static product social metadata is parseable, injection safe and private he
 });
 
 test('public pages have unique titles/descriptions and only home carries organization/site schema', () => {
-  const pages = ['/', '/shop/', '/our-story/', '/contact/'].map(path => metadata(path));
-  assert.equal(new Set(pages.map(page => page.title)).size, 4);
-  assert.equal(new Set(pages.map(page => page.description)).size, 4);
+  const pages = publicPages.map(path => metadata(path));
+  assert.equal(new Set(pages.map(page => page.title)).size, 7);
+  assert.equal(new Set(pages.map(page => page.description)).size, 7);
   assert.deepEqual(pages[0].schemas.map(schema => schema['@type']), ['Organization', 'WebSite']);
   assert(pages.slice(1).every(page => page.schemas.length === 0));
+  publicPages.forEach((path, index) => {
+    assert.equal(pages[index].robots, 'index, follow');
+    assert.equal(pages[index].canonical, ORIGIN + path);
+  });
 });
 
-test('includes only real public paths and unique published product IDs', () => {
-  const entries = entriesFor([
-    { id: 1, is_active: true, updated_at: '2026-11-01T12:00:00Z' },
-    { id: 1, is_active: true, updated_at: '2026-11-02T12:00:00Z' },
-    { id: 2, is_active: false }, { id: 3 },
-  ]);
-  assert.equal(entries.length, 5);
-  assert.equal(entries.at(-1).loc, ORIGIN + '/product/1/');
-  assert.equal(entries.at(-1).lastmod, '2026-11-02T12:00:00.000Z');
-  assert(!entries.some(entry => /login|signup|profile|cart|checkout|manager|admin|support/.test(new URL(entry.loc).pathname)));
-  assert.throws(() => entriesFor([{ id: '../admin', is_active: true }]));
-});
-
-test('regeneration reflects creation, unpublishing and deletion without changing products', () => {
-  const before = [{ id: 1, is_active: true }, { id: 2, is_active: true }];
-  const snapshot = JSON.stringify(before);
-  assert.equal(entriesFor(before).length, 6);
-  assert.equal(JSON.stringify(before), snapshot);
-  const after = [{ id: 2, is_active: false }, { id: 3, is_active: true }];
-  const locations = entriesFor(after).map(entry => entry.loc);
-  assert(locations.includes(ORIGIN + '/product/3/'));
-  assert(!locations.includes(ORIGIN + '/product/1/'));
-  assert(!locations.includes(ORIGIN + '/product/2/'));
+test('sitemap includes exactly seven approved pages regardless of catalog changes', () => {
+  const products = [{ id: 1, is_active: true }, { id: 2, is_active: false }];
+  const before = JSON.stringify(products);
+  const expected = publicPages.map(path => ({ loc: ORIGIN + path }));
+  assert.deepEqual(entriesFor(products), expected);
+  assert.deepEqual(entriesFor([]), expected);
+  assert.deepEqual(entriesFor([{ id: 3, is_active: true }]), expected);
+  assert.equal(JSON.stringify(products), before);
+  assert.equal(expected.length, 7);
+  assert(!expected.some(entry => /product|login|signup|profile|cart|checkout|manager|admin|support/.test(new URL(entry.loc).pathname)));
 });
 
 test('escapes XML and omits absent, invalid and future modification dates', async () => {
@@ -79,7 +73,9 @@ test('escapes XML and omits absent, invalid and future modification dates', asyn
   try {
     const file = join(directory, 'sitemap.xml');
     await writeFile(file, renderSitemap(entries));
-    assert.equal((await readEntries(file)).length, 6);
+    assert.equal((await readEntries(file)).length, 7);
+    await writeFile(file, renderSitemap([...entries, { loc: ORIGIN + '/product/1/' }]));
+    await assert.rejects(readEntries(file), /Non-public route/);
     await writeFile(file, '<urlset>broken');
     await assert.rejects(readEntries(file));
   } finally {

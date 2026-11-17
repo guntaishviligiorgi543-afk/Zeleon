@@ -1,3 +1,5 @@
+import AOS from 'aos';
+import { AOS_ENGINE } from './aos-engine';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -28,7 +30,7 @@ describe('AOS layout measurement regression (real library)', () => {
     vi.spyOn(window, 'innerHeight', 'get').mockReturnValue(800);
     vi.spyOn(window, 'pageYOffset', 'get').mockReturnValue(0);
     await TestBed.configureTestingModule({
-      imports: [App], providers: [provideRouter([{ path: '', component: LayoutPage }])],
+      imports: [App], providers: [{ provide: AOS_ENGINE, useValue: AOS }, provideRouter([{ path: '', component: LayoutPage }])],
     }).compileComponents();
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();

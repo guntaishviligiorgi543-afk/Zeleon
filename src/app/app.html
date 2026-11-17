@@ -2,7 +2,9 @@
   <app-header [checkout]="checkoutRoute()" [class.checkout-header-sticky]="checkoutRoute()" [attr.inert]="ratingRoute() ? '' : null"></app-header>
 }
 <main>
-  @if (ratingRoute()) { <app-home inert></app-home> }
+  @if (ratingRoute()) {
+    @defer (when ratingRoute()) { <app-home inert></app-home> }
+  }
   <router-outlet></router-outlet>
 </main>
 @if (!workspaceRoute() && !checkoutRoute()) {

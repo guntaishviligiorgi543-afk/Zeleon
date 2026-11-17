@@ -1,3 +1,4 @@
+import { AOS_ENGINE } from './aos-engine';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -16,6 +17,7 @@ describe('App', () => {
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
+        { provide: AOS_ENGINE, useValue: { init() {}, refresh() {}, refreshHard() {} } },
         provideRouter([
           { path: '', component: RoutedPage },
           { path: 'manager', component: RoutedPage },

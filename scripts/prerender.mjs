@@ -4,7 +4,7 @@ import { resolve, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
 import { JSDOM } from 'jsdom';
-import { ORIGIN, readEntries, productAliases } from './sitemap.mjs';
+import { readEntries, productAliases } from './sitemap.mjs';
 import { metadata } from '../src/app/seo-metadata.mjs';
 import { serveStatic } from './static-server.mjs';
 
@@ -16,9 +16,10 @@ export function checkRenderedHtml(html, path, catalog, verification) {
   const dom = new JSDOM(html);
   try {
     const document = dom.window.document;
-    const product = path.startsWith('/product/') ? catalog.find(item => String(item.id) === path.slice(9, -1)) : null;
-    const expected = metadata(path, product);
-    const page = document.querySelector(`app-root main ${selectors[path] ?? 'app-product-details'}`);
+    const category = path.startsWith('/shop/') ? path.split('/')[2] : null;
+    const listing = category ? catalog.filter(item => item.category === category) : catalog;
+    const expected = metadata(path);
+    const page = document.querySelector(`app-root main ${selectors[path] ?? 'app-shop'}`);
     assert(page && page.textContent.trim().length > 100, `Missing rendered Angular content: ${path}`);
     assert(!document.querySelector('noscript[data-zeleon-seo-content]'), 'A fallback is not prerendering');
     assert.equal(document.querySelectorAll('title').length, 1);
@@ -37,16 +38,14 @@ export function checkRenderedHtml(html, path, catalog, verification) {
     assert(!document.querySelector('.profile-link, .manager-launcher, button[aria-label="Log out"]'), 'Authenticated UI was captured');
     assert(document.querySelector('a[aria-label="Sign in"]'), 'Anonymous header was not rendered');
     assert(!document.querySelector('app-root [role="alert"]'), `Rendered error state: ${path}`);
-    if (product) {
-      assert.equal(page.querySelector('h1')?.textContent.trim(), product.name);
-      assert.equal(page.querySelector('.product-page')?.getAttribute('aria-busy'), 'false');
-      if (product.image) assert.equal(page.querySelector('.product-image img')?.getAttribute('src'), product.image);
-      assert(page.querySelector('.prodPrice')?.textContent.trim(), 'Missing visible price');
-      assert(page.querySelector('.add-cart'), 'Missing product controls');
-    } else if (path === '/' || path === '/shop/') {
+    if (path === '/' || path.startsWith('/shop/')) {
       const links = page.querySelectorAll(path === '/' ? '#featured-products a.card:not([data-loop-clone])' : '.product-name-link');
-      assert.equal(links.length, path === '/' ? catalog.length : Math.min(catalog.length, 12), 'Incomplete catalog rendering');
-      for (const link of links) assert(catalog.some(item => link.getAttribute('href') === `/product/${item.id}`), 'Unknown product link');
+      assert.equal(links.length, path === '/' ? listing.length : Math.min(listing.length, 12), 'Incomplete category/catalog rendering');
+      if (category) {
+        assert.equal(page.querySelector('h1')?.textContent.trim(), { classic: 'Classic', 'boost-blends': 'Boost Blends', 'zero-sugar': 'Zero Sugar' }[category]);
+        assert(page.querySelector('.category-description')?.textContent.trim(), 'Missing category content');
+      }
+      for (const link of links) assert(listing.some(item => link.getAttribute('href') === `/product/${item.id}`), 'Unknown product link');
     } else {
       assert(page.querySelector('h1')?.textContent.trim(), `Missing page heading: ${path}`);
       if (path === '/contact/') assert(page.querySelector('form'), 'Contact form was not rendered');
@@ -65,6 +64,12 @@ export async function validatePrerender(directory = join(root, 'dist/zeleon/brow
   for (const { loc } of entries) {
     const path = new URL(loc).pathname;
     results.push(checkRenderedHtml(await readFile(join(directory, path.slice(1), 'index.html'), 'utf8'), path, catalog, verification));
+  }
+  for (const product of catalog) {
+    const dom = new JSDOM(await readFile(join(directory, 'product', String(product.id), 'index.html'), 'utf8'));
+    assert.equal(dom.window.document.querySelector('meta[name="robots"]').content, 'noindex, follow');
+    assert.equal(dom.window.document.querySelector('app-root')?.innerHTML, '', 'Product must not contain a prerendered snapshot');
+    dom.window.close();
   }
   const aliases = productAliases(catalog);
   for (const alias of aliases) {
@@ -110,13 +115,6 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
           // Replay exactly the anonymous build snapshot, so body, metadata and
           // sitemap cannot disagree if a product changes mid-build. Never call auth.
           let products = rows;
-          for (const key of ['id', 'slug']) {
-            const filter = url.searchParams.get(key);
-            if (filter) {
-              assert(filter.startsWith('eq.'), 'Unsupported prerender product filter');
-              products = products.filter(item => String(item[key]) === filter.slice(3));
-            }
-          }
           products = [...products].sort((a, b) => a.created_at.localeCompare(b.created_at) || String(a.id).localeCompare(String(b.id), 'en', { numeric: true }));
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(products), headers: { 'Access-Control-Allow-Origin': server.origin } });
         }
@@ -130,11 +128,10 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
       page.on('pageerror', error => errors.push(error.message));
       try {
         await page.goto(server.origin + path, { waitUntil: 'domcontentloaded' });
-        const selector = selectors[path] ?? 'app-product-details';
+        const selector = selectors[path] ?? 'app-shop';
         await page.locator(`app-root main ${selector}`).waitFor();
         await page.waitForFunction(() => document.querySelector('a[aria-label="Sign in"]') && document.querySelector('meta[name="robots"]')?.content === 'index, follow');
-        if (path === '/shop/') await page.locator('#shop-products[aria-busy="false"]').waitFor();
-        if (path.startsWith('/product/')) await page.locator('.product-page[aria-busy="false"] .product-info h1').waitFor();
+        if (path.startsWith('/shop/')) await page.locator('#shop-products[aria-busy="false"]').waitFor();
         if (path === '/') await page.waitForFunction(count => document.querySelectorAll('#featured-products a.card:not([data-loop-clone])').length === count && !document.querySelector('app-home [role="status"], app-home [role="alert"]'), rows.length);
         await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
         assert.deepEqual(violations, [], `Non-public request during prerender: ${path}`);

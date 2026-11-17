@@ -1,7 +1,8 @@
 # Public prerendering on GitHub Pages
 
 The production build now saves actual Angular-rendered HTML for `/`, `/shop/`,
-`/our-story/`, `/contact/` and every active product's canonical ID URL. It uses
+`/our-story/`, `/contact/`, `/shop/classic/`, `/shop/boost-blends/`, and
+`/shop/zero-sugar/`. These are the only seven indexable pages. It uses
 build-time Chromium rendering, not Angular server rendering or hydration. No
 server runs in production. Visitors receive the rendered HTML first; the normal
 Angular bootstrap replaces it and attaches the existing behavior.
@@ -30,7 +31,9 @@ the live deployment, use `npm run test:seo:browser` (optional
    are saved in `tmp/prerender-products.json` and `tmp/seo-catalog.json`.
 2. `ng build` produces the unchanged browser application.
 3. `scripts/sitemap.mjs prepare` writes public heads, private noindex shells,
-   the empty SPA `404.html`, and product slug redirects.
+   the empty SPA `404.html`, empty product ID shells (`noindex, follow`), and
+   product slug redirects. It first removes the old product output directory,
+   preventing obsolete product snapshots from surviving preparation.
 4. `scripts/prerender.mjs` opens only sitemap routes in a fresh anonymous browser
    context per page. Public product GETs replay the same build snapshot; auth,
    private API calls, writes, and external scripts fail the build. Remote media
@@ -44,7 +47,9 @@ the live deployment, use `npm run test:seo:browser` (optional
 
 The temporary snapshots and browser state are never deployed. Private routes are
 not rendered. OAuth callback handling, Supabase Auth, Staff MFA, guards, RLS,
-cart behavior, product records, and Angular templates are unchanged.
+cart behavior and product records are unchanged. Category routes reuse the Shop
+component, catalog and product cards. Its existing filters are now crawlable
+links, and each category has a heading and short introduction.
 
 ## Product aliases and 404s
 
@@ -52,7 +57,9 @@ Only existing catalog slugs receive `/product/<slug>/index.html`. These files
 return HTTP 200 from static hosting, contain `noindex, follow`, and point their
 canonical and zero-second meta refresh to `/product/<id>/`. A small
 `location.replace` preserves query strings and fragments when JavaScript is on.
-No Angular bundle runs on the redirect page. Only ID URLs appear in the sitemap.
+No Angular bundle runs on the redirect page. Neither ID nor slug product URLs
+appear in the sitemap. Product ID entry files contain an empty Angular root
+with `noindex, follow`; product bodies load through the existing client route.
 Unsafe, duplicate, or ID-like conflicting slugs fail the build rather than
 overwriting another route. Numeric and UUID product IDs remain supported.
 
@@ -66,12 +73,14 @@ Angular navigation still uses the existing ID/slug lookup and ID canonical.
 - Catalog edits become static HTML at the next successful build/deployment:
   push to master, manual dispatch, or the existing six-hour schedule. There is
   no new database webhook. Until then, a newly created product can still have a
-  static 404 and changed/deleted product snapshots may be stale.
+  static 404 until deployment refreshes its entry shell. Product bodies always
+  load current public data in the browser.
 - This is a full browser DOM snapshot followed by client bootstrap, not Angular
   hydration. Live data is fetched again after bootstrap. Normal CSR loading
   states can briefly appear; no LCP/INP/CLS improvement is claimed without measurement.
 - Shop prerendering preserves the existing first-page pagination; all active
-  products still receive individual pages and sitemap entries.
+  products remain accessible through client-side routes but never enter the
+  sitemap or browser snapshot loop. Category listings use the existing filters.
 - The custom-domain/Pages settings and robots policy are unchanged.
 - Auth/guard unit tests and anonymous browser checks do not replace real-user
   Google OAuth or Staff MFA acceptance tests. No production account or MFA

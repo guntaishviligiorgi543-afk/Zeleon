@@ -3,9 +3,10 @@ import { CurrencyPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Products } from '../../services/products';
 import { Product } from '../../models/product';
+import { HomeHero } from './hero/hero';
 
 @Component({
-  imports: [CurrencyPipe, RouterLink],
+  imports: [CurrencyPipe, RouterLink, HomeHero],
   selector: 'app-home',
   styleUrl: './home.css',
   templateUrl: './home.html',

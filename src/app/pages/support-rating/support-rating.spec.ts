@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { Auth } from '../../services/auth';
+import { createAuthStub } from '../../testing/auth-stub';
 import { SUPABASE_CLIENT } from '../../services/supabase';
 import { SupportRatingPage } from './support-rating';
 
@@ -8,9 +9,11 @@ describe('Support rating stars', () => {
   const insert = vi.fn();
   beforeEach(() => insert.mockReset().mockResolvedValue({ error: null }));
   async function create(stars?: string) {
+    const auth = createAuthStub();
+    auth.user.set({ id: 'customer' });
     const client = { from: (table: string) => ({ insert, select: () => ({ eq: () => ({
       maybeSingle: async () => ({ data: table === 'support_conversations'
-        ? { id: 'conversation', subject: 'Help', status: 'resolved' } : null, error: null }),
+        ? { id: 'conversation', subject: 'Help', status: 'resolved', customer_user_id: 'customer' } : null, error: null }),
     }) }) }) };
     await TestBed.configureTestingModule({
       imports: [SupportRatingPage],
@@ -19,7 +22,7 @@ describe('Support rating stars', () => {
           paramMap: convertToParamMap({ id: 'conversation' }),
           queryParamMap: convertToParamMap(stars === undefined ? {} : { stars }),
         } } },
-        { provide: Auth, useValue: { ready: Promise.resolve(), isAuthenticated: () => true, getCurrentUser: async () => ({ id: 'customer' }) } },
+        { provide: Auth, useValue: auth },
         { provide: SUPABASE_CLIENT, useValue: client },
       ],
     }).compileComponents();

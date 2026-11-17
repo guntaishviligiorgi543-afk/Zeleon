@@ -1,6 +1,7 @@
 import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { combineLatest } from 'rxjs';
 import { Product } from '../../models/product';
 import { Products } from '../../services/products';
 import { ProductCard } from '../../components/product-card/product-card';
@@ -27,10 +28,11 @@ export class Shop {
 
   constructor() {
     const destroyRef = inject(DestroyRef);
-    inject(ActivatedRoute)
-      .queryParamMap.pipe(takeUntilDestroyed(destroyRef))
-      .subscribe((params) => {
-        const category = params.get('category');
+    const route = inject(ActivatedRoute);
+    combineLatest([route.data, route.queryParamMap])
+      .pipe(takeUntilDestroyed(destroyRef))
+      .subscribe(([data, params]) => {
+        const category = data['category'] ?? params.get('category');
         this.selectedCategory = ['classic', 'boost-blends', 'zero-sugar'].includes(category ?? '')
           ? (category as Category)
           : 'all';
@@ -64,7 +66,9 @@ export class Shop {
   navigateToProduct(id: string | number): void {
     void this.router.navigate(['/product', id]);
   }
-  selectedCategory: Category = 'all';
+  private readonly category = signal<Category>('all');
+  get selectedCategory(): Category { return this.category(); }
+  set selectedCategory(value: Category) { this.category.set(value); }
   selectedSort: Sort = 'default';
   readonly sortOpen = signal(false);
   readonly activeSort = signal(0);
@@ -139,6 +143,15 @@ export class Shop {
       classic: 'Classic',
       'boost-blends': 'Boost Blends',
       'zero-sugar': 'Zero Sugar',
+    }[this.selectedCategory];
+  }
+
+  get categoryDescription(): string {
+    return {
+      all: '',
+      classic: 'Explore the ZELEON Classic collection and find your next favorite flavor.',
+      'boost-blends': 'Discover the ZELEON Boost Blends collection and choose your next boost.',
+      'zero-sugar': 'Explore ZELEON Zero Sugar energy drinks and find the flavor that suits you.',
     }[this.selectedCategory];
   }
 

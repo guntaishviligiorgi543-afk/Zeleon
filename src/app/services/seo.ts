@@ -51,7 +51,7 @@ export class Seo {
       script.textContent = serializeJson(schema);
       this.document.head.appendChild(script);
     }
-    this.setMeta('robots', canonical ? 'index, follow' : 'noindex, nofollow');
+    this.setMeta('robots', canonical ? page.robots : path.startsWith('/product/') ? 'noindex, follow' : 'noindex, nofollow');
     const links = [...this.document.querySelectorAll<HTMLLinkElement>('link[rel="canonical"]')];
     const link = links.shift();
     links.forEach(duplicate => duplicate.remove());

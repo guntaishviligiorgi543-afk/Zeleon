@@ -1,4 +1,11 @@
-# ZELEON on-page SEO implementation
+# ZELEON on-page SEO implementation (historical audit)
+
+This document records the earlier product-indexing implementation and its original
+validation results. It is superseded by [category-level SEO](seo-sitemap.md) and
+[public prerendering](public-prerendering.md). The current policy indexes only the
+seven approved informational/category pages; every product is `noindex, follow`
+and excluded from the sitemap and rendered snapshots. Historical counts and
+prerender limitations below do not describe the current implementation.
 
 ## Audit and decisions
 

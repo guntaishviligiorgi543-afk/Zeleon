@@ -1,3 +1,4 @@
+import { AOS_ENGINE } from './aos-engine';
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
@@ -27,7 +28,7 @@ describe('App AOS routing', () => {
   it('initializes once, refreshes rendered routes, and unsubscribes on destruction', async () => {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([
+      providers: [{ provide: AOS_ENGINE, useValue: AOS }, provideRouter([
         { path: '', component: AnimatedPage },
         { path: 'other', component: OtherPage },
       ])],

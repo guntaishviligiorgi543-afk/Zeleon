@@ -4,6 +4,7 @@ import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { Auth } from '../../services/auth';
+import { createAuthenticatedAuthStub } from '../../testing/auth-stub';
 import { SUPABASE_CLIENT } from '../../services/supabase';
 import { legacyRatingPath } from './rating-link';
 import { SupportRatingPage } from './support-rating';
@@ -17,10 +18,10 @@ describe('Rating email navigation', () => {
     for (const legacy of [true, false]) {
       it(`renders the modal for ${legacy ? 'legacy' : 'new'} ${stars}-star links`, async () => {
         TestBed.configureTestingModule({ providers: [
-          provideRouter(routes.map(route => route.path === '' ? { ...route, component: HomeStub } : route)),
-          { provide: Auth, useValue: { ready: Promise.resolve(), isAuthenticated: () => true } },
+          provideRouter(routes.map(({ loadComponent, ...route }) => route.path === '' ? { ...route, component: HomeStub } : { ...route, loadComponent })),
+          { provide: Auth, useValue: createAuthenticatedAuthStub() },
           { provide: SUPABASE_CLIENT, useValue: { from: (table: string) => ({ select: () => ({ eq: () => ({
-            maybeSingle: async () => ({ data: table === 'support_conversations' ? { id, status: 'resolved' } : null, error: null }),
+            maybeSingle: async () => ({ data: table === 'support_conversations' ? { id, status: 'resolved', customer_user_id: 'user-1' } : null, error: null }),
           }) }) }) } },
         ] });
         const harness = await RouterTestingHarness.create();

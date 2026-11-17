@@ -16,9 +16,11 @@ const document = new JSDOM(xml, { contentType: 'application/xml' }).window.docum
 assert.equal(document.documentElement.namespaceURI, NAMESPACE);
 const locations = [...document.getElementsByTagNameNS(NAMESPACE, 'loc')].map(element => element.textContent);
 const socialImages = new Set();
-const staticProducts = new Map();
+
 console.log('Checking initial HTML for all public sitemap URLs...');
 assert.equal(new Set(locations).size, locations.length);
+assert.deepEqual([...locations].sort(), publicPages.map(path => ORIGIN + path).sort());
+assert(!locations.some(loc => new URL(loc).pathname.startsWith('/product/')));
 const robots = await fetch(base + '/robots.txt');
 assert.equal(robots.status, 200);
 assert.match(robots.headers.get('content-type'), /text\/plain/);
@@ -40,13 +42,7 @@ for (const loc of locations) {
   socialImages.add(head.querySelector('meta[property="og:image"]').content);
   assert(!head.querySelector('noscript[data-zeleon-seo-content]'), 'A noscript fallback is not prerendering');
   assert(head.querySelector('app-root main router-outlet + *')?.textContent.trim().length > 100, `Missing prerendered page: ${loc}`);
-  if (url.pathname.startsWith('/product/')) {
-    const schema = JSON.parse(head.querySelector('script[data-zeleon-seo]').textContent);
-    assert.equal(schema['@type'], 'Product');
-    assert.equal(typeof schema.offers.price, 'number');
-    assert.match(schema.offers.priceCurrency, /^[A-Z]{3}$/);
-    staticProducts.set(url.pathname, schema);
-  }
+
 }
 console.log('Checking public image URLs...');
 for (const url of socialImages) {
@@ -64,16 +60,17 @@ for (const path of ['/login/', '/signup/', '/cart/', '/checkout/', '/forgot-pass
 }
 const config = await readFile(new URL('../src/environments/environment.ts', import.meta.url), 'utf8');
 const setting = name => config.match(new RegExp(`${name}:\\s*'([^']+)'`))[1];
-const productsResponse = await fetch(setting('supabaseUrl') + '/rest/v1/products?select=id,slug,name,price,currency&is_active=eq.true&order=id.asc', { headers: { apikey: setting('supabasePublishableKey') } });
+const productsResponse = await fetch(setting('supabaseUrl') + '/rest/v1/products?select=id,slug,name,price,currency,category:categories(slug)&is_active=eq.true&order=id.asc', { headers: { apikey: setting('supabasePublishableKey') } });
 assert(productsResponse.ok);
 const products = await productsResponse.json();
-assert.equal(locations.length, products.length + publicPages.length);
+assert.equal(locations.length, publicPages.length);
 for (const product of products) {
-  assert(locations.includes(`${ORIGIN}/product/${product.id}/`));
-  const schema = staticProducts.get(`/product/${product.id}/`);
-  assert.equal(schema.name, product.name);
-  assert.equal(schema.offers.price, Number(product.price));
-  assert.equal(schema.offers.priceCurrency, product.currency);
+  assert(!locations.includes(`${ORIGIN}/product/${product.id}/`));
+  const response = await fetch(base + `/product/${product.id}/`);
+  assert.equal(response.status, 200);
+  const head = new JSDOM(await response.text()).window.document;
+  assert.equal(head.querySelector('meta[name="robots"]').content, 'noindex, follow');
+  assert.equal(head.querySelector('app-root')?.innerHTML, '', 'Products must not be prerendered');
   if (product.slug && product.slug !== String(product.id)) {
     const response = await fetch(base + '/product/' + encodeURIComponent(product.slug) + '/', { redirect: 'manual' });
     assert.equal(response.status, 200, `Slug returned HTTP ${response.status}: ${product.slug}`);
@@ -109,6 +106,10 @@ try {
   }
   for (const path of ['/login', '/signup', '/cart', '/checkout', '/forgot-password', '/reset-password', '/auth/callback?error=access_denied']) {
     await page.goto(base + path, { waitUntil: 'domcontentloaded' });
+    if (path === '/cart' || path === '/checkout') {
+      await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/login' &&
+        url.searchParams.get('returnUrl')?.replace(/\/+$/, '') === path);
+    }
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, nofollow');
     assert.equal(await page.locator('link[rel="canonical"]').count(), 0);
   }
@@ -119,7 +120,8 @@ try {
   for (const value of products.length ? [String(products[0].id), products[0].slug, ...products.slice(1, 2).map(product => String(product.id))].filter(Boolean) : []) {
     await page.goto(base + '/product/' + value + '/', { waitUntil: 'domcontentloaded' });
     await booted();
-    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, follow');
+    await page.locator('.product-page[aria-busy="false"] .product-info h1').waitFor();
     const expected = products.find(product => String(product.id) === value || product.slug === value);
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `${ORIGIN}/product/${expected.id}/`);
     const productSchema = JSON.parse(await page.locator('script[data-zeleon-seo]').textContent());
@@ -134,20 +136,23 @@ try {
   }
   await page.goto(base + '/product/zeleon-no-such-public-product/', { waitUntil: 'domcontentloaded' });
   await page.getByText('Product not found', { exact: false }).waitFor();
-  assert.equal(await page.locator('meta[name="robots"]').getAttribute('content'), 'noindex, nofollow');
+  assert.equal(await page.locator('meta[name="robots"]').getAttribute('content'), 'noindex, follow');
   assert.equal(await page.locator('script[data-zeleon-seo]').count(), 0);
   await page.goto(base + '/shop/', { waitUntil: 'domcontentloaded' });
   await booted();
   if (products.length) {
     await page.locator('.product-name-link').first().click();
     await page.waitForURL(url => url.pathname.startsWith('/product/'));
-    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, follow');
     await page.locator('#product-quantity').fill('2');
     await page.locator('.add-cart').click();
-    await page.waitForFunction(() => document.querySelector('.add-cart')?.textContent.includes('Added to Cart'));
-    // In-memory cart interaction only; no checkout, orders or database writes.
-    await page.locator('.add-cart').click();
-    await page.waitForFunction(() => document.querySelector('.add-cart')?.textContent.trim() === 'Add to Cart');
+    const loginDialog = page.getByRole('dialog', { name: 'Login Required' });
+    await loginDialog.waitFor();
+    assert.equal((await page.locator('.add-cart').textContent()).trim(), 'Add to Cart');
+    assert.equal(await page.locator('.cart-item').count(), 0);
+    await loginDialog.getByRole('button', { name: 'Log In', exact: true }).click();
+    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/login' && url.searchParams.get('returnUrl') === '/cart');
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, nofollow');
     const id = String(products[0].id);
     const slug = products[0].slug;
     if (slug && slug !== id) {
@@ -155,10 +160,32 @@ try {
       await booted();
       // Exercise the existing Angular route directly without a document request.
       await page.evaluate(slug => { history.pushState({}, '', '/product/' + slug); dispatchEvent(new PopStateEvent('popstate')); }, slug);
-      await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
+      await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, follow');
+      await page.locator('.product-page[aria-busy="false"] .product-info h1').waitFor();
       assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `${ORIGIN}/product/${id}/`);
     }
   }
+  await page.goto(base + '/shop/', { waitUntil: 'domcontentloaded' });
+  await booted();
+  for (const category of ['classic', 'boost-blends', 'zero-sugar']) {
+    await page.locator(`.filters a[href="/shop/${category}"]`).click();
+    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop/' + category);
+    await page.locator('#shop-products[aria-busy="false"]').waitFor();
+    await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
+    assert.equal(await page.title(), metadata('/shop/' + category).title);
+    assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), `${ORIGIN}/shop/${category}/`);
+    const expected = products.filter(product => product.category?.slug === category);
+    assert.equal(await page.locator('.product-name-link').count(), Math.min(expected.length, 12));
+    for (const link of await page.locator('.product-name-link').all()) {
+      const href = await link.getAttribute('href');
+      assert(expected.some(product => `/product/${product.id}` === href));
+    }
+    assert((await page.locator('.category-description').innerText()).length > 20);
+  }
+  await page.locator('.filters a[href="/shop"]').click();
+  await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop');
+  await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), ORIGIN + '/shop/');
   for (const path of ['/profile/info', '/manager/users', '/admin/users', '/support/', '/staff-auth/']) {
     await page.goto(base + path, { waitUntil: 'domcontentloaded' });
     await page.waitForURL(url => url.pathname.replace(/\/$/, '') === '/login');
@@ -168,7 +195,7 @@ try {
   console.log('Checking every public page with JavaScript disabled...');
   const noScript = await browser.newContext({ javaScriptEnabled: false });
   const staticPage = await noScript.newPage();
-  for (const path of [...publicPages, ...products.map(product => `/product/${product.id}/`)]) {
+  for (const path of publicPages) {
     await staticPage.goto(base + path, { waitUntil: 'domcontentloaded' });
     assert((await staticPage.locator('app-root main').innerText()).trim().length > 100);
     assert.equal(await staticPage.locator('app-root main [role="alert"]').count(), 0);
@@ -176,5 +203,5 @@ try {
   }
   await noScript.close();
   assert.deepEqual(pageErrors, [], 'Browser encountered runtime errors');
-  console.log(JSON.stringify({ sitemapHttp: 200, robotsHttp: 200, urls: locations.length, products: products.length, allPublicPagesHttp200: true, googleVerificationPreserved: true, initialHtmlMetadata: true, renderedAngularBody: true, noJavaScriptContent: true, jsonLd: true, slugHttp200: true, slugRedirect: true, missingHttp404: true, privateInitialNoindex: true, privateNoindex: true, anonymousGuards: true, navigationUpdates: true, idAndSlugCanonical: true, missingProductNoindex: true, productLinks: true, cartInteraction: true }, null, 2));
+  console.log(JSON.stringify({ sitemapHttp: 200, robotsHttp: 200, urls: locations.length, products: products.length, allIndexablePagesHttp200: true, googleVerificationPreserved: true, initialHtmlMetadata: true, renderedAngularBody: true, categoryNoJavaScriptContent: true, productsNoindex: true, jsonLd: true, slugHttp200: true, slugRedirect: true, missingHttp404: true, privateInitialNoindex: true, privateNoindex: true, anonymousGuards: true, navigationUpdates: true, idAndSlugCanonical: true, missingProductNoindex: true, productLinks: true, anonymousCartLoginRequired: true }, null, 2));
 } finally { await browser.close(); }

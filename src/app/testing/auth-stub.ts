@@ -12,6 +12,7 @@ export function createAuthStub() {
       return { hasSession: true };
     }),
     signIn: vi.fn().mockImplementation(async () => { user.set({ id: 'user-1' }); }),
+    getCurrentUser: vi.fn().mockImplementation(async () => user()),
     signInWithGoogle: vi.fn().mockResolvedValue(undefined),
     consumeGoogleDestination: vi.fn().mockReturnValue('/profile'),
     signOut: vi.fn().mockImplementation(async () => { user.set(null); }),

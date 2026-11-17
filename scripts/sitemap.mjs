@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile, writeFile, mkdir, access } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, access, rm } from 'node:fs/promises';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolve, dirname, join } from 'node:path';
 import { metadata, serializeJson } from '../src/app/seo-metadata.mjs';
@@ -12,23 +12,9 @@ const idPattern = /^(?:\d+|[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12})$/i;
 
 export const escapeXml = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' })[character]);
 
-export function entriesFor(products) {
-  const entries = new Map(publicPages.map(path => [ORIGIN + path, { loc: ORIGIN + path }]));
-  for (const product of products) {
-    if (product.is_active !== true) continue;
-    const id = String(product.id);
-    assert(idPattern.test(id), 'A public product has an unsupported route identifier');
-    const loc = `${ORIGIN}/product/${encodeURIComponent(id)}/`;
-    const entry = { loc };
-    if (typeof product.updated_at === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(product.updated_at)) {
-      const stamp = Date.parse(product.updated_at);
-      if (Number.isFinite(stamp) && stamp <= Date.now()) entry.lastmod = new Date(stamp).toISOString();
-    }
-    const previous = entries.get(loc);
-    if (!previous || (entry.lastmod ?? '') > (previous.lastmod ?? '')) entries.set(loc, entry);
-  }
-  assert(entries.size <= 50_000, 'Split the sitemap before exceeding 50,000 URLs');
-  return [...entries.values()];
+// The sitemap is an explicit allowlist; catalog changes never add indexable URLs.
+export function entriesFor() {
+  return publicPages.map(path => ({ loc: ORIGIN + path }));
 }
 
 export function renderSitemap(entries) {
@@ -69,7 +55,7 @@ async function checkRoutes() {
   const source = await readFile(join(root, 'src/app/app.routes.ts'), 'utf8');
   const paths = new Set([...source.matchAll(/path:\s*'([^']*)'/g)].map(match => match[1]));
   for (const path of publicPages) assert(paths.has(path.replace(/^\/+|\/+$/g, '')), `Sitemap path has no Angular route: ${path}`);
-  assert(paths.has('product/:id'), 'Product route changed; update sitemap generation');
+  assert(paths.has('product/:id'), 'Client-side product navigation must remain available');
 }
 
 export async function generate() {
@@ -79,11 +65,11 @@ export async function generate() {
   const api = process.env.SUPABASE_URL || setting('supabaseUrl');
   const products = await fetchProducts(api, process.env.SUPABASE_PUBLISHABLE_KEY || setting('supabasePublishableKey'), fetch, 500,
     'id,is_active,updated_at,created_at,name,slug,price,currency,category:categories(name,slug),images:product_images(storage_path,is_primary,created_at)');
-  const entries = entriesFor(products);
+  const entries = entriesFor();
   const catalog = products.filter(row => row.is_active === true).map(row => {
     const images = [...(row.images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.created_at.localeCompare(b.created_at) || a.storage_path.localeCompare(b.storage_path));
     const path = images[0]?.storage_path;
-    return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), currency: row.currency, categoryName: row.category?.name ?? '',
+    return { id: row.id, name: row.name, slug: row.slug, price: Number(row.price), currency: row.currency, category: row.category?.slug ?? '', categoryName: row.category?.name ?? '',
       image: path ? `${api}/storage/v1/object/public/${setting('productImagesBucket')}/${path.split('/').map(encodeURIComponent).join('/')}` : '' };
   });
   assert(catalog.every(product => typeof product.name === 'string' && product.name.trim() && Number.isFinite(product.price)), 'Public product metadata is incomplete');
@@ -112,7 +98,7 @@ export async function readEntries(file) {
     const url = new URL(loc);
     assert.equal(url.origin, ORIGIN);
     assert(!url.search && !url.hash, 'Sitemap URLs cannot include credentials or query variants');
-    assert(publicPages.includes(url.pathname) || (url.pathname.startsWith('/product/') && url.pathname.endsWith('/') && idPattern.test(url.pathname.slice(9, -1))), `Non-public route in sitemap: ${url.pathname}`);
+    assert(publicPages.includes(url.pathname), `Non-public route in sitemap: ${url.pathname}`);
     if (lastmod) assert(Number.isFinite(Date.parse(lastmod)), 'Invalid lastmod');
   }
   for (const path of publicPages) assert(entries.some(entry => entry.loc === ORIGIN + path));
@@ -124,8 +110,8 @@ export function withHead(html, { loc, index = true }, product = null) {
   html = html.replace(/<title>[^<]*<\/title>/gi, '').replace(/<meta\b(?=[^>]*(?:name=["'](?:description|twitter:[^"']+)["']|property=["']og:[^"']+["']))[^>]*>\s*/gi, '').replace(/<script\b[^>]*data-zeleon-seo[^>]*>[\s\S]*?<\/script>\s*/gi, '');
   const page = metadata(loc ? new URL(loc).pathname : '/private/', product);
   const tag = (name, value, attribute = 'name') => `<meta ${attribute}="${name}" content="${escapeXml(value)}">\n`;
-  let tags = `<title>${escapeXml(page.title)}</title>\n` + tag('robots', index ? 'index, follow' : 'noindex, nofollow');
-  if (loc && index) {
+  let tags = `<title>${escapeXml(page.title)}</title>\n` + tag('robots', index ? page.robots : 'noindex, nofollow');
+  if (loc && index && page.canonical) {
     tags += `<link rel="canonical" href="${escapeXml(loc)}">\n` + tag('description', page.description);
     for (const [name, value] of Object.entries({ 'og:title': page.title, 'og:description': page.description, 'og:type': 'website', 'og:url': loc, 'og:image': page.image, 'og:site_name': 'ZELEON', 'og:image:alt': product?.name ?? 'ZELEON logo' })) tags += tag(name, value, 'property');
     for (const [name, value] of Object.entries({ 'twitter:card': 'summary_large_image', 'twitter:title': page.title, 'twitter:description': page.description, 'twitter:image': page.image, 'twitter:image:alt': product?.name ?? 'ZELEON logo' })) tags += tag(name, value);
@@ -152,7 +138,6 @@ export function productAliases(catalog) {
 export function redirectPage(shell, { canonical, product }) {
   const path = new URL(canonical).pathname;
   let html = withHead(shell, { loc: canonical }, product)
-    .replace('content="index, follow"', 'content="noindex, follow"')
     .replace(/<script\b[^>]*\bsrc=[^>]*>[\s\S]*?<\/script>/gi, '');
   // Pages cannot configure a per-product HTTP 301. A zero-delay refresh also works
   // without JavaScript; replace() preserves campaign queries/fragments in browsers.
@@ -164,14 +149,26 @@ export async function prepare(directory = join(root, 'dist/zeleon/browser')) {
   const entries = await readEntries(join(directory, 'sitemap.xml'));
   const shell = await readFile(join(directory, 'index.html'), 'utf8');
   const catalog = JSON.parse(await readFile(join(root, 'tmp/seo-catalog.json'), 'utf8'));
+  // Remove obsolete product snapshots, including products deleted since the last build.
+  const productDirectory = resolve(directory, 'product');
+  assert.equal(dirname(productDirectory), resolve(directory));
+  await rm(productDirectory, { recursive: true, force: true });
   for (const entry of entries) {
-    const target = join(directory, new URL(entry.loc).pathname.slice(1), 'index.html');
-    await mkdir(dirname(target), { recursive: true });
     const path = new URL(entry.loc).pathname;
-    const product = path.startsWith('/product/') ? catalog.find(product => String(product.id) === path.slice(9, -1)) : null;
-    assert(!path.startsWith('/product/') || product, 'Sitemap product has no public metadata');
-    assert.equal(metadata(path, product).canonical, entry.loc, 'Static metadata and sitemap disagree');
-    await writeFile(target, withHead(shell, entry, product), 'utf8');
+    assert.equal(metadata(path).canonical, entry.loc, 'Static metadata and sitemap disagree');
+    const target = join(directory, path.slice(1), 'index.html');
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, withHead(shell, entry), 'utf8');
+  }
+  // Empty, non-indexable entry shells preserve direct product links on GitHub Pages.
+  // Only the seven sitemap pages receive rendered Angular snapshots.
+  for (const product of catalog) {
+    const id = String(product.id);
+    assert(idPattern.test(id), 'Unsupported product route identifier');
+    const loc = `${ORIGIN}/product/${encodeURIComponent(id)}/`;
+    const target = join(productDirectory, id, 'index.html');
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, withHead(shell, { loc }, product), 'utf8');
   }
   for (const alias of productAliases(catalog)) {
     const target = join(directory, alias.path.slice(1), 'index.html');

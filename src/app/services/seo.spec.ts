@@ -17,7 +17,7 @@ describe('Route indexing metadata', () => {
   });
   async function setup() {
     TestBed.configureTestingModule({ providers: [provideRouter([
-      ...['', 'shop', 'our-story', 'contact', 'login', 'signup', 'profile/info', 'cart', 'checkout', 'manager/users', 'admin/users', 'support', 'staff-auth', 'forgot-password', 'reset-password', 'auth/callback', 'rate-support/:id', 'product/:id'].map(path => ({ path, component: Page })),
+      ...['', 'shop', 'shop/classic', 'shop/boost-blends', 'shop/zero-sugar', 'our-story', 'contact', 'login', 'signup', 'profile/info', 'cart', 'checkout', 'manager/users', 'admin/users', 'support', 'staff-auth', 'forgot-password', 'reset-password', 'auth/callback', 'rate-support/:id', 'product/:id'].map(path => ({ path, component: Page })),
     ])] });
     const seo = TestBed.inject(Seo);
     seo.start();
@@ -31,7 +31,7 @@ describe('Route indexing metadata', () => {
       expect(meta.getTag('name="robots"')?.content).toBe('noindex, nofollow');
       expect(document.querySelector('link[rel="canonical"]')).toBeNull();
     }
-    for (const path of ['/', '/shop', '/our-story', '/contact']) {
+    for (const path of ['/', '/shop', '/our-story', '/contact', '/shop/classic', '/shop/boost-blends', '/shop/zero-sugar']) {
       await harness.navigateByUrl(path);
       expect(meta.getTag('name="robots"')?.content).toBe('index, follow');
       expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe('https://zeleon.store' + (path === '/' ? path : path + '/'));
@@ -41,9 +41,9 @@ describe('Route indexing metadata', () => {
   it('canonicalizes ID and slug product routes only after the public product has loaded', async () => {
     const { seo, harness, meta } = await setup();
     await harness.navigateByUrl('/product/lemon');
-    expect(meta.getTag('name="robots"')?.content).toContain('noindex');
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex, follow');
     seo.productLoaded(product);
-    expect(meta.getTag('name="robots"')?.content).toBe('index, follow');
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex, follow');
     expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe('https://zeleon.store/product/12/');
     expect(document.title).toBe('Test Energy | ZELEON');
     const schema = JSON.parse(document.querySelector('script[data-zeleon-seo]')!.textContent!);
@@ -52,11 +52,11 @@ describe('Route indexing metadata', () => {
     expect(schema).not.toHaveProperty('aggregateRating');
     expect(schema.offers).not.toHaveProperty('availability');
     await harness.navigateByUrl('/product/lemon?campaign=spring');
-    expect(meta.getTag('name="robots"')?.content).toBe('index, follow');
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex, follow');
     expect(document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe('https://zeleon.store/product/12/');
     await harness.navigateByUrl('/product/missing');
     seo.productLoaded(null);
-    expect(meta.getTag('name="robots"')?.content).toContain('noindex');
+    expect(meta.getTag('name="robots"')?.content).toBe('noindex, follow');
     expect(document.querySelector('link[rel="canonical"]')).toBeNull();
     expect(document.querySelector('script[data-zeleon-seo]')).toBeNull();
     expect(document.title).toBe('Product unavailable | ZELEON');
@@ -65,6 +65,9 @@ describe('Route indexing metadata', () => {
     expect(document.title).toBe('Next Energy | ZELEON');
     expect(document.querySelectorAll('script[data-zeleon-seo]')).toHaveLength(1);
     expect(JSON.parse(document.querySelector('script[data-zeleon-seo]')!.textContent!).offers.priceCurrency).toBe('EUR');
+    await harness.navigateByUrl('/shop/classic');
+    expect(meta.getTag('name="robots"')?.content).toBe('index, follow');
+    expect(document.querySelector('script[data-zeleon-seo]')).toBeNull();
     await harness.navigateByUrl('/contact');
     expect(document.title).toBe('Contact Us | ZELEON');
     expect(document.querySelector('script[data-zeleon-seo]')).toBeNull();

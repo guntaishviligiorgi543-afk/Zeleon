@@ -51,11 +51,21 @@ describe('ManagerNavigation', () => {
     expect(test.client.from).not.toHaveBeenCalled();
   });
 
-  for (const [role, status] of [[null, 'active'], ['admin', 'active'], ['support', 'active'], ['manager', 'suspended'], ['manager', 'on_leave']]) {
+  for (const [role, status] of [[null, 'active'], ['admin', 'suspended'], ['support', 'on_leave'], ['manager', 'suspended'], ['manager', 'on_leave']]) {
     it(`hides the shortcut for ${role ?? 'customer'} / ${status}`, async () => {
       const test = setup(role, status!);
       await test.fixture.whenStable();
       expect(test.button()).toBeNull();
+    });
+  }
+
+  for (const role of ['admin', 'support']) {
+    it(`shows the verified active ${role} shortcut without granting workspace access`, async () => {
+      const test = setup(role);
+      await test.fixture.whenStable();
+      expect(test.button()?.getAttribute('href')).toBe('/' + role);
+      expect(test.button()?.getAttribute('aria-label')).toBe(role === 'admin' ? 'Admin Dashboard' : 'Support Dashboard');
+      expect(test.staff.isVerified()).toBe(false);
     });
   }
 

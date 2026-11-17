@@ -7,47 +7,50 @@
       }
     </p>
 
-    <p class="filterdCategoryTagName">
+    <h1 class="filterdCategoryTagName">
       {{ selectedCategoryName }}
-    </p>
+    </h1>
+    @if (categoryDescription) {
+      <p class="category-description">{{ categoryDescription }}</p>
+    }
   </div>
 
   <div class="filters">
-    <button
-      type="button"
+    <a
+      routerLink="/shop"
       class="allProducts"
       [class.active]="selectedCategory === 'all'"
-      (click)="selectCategory('all')"
+      [attr.aria-current]="selectedCategory === 'all' ? 'page' : null"
     >
       All Products
-    </button>
+    </a>
 
-    <button
-      type="button"
+    <a
+      routerLink="/shop/classic"
       class="classic"
       [class.active]="selectedCategory === 'classic'"
-      (click)="selectCategory('classic')"
+      [attr.aria-current]="selectedCategory === 'classic' ? 'page' : null"
     >
       Classic
-    </button>
+    </a>
 
-    <button
-      type="button"
+    <a
+      routerLink="/shop/boost-blends"
       class="boostBlends"
       [class.active]="selectedCategory === 'boost-blends'"
-      (click)="selectCategory('boost-blends')"
+      [attr.aria-current]="selectedCategory === 'boost-blends' ? 'page' : null"
     >
       Boost Blends
-    </button>
+    </a>
 
-    <button
-      type="button"
+    <a
+      routerLink="/shop/zero-sugar"
       class="zeroSugar"
       [class.active]="selectedCategory === 'zero-sugar'"
-      (click)="selectCategory('zero-sugar')"
+      [attr.aria-current]="selectedCategory === 'zero-sugar' ? 'page' : null"
     >
       Zero Sugar
-    </button>
+    </a>
   </div>
 
   <div class="filterdsQuantity-sort">

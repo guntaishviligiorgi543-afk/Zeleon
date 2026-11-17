@@ -27,7 +27,7 @@ section {
   gap: 20px;
 }
 
-.filters button {
+.filters a {
   border: 1px solid #fff;
   font-size: 20px;
   background: transparent;
@@ -40,12 +40,12 @@ section {
   transition: all 0.3s ease;
 }
 
-.filters button.active {
+.filters a.active {
   background: #fff;
   color: #000;
 }
 
-.filters button:hover {
+.filters a:hover {
   background: #fff;
   color: #000;
 }
@@ -161,13 +161,13 @@ section {
   .filters { flex-wrap: wrap; gap: 12px; }
   .filterdsQuantity-sort { flex-wrap: wrap; align-items: center; gap: 12px; }
   .productCard { min-width: 0; box-sizing: border-box; overflow-wrap: anywhere; }
-  .filters button, .sort-toggle, .sort-options button { min-height: 44px; }
+  .filters a, .sort-toggle, .sort-options button { min-height: 44px; }
 }
 
 @media (max-width: 600px) {
   .shop-section { padding: 132px 16px 40px; }
   .filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .filters button { padding-inline: 12px; font-size: 1rem; }
+  .filters a { padding-inline: 12px; font-size: 1rem; }
   .filterdsQuantity-sort { margin-top: 20px; }
   .sort { width: 100%; min-width: 0; }
   .sort > p { flex-shrink: 0; }
@@ -176,9 +176,9 @@ section {
   .productsContainer { grid-template-columns: minmax(0, 1fr); margin-top: 24px; }
 }
 
-.filters button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.filters a:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
 @media (prefers-reduced-motion: reduce) {
-  .pagination button, .filters button { transition: none; }
+  .pagination button, .filters a { transition: none; }
 }
 
 .productCard {
@@ -212,3 +212,7 @@ section {
 .productCard {
   cursor: pointer;
 }
+
+.filters a { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; box-sizing: border-box; }
+.filterdCategoryTagName { margin-block: 1em; font-size: inherit; font-weight: inherit; }
+.category-description { max-width: 640px; margin: 0 0 24px; color: #bcbcbc; line-height: 1.6; text-transform: none; }

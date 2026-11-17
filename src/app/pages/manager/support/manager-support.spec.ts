@@ -53,11 +53,14 @@ describe('ManagerSupport reply composer', () => {
     expect(fixture.nativeElement.querySelector('button[type="submit"]').disabled).toBe(false);
   });
 
-  it('still closes the thread when pressing the backdrop', async () => {
+  it('keeps the full-screen thread open on backdrop press and closes with Back', async () => {
     const fixture = await openThread();
     fixture.nativeElement.querySelector('.thread-backdrop').dispatchEvent(
       new MouseEvent('mousedown', { bubbles: true, cancelable: true }),
     );
+    fixture.detectChanges();
+    expect(fixture.componentInstance.selected()?.id).toBe(conversation.id);
+    fixture.nativeElement.querySelector('[aria-label="Back to conversations"]').click();
     fixture.detectChanges();
     expect(fixture.componentInstance.selected()).toBeNull();
   });

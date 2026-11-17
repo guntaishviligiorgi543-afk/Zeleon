@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Shop } from './shop';
 import { provideRouter } from '@angular/router';
 import { Products } from '../../services/products';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { routes } from '../../app.routes';
 import { vi } from 'vitest';
 
 describe('Shop', () => {
@@ -37,7 +39,7 @@ describe('Shop', () => {
     (fixture.nativeElement.querySelector('[aria-label="Page 2"]') as HTMLButtonElement).click();
     fixture.detectChanges();
     expect(component.paginatedProducts.map(product => product.id)).toEqual(Array.from({ length: 12 }, (_, i) => i + 13));
-    expect(fixture.nativeElement.querySelector('[aria-current="page"]').textContent.trim()).toBe('2');
+    expect(fixture.nativeElement.querySelector('.pagination [aria-current="page"]').textContent.trim()).toBe('2');
     expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.productsContainer'));
     expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
     component.goToPage(3);
@@ -98,7 +100,9 @@ describe('Shop', () => {
     ]);
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('.filteredQuantity').textContent.trim()).toBe('2 Products');
-    (fixture.nativeElement.querySelector('.filters .classic') as HTMLButtonElement).click();
+    expect(fixture.nativeElement.querySelector('.filters .classic').getAttribute('href')).toBe('/shop/classic');
+    component.selectCategory('classic');
+    fixture.detectChanges();
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('.filteredQuantity').textContent.trim()).toBe('1 Products');
     expect(component.selectedCategoryName).toBe('Classic');
@@ -161,5 +165,38 @@ describe('Shop', () => {
     await component.loadProducts();
     expect(component.error()).toContain('Unable to load products');
     expect(component.loading()).toBe(false);
+  });
+});
+
+describe('Shop category routes', () => {
+  it('uses the existing catalog, filters each route, and preserves legacy query links', async () => {
+    const products = ['classic', 'boost-blends', 'zero-sugar'].map((category, index) => ({
+      id: index + 1, name: category, slug: category, price: 3, currency: 'USD',
+      category, categoryName: category, image: '',
+    }));
+    TestBed.configureTestingModule({ providers: [
+      provideRouter(routes.filter(route => route.path?.startsWith('shop'))),
+      { provide: Products, useValue: { getActiveProducts: vi.fn().mockResolvedValue(products) } },
+    ] });
+    const harness = await RouterTestingHarness.create();
+    for (const category of ['classic', 'boost-blends', 'zero-sugar']) {
+      const shop = await harness.navigateByUrl(`/shop/${category}?category=classic`, Shop);
+      await shop.loadProducts();
+      harness.detectChanges();
+      expect(shop.selectedCategory).toBe(category);
+      expect(shop.displayedProducts.map(product => product.category)).toEqual([category]);
+      expect(harness.routeNativeElement?.querySelectorAll('.product-name-link')).toHaveLength(1);
+      expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(shop.selectedCategoryName);
+      expect(harness.routeNativeElement?.querySelector('.category-description')?.textContent?.trim()).toBeTruthy();
+      expect(harness.routeNativeElement?.querySelector(`.filters a[href="/shop/${category}"]`)?.getAttribute('aria-current')).toBe('page');
+    }
+    const legacy = await harness.navigateByUrl('/shop?category=zero-sugar', Shop);
+    await legacy.loadProducts();
+    expect(legacy.displayedProducts.map(product => product.category)).toEqual(['zero-sugar']);
+    const all = await harness.navigateByUrl('/shop', Shop);
+    await all.loadProducts();
+    harness.detectChanges();
+    expect(all.displayedProducts).toHaveLength(3);
+    expect(harness.routeNativeElement?.querySelectorAll('.filters a[href^="/shop/"]')).toHaveLength(3);
   });
 });

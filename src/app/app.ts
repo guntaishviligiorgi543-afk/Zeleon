@@ -15,7 +15,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
-import AOS from 'aos';
+import { AOS_ENGINE } from './aos-engine';
 import { filter } from 'rxjs';
 import { Header } from './components/header/header';
 import { Footer } from './components/footer/footer';
@@ -40,6 +40,7 @@ export class App implements AfterViewInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly zone = inject(NgZone);
   private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
+  private readonly aos = inject(AOS_ENGINE);
   private aosInitialized = false;
   private pendingRender?: AfterRenderRef;
   private layoutObserver?: ResizeObserver;
@@ -90,7 +91,7 @@ export class App implements AfterViewInit {
         this.pendingRender = undefined;
         this.zone.runOutsideAngular(() => {
           if (!this.aosInitialized) {
-            AOS.init({
+            this.aos.init({
               duration: 1500,
               easing: 'ease-in-out',
               once: false,
@@ -106,13 +107,13 @@ export class App implements AfterViewInit {
               if (this.layoutFrame !== null) return;
               this.layoutFrame = window.requestAnimationFrame(() => {
                 this.layoutFrame = null;
-                AOS.refresh();
+                this.aos.refresh();
               });
             });
             const content = this.element.nativeElement.querySelector('main');
             if (content) this.layoutObserver.observe(content);
           } else {
-            AOS.refreshHard();
+            this.aos.refreshHard();
           }
         });
       },

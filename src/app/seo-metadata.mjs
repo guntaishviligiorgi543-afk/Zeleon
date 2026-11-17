@@ -6,6 +6,9 @@ export const PAGES = {
   '/shop/': { title: 'Shop Energy Drinks | ZELEON', description: 'Explore the ZELEON energy drink collection. Discover classic flavors, boost blends, and zero sugar options. Find your next favorite energy drink.' },
   '/our-story/': { title: 'Our Story | ZELEON Energy Drinks', description: 'Discover the story behind ZELEON, our passion for bold flavors, and our mission to create a distinctive energy drink experience.' },
   '/contact/': { title: 'Contact Us | ZELEON', description: 'Get in touch with ZELEON. Contact our team for product questions, customer support, and general inquiries.' },
+  '/shop/classic/': { title: 'Classic Energy Drinks | ZELEON', description: 'Explore ZELEON Classic energy drinks. Browse the classic collection, compare flavors, and find your next favorite.' },
+  '/shop/boost-blends/': { title: 'Boost Blends Energy Drinks | ZELEON', description: 'Discover ZELEON Boost Blends. Explore the blend collection and choose an energy drink for your next boost.' },
+  '/shop/zero-sugar/': { title: 'Zero Sugar Energy Drinks | ZELEON', description: 'Browse ZELEON Zero Sugar energy drinks. Explore the zero sugar collection and find the flavor that suits you.' },
 };
 export const canonicalPath = path => path === '/' ? '/' : path.replace(/\/+$/, '') + '/';
 export function safeImage(value) {
@@ -24,7 +27,8 @@ export function metadata(path, product = null) {
   if (isProduct && product) {
     page = { title: `${product.name} | ZELEON`, description: `Explore ${product.name}${product.categoryName ? ` from the ZELEON ${product.categoryName} collection` : ' at ZELEON'}. View product details and price.` };
   }
-  if (!page) return { title: isProduct ? 'Product unavailable | ZELEON' : 'ZELEON', description: '', canonical: null, image: '', schemas: [] };
+  const robots = isProduct ? 'noindex, follow' : page ? 'index, follow' : 'noindex, nofollow';
+  if (!page) return { title: isProduct ? 'Product unavailable | ZELEON' : 'ZELEON', description: '', canonical: null, image: '', schemas: [], robots };
   const canonical = ORIGIN + (isProduct ? `/product/${encodeURIComponent(String(product.id))}/` : path);
   const schemas = [];
   if (path === '/') schemas.push(
@@ -40,5 +44,5 @@ export function metadata(path, product = null) {
     }
     schemas.push(schema);
   }
-  return { ...page, canonical, image: isProduct ? safeImage(product.image) : BRAND_IMAGE, schemas };
+  return { ...page, canonical, image: isProduct ? safeImage(product.image) : BRAND_IMAGE, schemas, robots };
 }

@@ -160,12 +160,18 @@ describe('ManagerDashboard', () => {
   });
 
   it('updates support assignment through the RLS-protected conversation table', async () => {
-    const eq = vi.fn().mockResolvedValue({ error: null });
+    const maybeSingle = vi.fn().mockResolvedValue({ data: { id: 'conversation' }, error: null });
+    const select = vi.fn(() => ({ maybeSingle }));
+    const eq = vi.fn(() => ({ select }));
     const update = vi.fn(() => ({ eq }));
     const service = setup({ from: vi.fn(() => ({ update })) });
     await service.updateConversation('conversation', { assigned_support_id: 'support-user' });
     expect(update).toHaveBeenCalledWith({ assigned_support_id: 'support-user' });
     expect(eq).toHaveBeenCalledWith('id', 'conversation');
+    expect(select).toHaveBeenCalledWith('id');
+    expect(maybeSingle).toHaveBeenCalledOnce();
+    maybeSingle.mockResolvedValueOnce({ data: null as any, error: null });
+    await expect(service.updateConversation('conversation', { assigned_support_id: 'support-user' })).rejects.toThrow('Update denied');
   });
 
   it('reads a selected support thread through its RLS-protected messages query', async () => {

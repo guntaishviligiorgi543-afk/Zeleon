@@ -1,59 +1,63 @@
-# SEO sitemap
+# Category-level SEO sitemap
 
-See [on-page SEO implementation](seo-optimization.md) for the subsequent static
-metadata, social sharing, structured data and private fallback improvements.
+The canonical origin is `https://zeleon.store`. The explicit allowlist in
+`src/app/seo-pages.json` contains exactly seven indexable pages:
 
-The canonical origin is `https://zeleon.store`. The public page list in
-`src/app/seo-pages.json` contains home, shop, our-story and contact. Active,
-anonymously accessible Supabase products add `/product/{id}/` entries. IDs match
-the existing Angular route and provide one canonical URL even when a product is
-also reachable by slug. Canonical URLs use trailing slashes so GitHub Pages can
-serve their generated directory entry pages with HTTP 200.
+- `/`
+- `/shop/`
+- `/our-story/`
+- `/contact/`
+- `/shop/classic/`
+- `/shop/boost-blends/`
+- `/shop/zero-sugar/`
 
-## Generation and deployment
+Every entry has an Angular route, unique title and description, a self-referencing
+canonical with a trailing slash, and `index, follow`. The three category routes
+reuse Shop and its filtering, sorting, pagination and product cards. Shop's
+category filters are internal links to those routes; old query filters still work.
 
-- `npm run sitemap` refreshes `public/sitemap.xml` using the existing public
-  Supabase configuration and anonymous RLS. Only id, is_active and updated_at
-  are requested. No service credentials or unpublished product data are used.
-- `npm run build -- --configuration production --base-href /` runs generation
-  before Angular, then validates XML/robots and creates public static entry
-  pages with canonical and robots metadata. Existing SPA fallback handling,
-  base href and Google verification are preserved.
-- The deployment workflow runs on master pushes, manual dispatch and the cron
-  `17 */6 * * *` (UTC). Each run queries current products. Admin additions,
-  edits, unpublishing and deletion appear after the next successful deployment;
-  this is not instantaneous. Dispatch the workflow for an earlier refresh.
-  GitHub schedules can be delayed. Scheduled execution itself must be observed
-  separately; build-time regeneration and simulated catalog changes are tested.
-- API failure stops the build rather than replacing the deployed sitemap with
-  an incomplete catalog. The committed XML is a snapshot; deployment regenerates
-  it. Reliable product modification timestamps supply lastmod; static page
-  timestamps are omitted.
+## Products and private routes
 
-`public/robots.txt` allows crawling and advertises the root sitemap. Private
-routes are excluded from the sitemap and receive noindex metadata through the
-new Angular Seo service, including during client navigation. This metadata is
-not access control. Authentication, staff MFA and RLS remain unchanged.
+All individual product routes use `noindex, follow` before and after product
+loading and during Angular navigation. ID/slug URLs remain accessible and retain
+the existing ID canonical and sharing metadata. They never enter the sitemap.
+Product static entry shells have an empty Angular root; product bodies are not
+prerendered. Existing slug redirects preserve queries and fragments.
+
+Cart, checkout, login, signup, profile, staff workspaces and authentication routes
+remain `noindex, nofollow`. Static private shells and the 404 fallback contain no
+public canonical or snapshot. The wildcard route displays the 404 page.
+
+`public/robots.txt` continues to allow crawling and advertise the sitemap. Do not
+add product disallow rules: crawlers must be able to see the noindex directive.
+These directives do not replace authentication or access controls.
+
+## Build and deployment
+
+`npm run build -- --configuration production --base-href /` generates the sitemap,
+compiles Angular, prepares entry files and prerenders only the seven approved
+pages using Chromium. The existing read-only anonymous catalog snapshot supplies
+real product listings; no product data is modified. API failures stop the build.
+Product output is cleared before preparation so obsolete snapshots are removed.
+
+GitHub Pages remains static hosting with no SSR server. The master push, manual
+workflow and six-hour schedule are unchanged. Category content and static product
+entry shells refresh on the next successful deployment; the sitemap allowlist
+is independent of product additions, edits or deletions.
 
 ## Verification
 
-`npm run test:seo` tests XML, filtering, catalog changes, pagination, failure
-handling, static metadata and workflow hooks. Angular metadata tests live in
-`src/app/services/seo.spec.ts`.
+```sh
+npx playwright install --with-deps chromium
+npm run test:seo
+npm run test:public-safety
+npm run build -- --configuration production --base-href /
+npm run test:prerender
+npm run test:seo:local
+```
 
-For headless HTTP and browser verification, run `node scripts/verify-seo.mjs`
-with Playwright installed externally and `PLAYWRIGHT_MODULE_PATH` pointing to
-its package. `SEO_TEST_BASE_URL` defaults to production. It verifies the XML and
-robots MIME types, every public URL's HTTP 200 status, canonical metadata,
-Google verification, private noindex rules and product ID/slug equivalence.
-No database mutations are made.
-
-The initial generated catalog contains 16 URLs: four public pages and 12 active
-products. Production build, seven generator tests and 28 focused Angular tests
-passed. The broader existing suite also contains unrelated failures; it is not
-claimed to pass.
-
-Submit `https://zeleon.store/sitemap.xml` in the verified Search Console
-property. Sitemap availability does not guarantee Google indexing. GitHub Pages
-continues to serve Angular client-rendered content; these entry pages provide
-HTTP 200 and static head metadata, not server-rendered product content.
+`test:seo:local` verifies the built artifact over HTTP and in a browser, including
+category filtering, metadata changes on navigation, private guards, ID/slug links,
+no-JavaScript public content, and the anonymous Add to Cart login requirement.
+`test:seo:browser` uses the live domain unless `SEO_TEST_BASE_URL` is provided.
+See [public prerendering](public-prerendering.md) for capture boundaries.

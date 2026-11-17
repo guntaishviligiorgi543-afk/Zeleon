@@ -2,31 +2,14 @@ import { Router, Routes } from '@angular/router';
 import { inject } from '@angular/core';
 import { legacyRatingPath } from './pages/support-rating/rating-link';
 
-import { Home } from './pages/home/home';
-import { Shop } from './pages/shop/shop';
-import { OurStory } from './pages/our-story/our-story';
-import { Contact } from './pages/contact/contact';
-import { ProductDetails } from './pages/product-details/product-details';
-import { Login } from './pages/login/login';
-import { ForgotPassword } from './pages/forgot-password/forgot-password';
-import { Signup } from './pages/signup/signup';
-import { Cart } from './pages/cart/cart';
-import { Checkout } from './pages/checkout/checkout';
-import { Profile } from './pages/profile/profile';
-import { YourInfo } from './pages/profile/your-info/your-info';
-import { Security } from './pages/profile/security/security';
-import { ShopInfo } from './pages/profile/shop-info/shop-info';
 import { authGuard, guestGuard } from './guards/auth.guard';
-import { AuthCallback } from './pages/auth-callback/auth-callback';
-import { ResetPassword } from './pages/reset-password/reset-password';
-import { StaffAuth } from './pages/staff-auth/staff-auth';
 import { staffGuard } from './guards/staff.guard';
 import { managerChildGuard, managerGuard } from './guards/manager.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    component: Home,
+    loadComponent: () => import('./pages/home/home').then(m => m.Home),
     canActivate: [(route) => {
       const target = legacyRatingPath(route.queryParams);
       return target ? inject(Router).parseUrl(target) : true;
@@ -39,62 +22,65 @@ export const routes: Routes = [
   },
   {
     path: 'shop',
-    component: Shop,
+    loadComponent: () => import('./pages/shop/shop').then(m => m.Shop),
   },
+  { path: 'shop/classic', loadComponent: () => import('./pages/shop/shop').then(m => m.Shop), data: { category: 'classic' } },
+  { path: 'shop/boost-blends', loadComponent: () => import('./pages/shop/shop').then(m => m.Shop), data: { category: 'boost-blends' } },
+  { path: 'shop/zero-sugar', loadComponent: () => import('./pages/shop/shop').then(m => m.Shop), data: { category: 'zero-sugar' } },
   {
     path: 'our-story',
-    component: OurStory,
+    loadComponent: () => import('./pages/our-story/our-story').then(m => m.OurStory),
   },
   {
     path: 'contact',
-    component: Contact,
+    loadComponent: () => import('./pages/contact/contact').then(m => m.Contact),
   },
   {
     path: 'product/:id',
-    component: ProductDetails,
+    loadComponent: () => import('./pages/product-details/product-details').then(m => m.ProductDetails),
   },
   {
     path: 'login',
     canActivate: [guestGuard],
-    component: Login,
+    loadComponent: () => import('./pages/login/login').then(m => m.Login),
   },
   {
     path: 'signup',
     canActivate: [guestGuard],
-    component: Signup,
+    loadComponent: () => import('./pages/signup/signup').then(m => m.Signup),
   },
   {
     path: 'forgot-password',
-    component: ForgotPassword,
+    loadComponent: () => import('./pages/forgot-password/forgot-password').then(m => m.ForgotPassword),
   },
   {
     path: 'cart',
     canActivate: [authGuard],
-    component: Cart,
+    loadComponent: () => import('./pages/cart/cart').then(m => m.Cart),
   },
   {
     path: 'checkout',
     canActivate: [authGuard],
-    component: Checkout,
+    loadComponent: () => import('./pages/checkout/checkout').then(m => m.Checkout),
   },
   {
     path: 'auth/callback',
-    component: AuthCallback,
+    loadComponent: () => import('./pages/auth-callback/auth-callback').then(m => m.AuthCallback),
   },
   {
     path: 'reset-password',
-    component: ResetPassword,
+    loadComponent: () => import('./pages/reset-password/reset-password').then(m => m.ResetPassword),
   },
   {
     path: 'staff-auth',
     canActivate: [authGuard],
-    component: StaffAuth,
+    loadComponent: () => import('./pages/staff-auth/staff-auth').then(m => m.StaffAuth),
   },
   {
     path: 'profile',
     canActivate: [authGuard],
     canActivateChild: [authGuard],
-    component: Profile,
+    loadComponent: () => import('./pages/profile/profile').then(m => m.Profile),
     children: [
       {
         path: '',
@@ -103,15 +89,15 @@ export const routes: Routes = [
       },
       {
         path: 'info',
-        component: YourInfo,
+        loadComponent: () => import('./pages/profile/your-info/your-info').then(m => m.YourInfo),
       },
       {
         path: 'security',
-        component: Security,
+        loadComponent: () => import('./pages/profile/security/security').then(m => m.Security),
       },
       {
         path: 'shop-info',
-        component: ShopInfo,
+        loadComponent: () => import('./pages/profile/shop-info/shop-info').then(m => m.ShopInfo),
       },
     ],
   },
