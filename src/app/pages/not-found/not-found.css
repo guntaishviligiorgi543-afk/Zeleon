@@ -1,0 +1,50 @@
+:host { display: block; }
+:host * { box-sizing: border-box; }
+
+.error-page {
+  display: flex;
+  min-height: 75svh;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 24px 90px;
+  color: #fff;
+  text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.error-code {
+  position: relative;
+  margin-bottom: 36px;
+  color: #fff;
+  font-family: 'Climate Crisis', sans-serif;
+  font-variation-settings: 'YEAR' 1979;
+  font-size: clamp(96px, 19vw, 220px);
+  line-height: 1;
+  letter-spacing: -.06em;
+}
+
+.error-code span {
+  position: absolute;
+  right: -8px;
+  bottom: 3%;
+  width: 22%;
+  height: 42%;
+  background: #de1313;
+  clip-path: polygon(45% 0, 100% 0, 65% 38%, 95% 38%, 12% 100%, 35% 54%, 0 54%);
+}
+
+h1 { margin: 0 0 18px; font-size: clamp(25px, 4vw, 40px); line-height: 1.2; letter-spacing: -.035em; }
+p { max-width: 460px; margin: 0; color: #bcbcbc; font-size: 16px; line-height: 1.7; }
+.error-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px 28px; margin-top: 32px; }
+a { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; text-decoration: none; }
+.home-link { padding: 0 26px; border: 1px solid #fff; border-radius: 999px; background: #fff; color: #000; }
+.home-link:hover { background: #dedede; border-color: #dedede; }
+.shop-link { color: #fff; text-decoration: underline; text-underline-offset: 5px; }
+.shop-link:hover { color: #bcbcbc; }
+a:focus-visible { outline: 2px solid #fff; outline-offset: 6px; }
+@media (max-width: 480px) {
+  .error-page { min-height: 70svh; padding: 90px 22px 70px; }
+  .error-code { margin-bottom: 30px; }
+  .desktop-break { display: none; }
+}
