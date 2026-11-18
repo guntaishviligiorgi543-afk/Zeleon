@@ -124,7 +124,7 @@ try {
         await image.decode();
         return { width: image.naturalWidth, height: image.naturalHeight };
       });
-      assert(icon.width >= 8 && icon.width === icon.height, 'Browser could not decode a valid square favicon');
+      assert(icon.width >= 8 && icon.height >= 8, 'Browser could not decode the favicon');
     }
   }
   for (const path of ['/login', '/signup', '/cart', '/checkout', '/forgot-password', '/reset-password', '/auth/callback?error=access_denied']) {

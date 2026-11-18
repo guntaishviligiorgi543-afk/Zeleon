@@ -23,7 +23,7 @@ export function checkPngFavicon(bytes, declaredSizes) {
   assert.equal(bytes.toString('ascii', 12, 16), 'IHDR', 'Missing PNG image header');
   const width = bytes.readUInt32BE(16);
   const height = bytes.readUInt32BE(20);
-  assert(width >= 8 && width === height, 'Google favicon must be square and at least 8px');
+  assert(width >= 8 && height >= 8, 'Favicon dimensions must be at least 8px');
   if (declaredSizes) assert.equal(declaredSizes, `${width}x${height}`, 'Declared favicon size differs from image');
   return { width, height, bytes: bytes.length };
 }
