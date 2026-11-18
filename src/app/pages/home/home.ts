@@ -15,6 +15,9 @@ export class Home {
   readonly products = signal<Product[]>([]);
   readonly productsLoading = signal(true);
   readonly productsError = signal(false);
+  readonly newsletterBusy = signal(false);
+  readonly newsletterMessage = signal('');
+  private newsletterWidgetId: string | null = null;
   private readonly catalog = inject(Products);
   private productRequest?: AbortController;
   private readonly element: ElementRef<HTMLElement> = inject(ElementRef);
@@ -22,7 +25,7 @@ export class Home {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
-    afterNextRender(() => { void this.loadProducts(); });
+    afterNextRender(() => { void this.loadProducts(); this.setupNewsletterCaptcha(); });
     this.destroyRef.onDestroy(() => this.productRequest?.abort());
     afterNextRender(() => {
       this.zone.runOutsideAngular(() => this.initializeProductSlider());
@@ -127,6 +130,61 @@ export class Home {
         });
       });
     });
+  }
+
+
+  private setupNewsletterCaptcha(): void {
+    const siteKey = 'REPLACE_WITH_TURNSTILE_SITE_KEY';
+    if (siteKey.startsWith('REPLACE_')) {
+      this.newsletterMessage.set('Newsletter verification is being configured.');
+      return;
+    }
+    const widget = this.element.nativeElement.querySelector<HTMLElement>('#zeleon-newsletter-turnstile');
+    if (!widget) return;
+    const render = () => {
+      const turnstile = (window as any).turnstile;
+      if (!turnstile || this.newsletterWidgetId) return;
+      this.newsletterWidgetId = turnstile.render(widget, { sitekey: siteKey, theme: 'auto' });
+    };
+    if ((window as any).turnstile) { render(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    script.async = true;
+    script.onload = render;
+    document.head.appendChild(script);
+  }
+
+  async submitNewsletter(event: Event): Promise<void> {
+    event.preventDefault();
+    if (this.newsletterBusy()) return;
+    const form = event.target as HTMLFormElement;
+    const email = form.querySelector<HTMLInputElement>('input[type="email"]');
+    const consent = form.querySelector<HTMLInputElement>('input[type="checkbox"]');
+    const turnstile = (window as any).turnstile;
+    const captcha = this.newsletterWidgetId && turnstile ? turnstile.getResponse(this.newsletterWidgetId) : '';
+    if (!email?.validity.valid || !consent?.checked) {
+      this.newsletterMessage.set('Enter a valid email and accept the newsletter consent.');
+      return;
+    }
+    if (!captcha) { this.newsletterMessage.set('Complete the human verification first.'); return; }
+    this.newsletterBusy.set(true);
+    this.newsletterMessage.set('');
+    try {
+      const response = await fetch('https://nunxmgltzvknnmkdvjsw.supabase.co/functions/v1/newsletter-management', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'subscribe', email: email.value, consent: true, captcha }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Subscription request failed');
+      this.newsletterMessage.set(data.message || 'Check your email to confirm your subscription.');
+      form.reset();
+    } catch (error) {
+      this.newsletterMessage.set(error instanceof Error ? error.message : 'Please try again later.');
+    } finally {
+      this.newsletterBusy.set(false);
+      if (this.newsletterWidgetId && turnstile) turnstile.reset(this.newsletterWidgetId);
+    }
   }
 
   async loadProducts(): Promise<void> {
