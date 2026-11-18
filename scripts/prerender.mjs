@@ -7,7 +7,7 @@ import { JSDOM } from 'jsdom';
 import { readEntries, productAliases } from './sitemap.mjs';
 import { metadata } from '../src/app/seo-metadata.mjs';
 import { serveStatic } from './static-server.mjs';
-import { faviconFor, checkPngFavicon, checkSnippetDirectives } from './search-appearance.mjs';
+import { faviconFor, checkFavicon, checkSnippetDirectives } from './search-appearance.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const browserOptions = () => ({ headless: true, ...(process.env.PRERENDER_BROWSER_CHANNEL ? { channel: process.env.PRERENDER_BROWSER_CHANNEL } : {}) });
@@ -65,7 +65,7 @@ export async function validatePrerender(directory = join(root, 'dist/zeleon/brow
   const source = new JSDOM(await readFile(join(root, 'src/index.html'), 'utf8'));
   const verification = source.window.document.querySelector('meta[name="google-site-verification"]').content;
   const favicon = faviconFor(source.window.document);
-  const icon = checkPngFavicon(await readFile(join(directory, decodeURIComponent(favicon.url.pathname).slice(1))), favicon.sizes);
+  const icon = checkFavicon(await readFile(join(directory, decodeURIComponent(favicon.url.pathname).slice(1))), favicon.sizes);
   source.window.close();
   const results = [];
   for (const { loc } of entries) {

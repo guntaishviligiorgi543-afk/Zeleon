@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { ORIGIN, publicPages, NAMESPACE } from './sitemap.mjs';
 import { metadata } from '../src/app/seo-metadata.mjs';
 import { browserOptions } from './prerender.mjs';
-import { faviconFor, checkPngFavicon, checkSnippetDirectives } from './search-appearance.mjs';
+import { faviconFor, checkFavicon, checkSnippetDirectives } from './search-appearance.mjs';
 
 const base = process.env.SEO_TEST_BASE_URL || ORIGIN;
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
@@ -54,9 +54,9 @@ assert.equal(faviconUrls.size, 1, 'Public pages must share the stable site favic
 for (const { url, sizes } of faviconUrls.values()) {
   const response = await fetch(base + url.pathname, { signal: AbortSignal.timeout(30_000) });
   assert.equal(response.status, 200, 'Favicon unavailable');
-  assert.match(response.headers.get('content-type'), /^image\/png(?:;|$)/i);
+  assert.match(response.headers.get('content-type'), /^image\/(?:png|svg\+xml)(?:;|$)/i);
   checkSnippetDirectives(response.headers.get('x-robots-tag') ?? '');
-  console.log(JSON.stringify({ favicon: url.pathname, ...checkPngFavicon(Buffer.from(await response.arrayBuffer()), sizes) }));
+  console.log(JSON.stringify({ favicon: url.pathname, ...checkFavicon(Buffer.from(await response.arrayBuffer()), sizes) }));
 }
 console.log('Checking public image URLs...');
 for (const url of socialImages) {

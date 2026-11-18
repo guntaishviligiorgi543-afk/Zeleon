@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { ORIGIN } from '../src/app/seo-metadata.mjs';
 
-// Project contract: retain the existing, same-origin PNG favicon at a stable URL.
+// Project contract: retain the existing, same-origin favicon at a stable URL.
 // Google permits other formats and hosts; these checks protect this site's setup.
 export function faviconFor(document) {
   const icons = document.querySelectorAll('link[rel~="icon"]');
@@ -12,7 +12,7 @@ export function faviconFor(document) {
   const url = new URL(href, ORIGIN);
   assert.equal(url.origin, ORIGIN, 'Favicon origin changed');
   assert(!url.search && !url.hash, 'Favicon URL must remain stable, without query/hash variants');
-  assert.equal(icon.type, 'image/png', 'Favicon declaration must match its PNG bytes');
+  assert.equal(icon.type, url.pathname.endsWith('.svg') ? 'image/svg+xml' : 'image/png', 'Favicon declaration must match its format');
   return { url, sizes: icon.getAttribute('sizes') };
 }
 
@@ -31,4 +31,16 @@ export function checkPngFavicon(bytes, declaredSizes) {
 export function checkSnippetDirectives(value = '') {
   assert(!/(?:^|[\s,:;])(?:nosnippet|noindex)(?=$|[\s,;])|max-snippet\s*:\s*0\b/i.test(value),
     'Indexable page contains a snippet/indexing blocker');
+}
+
+// The SVG embeds the original PNG and fits it within a square without stretching.
+export function checkFavicon(bytes, declaredSizes) {
+  if (!bytes.toString('utf8', 0, 4).startsWith('<svg')) return checkPngFavicon(bytes, declaredSizes);
+  const svg = bytes.toString('utf8');
+  assert(svg.includes('viewBox="0 0 600 600"') && svg.includes('preserveAspectRatio="xMidYMid meet"'), 'Favicon must preserve the artwork proportions');
+  assert.equal(declaredSizes, 'any');
+  const embedded = svg.match(/href="data:image\/png;base64,([^"]+)"/);
+  assert(embedded, 'Missing embedded favicon PNG');
+  checkPngFavicon(Buffer.from(embedded[1], 'base64'));
+  return { width: 600, height: 600, bytes: bytes.length };
 }
