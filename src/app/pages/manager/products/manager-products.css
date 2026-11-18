@@ -165,9 +165,12 @@
   background: rgba(17, 30, 53, 0.48);
 }
 .editor {
+  position: relative;
+  z-index: 1;
   width: min(820px, 100%);
   margin-block: 28px;
   padding: 24px;
+  pointer-events: auto;
 }
 .editor-header {
   display: flex;
