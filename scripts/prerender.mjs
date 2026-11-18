@@ -7,6 +7,7 @@ import { JSDOM } from 'jsdom';
 import { readEntries, productAliases } from './sitemap.mjs';
 import { metadata } from '../src/app/seo-metadata.mjs';
 import { serveStatic } from './static-server.mjs';
+import { faviconFor, checkPngFavicon, checkSnippetDirectives } from './search-appearance.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 export const browserOptions = () => ({ headless: true, ...(process.env.PRERENDER_BROWSER_CHANNEL ? { channel: process.env.PRERENDER_BROWSER_CHANNEL } : {}) });
@@ -28,6 +29,10 @@ export function checkRenderedHtml(html, path, catalog, verification) {
     assert.equal(document.querySelector('link[rel="canonical"]').href, expected.canonical);
     assert.equal(document.querySelector('meta[name="robots"]').content, 'index, follow');
     assert.equal(document.querySelector('meta[name="description"]').content, expected.description);
+    faviconFor(document);
+    for (const tag of document.querySelectorAll('meta[name="robots"], meta[name="googlebot"]')) {
+      checkSnippetDirectives(tag.content);
+    }
     assert.equal(document.querySelector('meta[property="og:url"]').content, expected.canonical);
     assert.equal(document.querySelector('meta[property="og:title"]').content, expected.title);
     assert.equal(document.querySelector('meta[property="og:image"]').content, expected.image);
@@ -59,6 +64,8 @@ export async function validatePrerender(directory = join(root, 'dist/zeleon/brow
   const catalog = JSON.parse(await readFile(join(root, 'tmp/seo-catalog.json'), 'utf8'));
   const source = new JSDOM(await readFile(join(root, 'src/index.html'), 'utf8'));
   const verification = source.window.document.querySelector('meta[name="google-site-verification"]').content;
+  const favicon = faviconFor(source.window.document);
+  const icon = checkPngFavicon(await readFile(join(directory, decodeURIComponent(favicon.url.pathname).slice(1))), favicon.sizes);
   source.window.close();
   const results = [];
   for (const { loc } of entries) {
@@ -89,7 +96,7 @@ export async function validatePrerender(directory = join(root, 'dist/zeleon/brow
     assert.equal(document.querySelectorAll('link[rel="canonical"], script[data-zeleon-seo]').length, 0);
     dom.window.close();
   }
-  console.log(JSON.stringify({ prerendered: results, slugRedirects: aliases.length, privateShells: 'empty/noindex' }));
+  console.log(JSON.stringify({ prerendered: results, favicon: { path: favicon.url.pathname, ...icon }, slugRedirects: aliases.length, privateShells: 'empty/noindex' }));
 }
 
 export async function prerender(directory = join(root, 'dist/zeleon/browser')) {

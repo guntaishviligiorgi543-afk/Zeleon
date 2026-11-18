@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { ORIGIN, publicPages, NAMESPACE } from './sitemap.mjs';
 import { metadata } from '../src/app/seo-metadata.mjs';
 import { browserOptions } from './prerender.mjs';
+import { faviconFor, checkPngFavicon, checkSnippetDirectives } from './search-appearance.mjs';
 
 const base = process.env.SEO_TEST_BASE_URL || ORIGIN;
 const { chromium } = createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE_PATH || 'playwright');
@@ -16,6 +17,7 @@ const document = new JSDOM(xml, { contentType: 'application/xml' }).window.docum
 assert.equal(document.documentElement.namespaceURI, NAMESPACE);
 const locations = [...document.getElementsByTagNameNS(NAMESPACE, 'loc')].map(element => element.textContent);
 const socialImages = new Set();
+const faviconUrls = new Map();
 
 console.log('Checking initial HTML for all public sitemap URLs...');
 assert.equal(new Set(locations).size, locations.length);
@@ -35,6 +37,10 @@ for (const loc of locations) {
   assert(html.includes('content="index, follow"'));
   assert(html.includes('name="google-site-verification"'));
   const head = new JSDOM(html).window.document;
+  checkSnippetDirectives(response.headers.get('x-robots-tag') ?? '');
+  for (const tag of head.querySelectorAll('meta[name="robots"], meta[name="googlebot"]')) checkSnippetDirectives(tag.content);
+  const favicon = faviconFor(head);
+  faviconUrls.set(favicon.url.href, favicon);
   assert.equal(head.querySelectorAll('title').length, 1);
   assert.notEqual(head.title, 'Zeleon');
   for (const selector of ['meta[name="description"]', 'meta[property="og:title"]', 'meta[property="og:description"]', 'meta[property="og:url"]', 'meta[property="og:image"]', 'meta[name="twitter:card"]']) assert.equal(head.querySelectorAll(selector).length, 1, `${selector}: ${loc}`);
@@ -43,6 +49,14 @@ for (const loc of locations) {
   assert(!head.querySelector('noscript[data-zeleon-seo-content]'), 'A noscript fallback is not prerendering');
   assert(head.querySelector('app-root main router-outlet + *')?.textContent.trim().length > 100, `Missing prerendered page: ${loc}`);
 
+}
+assert.equal(faviconUrls.size, 1, 'Public pages must share the stable site favicon');
+for (const { url, sizes } of faviconUrls.values()) {
+  const response = await fetch(base + url.pathname, { signal: AbortSignal.timeout(30_000) });
+  assert.equal(response.status, 200, 'Favicon unavailable');
+  assert.match(response.headers.get('content-type'), /^image\/png(?:;|$)/i);
+  checkSnippetDirectives(response.headers.get('x-robots-tag') ?? '');
+  console.log(JSON.stringify({ favicon: url.pathname, ...checkPngFavicon(Buffer.from(await response.arrayBuffer()), sizes) }));
 }
 console.log('Checking public image URLs...');
 for (const url of socialImages) {
@@ -103,19 +117,28 @@ try {
     assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), ORIGIN + path);
     assert.equal(await page.title(), metadata(path).title);
     assert.equal(await page.locator('[data-zeleon-prerender]').count(), 0, 'Snapshot must be replaced by the interactive app');
+    if (path === '/') {
+      const icon = await page.evaluate(async () => {
+        const image = new Image();
+        image.src = document.querySelector('link[rel~="icon"]').href;
+        await image.decode();
+        return { width: image.naturalWidth, height: image.naturalHeight };
+      });
+      assert(icon.width >= 8 && icon.width === icon.height, 'Browser could not decode a valid square favicon');
+    }
   }
   for (const path of ['/login', '/signup', '/cart', '/checkout', '/forgot-password', '/reset-password', '/auth/callback?error=access_denied']) {
     await page.goto(base + path, { waitUntil: 'domcontentloaded' });
     if (path === '/cart' || path === '/checkout') {
       await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/login' &&
-        url.searchParams.get('returnUrl')?.replace(/\/+$/, '') === path);
+        url.searchParams.get('returnUrl')?.replace(/\/+$/, '') === path, { waitUntil: 'domcontentloaded' });
     }
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, nofollow');
     assert.equal(await page.locator('link[rel="canonical"]').count(), 0);
   }
   await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
   await page.locator('a[href="/shop"]').first().click();
-  await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop');
+  await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
   for (const value of products.length ? [String(products[0].id), products[0].slug, ...products.slice(1, 2).map(product => String(product.id))].filter(Boolean) : []) {
     await page.goto(base + '/product/' + value + '/', { waitUntil: 'domcontentloaded' });
@@ -142,7 +165,8 @@ try {
   await booted();
   if (products.length) {
     await page.locator('.product-name-link').first().click();
-    await page.waitForURL(url => url.pathname.startsWith('/product/'));
+    await page.waitForURL(url => url.pathname.startsWith('/product/'), { waitUntil: 'domcontentloaded' });
+    await page.locator('.product-page[aria-busy="false"] .product-info h1').waitFor();
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, follow');
     await page.locator('#product-quantity').fill('2');
     await page.locator('.add-cart').click();
@@ -151,7 +175,7 @@ try {
     assert.equal((await page.locator('.add-cart').textContent()).trim(), 'Add to Cart');
     assert.equal(await page.locator('.cart-item').count(), 0);
     await loginDialog.getByRole('button', { name: 'Log In', exact: true }).click();
-    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/login' && url.searchParams.get('returnUrl') === '/cart');
+    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/login' && url.searchParams.get('returnUrl') === '/cart', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, nofollow');
     const id = String(products[0].id);
     const slug = products[0].slug;
@@ -169,7 +193,7 @@ try {
   await booted();
   for (const category of ['classic', 'boost-blends', 'zero-sugar']) {
     await page.locator(`.filters a[href="/shop/${category}"]`).click();
-    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop/' + category);
+    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop/' + category, { waitUntil: 'domcontentloaded' });
     await page.locator('#shop-products[aria-busy="false"]').waitFor();
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
     assert.equal(await page.title(), metadata('/shop/' + category).title);
@@ -183,12 +207,12 @@ try {
     assert((await page.locator('.category-description').innerText()).length > 20);
   }
   await page.locator('.filters a[href="/shop"]').click();
-  await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop');
+  await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
   assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), ORIGIN + '/shop/');
   for (const path of ['/profile/info', '/manager/users', '/admin/users', '/support/', '/staff-auth/']) {
     await page.goto(base + path, { waitUntil: 'domcontentloaded' });
-    await page.waitForURL(url => url.pathname.replace(/\/$/, '') === '/login');
+    await page.waitForURL(url => url.pathname.replace(/\/$/, '') === '/login', { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, nofollow');
     assert.equal(await page.locator('.manager-launcher').count(), 0);
   }

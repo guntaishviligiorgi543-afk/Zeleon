@@ -5,6 +5,42 @@ import { mkdtemp, writeFile, rm, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { metadata, serializeJson, safeImage, BRAND_IMAGE } from '../src/app/seo-metadata.mjs';
+import { faviconFor, checkPngFavicon, checkSnippetDirectives } from './search-appearance.mjs';
+
+test('the unchanged source favicon is a crawlable square PNG with accurate dimensions', async () => {
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM(await readFile(new URL('../src/index.html', import.meta.url), 'utf8'));
+  const favicon = faviconFor(dom.window.document);
+  const image = await readFile(new URL('../src/app/images/' + favicon.url.pathname.slice(1), import.meta.url));
+  assert.deepEqual(checkPngFavicon(image, favicon.sizes), { width: 500, height: 500, bytes: image.length });
+  assert.equal(favicon.url.href, BRAND_IMAGE, 'Do not replace or move the approved favicon artwork');
+  const published = withHead(dom.serialize(), { loc: ORIGIN + '/' });
+  assert.equal(faviconFor(new JSDOM(published).window.document).url.href, favicon.url.href);
+  dom.window.close();
+});
+
+test('favicon checks reject broken metadata, non-image fallback content and invalid dimensions', async () => {
+  const { JSDOM } = await import('jsdom');
+  const page = html => new JSDOM(html).window.document;
+  assert.throws(() => faviconFor(page('')), /favicon link/);
+  assert.throws(() => faviconFor(page('<link rel="icon" href="/a.png"><link rel="icon" href="/b.png">')), /favicon link/);
+  assert.throws(() => faviconFor(page('<link rel="icon" type="image/png" href="/a.png?v=2">')), /stable/);
+  assert.throws(() => checkPngFavicon(Buffer.from('<html>SPA fallback</html>')), /PNG/);
+  const source = await readFile(new URL('../src/app/images/' + new URL(BRAND_IMAGE).pathname.slice(1), import.meta.url));
+  assert.throws(() => checkPngFavicon(source, '48x48'), /size differs/);
+  const invalid = Buffer.from(source);
+  invalid.writeUInt32BE(32, 20);
+  assert.throws(() => checkPngFavicon(invalid), /square/);
+  invalid.writeUInt32BE(4, 16); invalid.writeUInt32BE(4, 20);
+  assert.throws(() => checkPngFavicon(invalid), /at least 8px/);
+});
+
+test('indexable search appearance checks reject snippet blockers but allow normal directives', () => {
+  for (const value of ['index, follow', 'max-snippet:-1', '', 'max-snippet:120']) checkSnippetDirectives(value);
+  for (const value of ['nosnippet', 'googlebot: noindex', 'index, max-snippet: 0', 'NOINDEX, follow']) {
+    assert.throws(() => checkSnippetDirectives(value), /blocker/);
+  }
+});
 
 test('metadata uses actual product data, currency and omits unsupported claims', () => {
   const item = { id: 7, name: 'Citrus & Lime', price: 9.75, currency: 'GEL', categoryName: 'Classic', image: 'https://example.com/can.png' };
