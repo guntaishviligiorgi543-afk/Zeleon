@@ -6,6 +6,7 @@ export const MANAGER_ROUTES: Routes = [
     pathMatch: 'full',
     loadComponent: () => import('./overview/manager-overview').then((m) => m.ManagerOverview),
   },
+  { path: 'newsletter', loadComponent: () => import('./newsletter/newsletter-staff').then(m => m.NewsletterStaff) },
   { path: 'users', loadComponent: () => import('./users/manager-users').then(m => m.ManagerUsers) },
   {
     path: 'products',
