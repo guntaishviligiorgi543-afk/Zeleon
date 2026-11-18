@@ -37,10 +37,10 @@ export function checkSnippetDirectives(value = '') {
 export function checkFavicon(bytes, declaredSizes) {
   if (!bytes.toString('utf8', 0, 4).startsWith('<svg')) return checkPngFavicon(bytes, declaredSizes);
   const svg = bytes.toString('utf8');
-  assert(svg.includes('viewBox="0 0 600 600"') && svg.includes('preserveAspectRatio="xMidYMid meet"'), 'Favicon must preserve the artwork proportions');
-  assert.equal(declaredSizes, 'any');
+  assert(svg.includes('viewBox="76 8 448 448"') && svg.includes('preserveAspectRatio="xMidYMid meet"'), 'Favicon must preserve the artwork proportions');
+  assert.equal(declaredSizes, '64x64');
   const embedded = svg.match(/href="data:image\/png;base64,([^"]+)"/);
   assert(embedded, 'Missing embedded favicon PNG');
   checkPngFavicon(Buffer.from(embedded[1], 'base64'));
-  return { width: 600, height: 600, bytes: bytes.length };
+  return { width: 64, height: 64, bytes: bytes.length };
 }

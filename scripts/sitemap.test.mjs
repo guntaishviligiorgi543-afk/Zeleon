@@ -12,7 +12,7 @@ test('the shared source favicon uses the requested PNG with accurate dimensions'
   const dom = new JSDOM(await readFile(new URL('../src/index.html', import.meta.url), 'utf8'));
   const favicon = faviconFor(dom.window.document);
   const image = await readFile(new URL('../public/' + favicon.url.pathname.slice(1), import.meta.url));
-  assert.deepEqual(checkFavicon(image, favicon.sizes), { width: 600, height: 600, bytes: image.length });
+  assert.deepEqual(checkFavicon(image, favicon.sizes), { width: 64, height: 64, bytes: image.length });
   assert.equal(favicon.url.href, ORIGIN + '/images/favicon.svg');
   const embedded = image.toString().match(/href="data:image\/png;base64,([^"]+)"/);
   assert.deepEqual(Buffer.from(embedded[1], 'base64'), await readFile(new URL('../public/images/favicon.png', import.meta.url)));
