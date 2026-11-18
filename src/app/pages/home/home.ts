@@ -134,7 +134,7 @@ export class Home {
 
 
   private setupNewsletterCaptcha(): void {
-    const siteKey = 'REPLACE_WITH_TURNSTILE_SITE_KEY';
+    const siteKey = '0x4AAAAAAGHCqbPtlPdWY31w';
     if (siteKey.startsWith('REPLACE_')) {
       this.newsletterMessage.set('Newsletter verification is being configured.');
       return;
