@@ -59,7 +59,7 @@ The existing HTTP duplicate is a hosting variant, not an additional application 
 
 The existing stable URL is:
 
-`https://zeleon.store/Navy_Z_with_Yellow_Lightning_Bolt-removebg-preview%20(1)_edited.png`
+`https://zeleon.store/images/favicon.png`
 
 - The link is in the original homepage head and every prerendered public page.
 - The root-relative path resolves correctly on both root and nested category URLs.

@@ -7,15 +7,13 @@ import { join } from 'node:path';
 import { metadata, serializeJson, safeImage, BRAND_IMAGE } from '../src/app/seo-metadata.mjs';
 import { faviconFor, checkFavicon, checkPngFavicon, checkSnippetDirectives } from './search-appearance.mjs';
 
-test('the shared source favicon uses the requested PNG with accurate dimensions', async () => {
+test('the shared source favicon is a Google-compatible square PNG', async () => {
   const { JSDOM } = await import('jsdom');
   const dom = new JSDOM(await readFile(new URL('../src/index.html', import.meta.url), 'utf8'));
   const favicon = faviconFor(dom.window.document);
   const image = await readFile(new URL('../public/' + favicon.url.pathname.slice(1), import.meta.url));
   assert.deepEqual(checkFavicon(image, favicon.sizes), { width: 64, height: 64, bytes: image.length });
-  assert.equal(favicon.url.href, ORIGIN + '/images/favicon.svg');
-  const embedded = image.toString().match(/href="data:image\/png;base64,([^"]+)"/);
-  assert.deepEqual(Buffer.from(embedded[1], 'base64'), await readFile(new URL('../public/images/favicon.png', import.meta.url)));
+  assert.equal(favicon.url.href, ORIGIN + '/images/favicon-64.png');
   const published = withHead(dom.serialize(), { loc: ORIGIN + '/' });
   assert.equal(faviconFor(new JSDOM(published).window.document).url.href, favicon.url.href);
   dom.window.close();
@@ -28,7 +26,7 @@ test('favicon checks reject broken metadata, non-image fallback content and inva
   assert.throws(() => faviconFor(page('<link rel="icon" href="/a.png"><link rel="icon" href="/b.png">')), /favicon link/);
   assert.throws(() => faviconFor(page('<link rel="icon" type="image/png" href="/a.png?v=2">')), /stable/);
   assert.throws(() => checkPngFavicon(Buffer.from('<html>SPA fallback</html>')), /PNG/);
-  const source = await readFile(new URL('../public/images/favicon.png', import.meta.url));
+  const source = await readFile(new URL('../public/images/favicon-64.png', import.meta.url));
   assert.throws(() => checkPngFavicon(source, '48x48'), /size differs/);
   const invalid = Buffer.from(source);
   invalid.writeUInt32BE(0, 20);

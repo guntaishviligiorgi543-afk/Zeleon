@@ -125,6 +125,9 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
           products = [...products].sort((a, b) => a.created_at.localeCompare(b.created_at) || String(a.id).localeCompare(String(b.id), 'en', { numeric: true }));
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(products), headers: { 'Access-Control-Allow-Origin': server.origin } });
         }
+        // The newsletter CAPTCHA is intentionally unavailable in the anonymous
+        // static snapshot; loading it is neither needed nor appropriate here.
+        if (request.method() === 'GET' && url.origin === 'https://challenges.cloudflare.com' && url.pathname === '/turnstile/v0/api.js') return route.abort();
         if (request.method() === 'GET' && ['image', 'font', 'stylesheet'].includes(request.resourceType()) && url.protocol === 'https:') return route.abort();
         // Fail closed on API writes, auth/private requests, external scripts, etc.
         violations.push(`${request.method()} ${url.origin}${url.pathname}`);
@@ -139,7 +142,8 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
         await page.locator(`app-root main ${selector}`).waitFor();
         await page.waitForFunction(() => document.querySelector('a[aria-label="Sign in"]') && document.querySelector('meta[name="robots"]')?.content === 'index, follow');
         if (path.startsWith('/shop/')) await page.locator('#shop-products[aria-busy="false"]').waitFor();
-        if (path === '/') await page.waitForFunction(count => document.querySelectorAll('#featured-products a.card:not([data-loop-clone])').length === count && !document.querySelector('app-home [role="status"], app-home [role="alert"]'), rows.length);
+        if (path === '/') await page.waitForFunction(count => document.querySelectorAll('#featured-products a.card:not([data-loop-clone])').length === count &&
+          ![...document.querySelectorAll('app-home [role="status"], app-home [role="alert"]')].some(element => element.textContent?.trim()), rows.length);
         await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
         assert.deepEqual(violations, [], `Non-public request during prerender: ${path}`);
         assert.deepEqual(errors, [], `Angular error during prerender: ${path}`);

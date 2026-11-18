@@ -1,6 +1,6 @@
 // Shared by Angular and the static build: one source for crawler and browser metadata.
 export const ORIGIN = 'https://zeleon.store';
-export const BRAND_IMAGE = ORIGIN + '/Navy_Z_with_Yellow_Lightning_Bolt-removebg-preview%20(1)_edited.png';
+export const BRAND_IMAGE = ORIGIN + '/images/favicon.png';
 export const PAGES = {
   '/': { title: 'ZELEON | Premium Energy Drinks', description: 'Discover ZELEON premium energy drinks. Explore bold flavors and our collection of classic, boost blend, and zero sugar drinks.' },
   '/shop/': { title: 'Shop Energy Drinks | ZELEON', description: 'Explore the ZELEON energy drink collection. Discover classic flavors, boost blends, and zero sugar options. Find your next favorite energy drink.' },
