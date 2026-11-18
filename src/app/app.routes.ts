@@ -20,6 +20,8 @@ export const routes: Routes = [
     path: 'rate-support/:id',
     loadComponent: () => import('./pages/support-rating/support-rating').then(m => m.SupportRatingPage),
   },
+  { path: 'newsletter/confirm', data: { action: 'confirm' }, loadComponent: () => import('./pages/newsletter-action/newsletter-action').then(m => m.NewsletterAction) },
+  { path: 'newsletter/unsubscribe', data: { action: 'unsubscribe' }, loadComponent: () => import('./pages/newsletter-action/newsletter-action').then(m => m.NewsletterAction) },
   {
     path: 'shop',
     loadComponent: () => import('./pages/shop/shop').then(m => m.Shop),
