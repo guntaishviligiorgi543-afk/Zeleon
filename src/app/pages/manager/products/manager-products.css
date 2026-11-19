@@ -157,12 +157,13 @@
 .dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 2147483647;
   display: grid;
   padding: 20px;
   overflow-y: auto;
   place-items: start center;
   background: rgba(17, 30, 53, 0.48);
+  isolation: isolate;
 }
 .editor {
   position: relative;
@@ -171,6 +172,7 @@
   margin-block: 28px;
   padding: 24px;
   pointer-events: auto;
+  touch-action: manipulation;
 }
 .editor-header {
   display: flex;
