@@ -5,8 +5,6 @@ import { ManagerProducts } from './manager-products';
 describe('Product editor form', () => {
   const references = {
     categories: [{ id: 1, name: 'Classic', slug: 'classic' }],
-    types: [{ id: 2, name: 'Energy drink', slug: 'energy-drink' }],
-    flavors: [{ id: 3, name: 'Lemon', slug: 'lemon' }],
   };
   let dashboard: {
     getProducts: ReturnType<typeof vi.fn>;
@@ -49,17 +47,9 @@ describe('Product editor form', () => {
     type('product-name', 'Test energy drink');
     type('product-slug', 'test-energy-drink');
     type('product-price', '4.50');
-    type('product-brand', 'ZELEON');
-    type('product-description', 'Product editor regression test');
-    for (const id of ['product-category', 'product-type', 'product-flavor']) {
-      const select = fixture.nativeElement.querySelector(`#${id}`) as HTMLSelectElement;
-      select.selectedIndex = 1;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    const active = fixture.nativeElement.querySelector(
-      '[formControlName="is_active"]',
-    ) as HTMLInputElement;
-    active.click();
+    const select = fixture.nativeElement.querySelector('#product-category') as HTMLSelectElement;
+    select.selectedIndex = 1;
+    select.dispatchEvent(new Event('change', { bubbles: true }));
     fixture.detectChanges();
     expect(fixture.componentInstance.form.valid).toBe(true);
     const submit = fixture.nativeElement.querySelector(
@@ -76,12 +66,12 @@ describe('Product editor form', () => {
           slug: 'test-energy-drink',
           price: 4.5,
           category_id: 1,
-          product_type_id: 2,
-          flavor_id: 3,
-          brand: 'ZELEON',
-          description: 'Product editor regression test',
+          product_type_id: null,
+          flavor_id: null,
+          brand: null,
+          description: null,
           currency: 'USD',
-          is_active: false,
+          is_active: true,
         },
         undefined,
       ),
@@ -107,8 +97,8 @@ describe('Product editor form', () => {
       images: [],
       updated_at: '2026-11-12T00:00:00Z',
       category: references.categories[0],
-      product_type: references.types[0],
-      flavor: references.flavors[0],
+      product_type: null,
+      flavor: null,
     };
     fixture.componentInstance.openEdit(product);
     fixture.detectChanges();

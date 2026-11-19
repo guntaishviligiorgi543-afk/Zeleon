@@ -139,7 +139,7 @@
         <div class="editor-header">
           <div>
             <h2 id="product-editor-title">{{ editing() ? 'Edit product' : 'Add product' }}</h2>
-            <p>All changes are protected by the active Manager session.</p>
+            <p>Enter the four database fields required to create a product.</p>
           </div>
           <button
             type="button"
@@ -202,94 +202,7 @@
                 >A category is required.</small
               >
             </div>
-            <div class="field">
-              <label for="product-type">Product type</label
-              ><select id="product-type" formControlName="product_type_id">
-                <option [ngValue]="null">No product type</option>
-                @for (type of references().types; track type.id) {
-                  <option [ngValue]="type.id">{{ type.name }}</option>
-                }
-              </select>
-            </div>
-            <div class="inline-create">
-              <input
-                [formControl]="newType"
-                placeholder="Create product type"
-                aria-label="New product type"
-              /><button
-                type="button"
-                class="button"
-                (click)="addReference('type')"
-                [disabled]="newType.invalid"
-              >
-                Add type
-              </button>
-            </div>
-            <div class="field">
-              <label for="product-flavor">Flavor</label
-              ><select id="product-flavor" formControlName="flavor_id">
-                <option [ngValue]="null">No flavor</option>
-                @for (flavor of references().flavors; track flavor.id) {
-                  <option [ngValue]="flavor.id">{{ flavor.name }}</option>
-                }
-              </select>
-            </div>
-            <div class="inline-create">
-              <input
-                [formControl]="newFlavor"
-                placeholder="Create flavor"
-                aria-label="New flavor"
-              /><button
-                type="button"
-                class="button"
-                (click)="addReference('flavor')"
-                [disabled]="newFlavor.invalid"
-              >
-                Add flavor
-              </button>
-            </div>
-            <div class="field">
-              <label for="product-brand">Brand</label
-              ><input id="product-brand" formControlName="brand" placeholder="Optional brand" />
-            </div>
-            <div class="field">
-              <label for="product-image">Product image</label
-              ><input
-                id="product-image"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                (change)="onImageSelected($event)"
-              /><small>JPEG, PNG, or WebP. Maximum 10 MB.</small>
-            </div>
-            <div class="field full">
-              <label for="product-description">Description</label
-              ><textarea
-                id="product-description"
-                formControlName="description"
-                placeholder="Product details shown to customers"
-              ></textarea>
-            </div>
-            <label class="check-field full"
-              ><input type="checkbox" formControlName="is_active" /><span
-                >Active and visible in the storefront</span
-              ></label
-            >
           </div>
-          @if (editing()?.images?.length) {
-            <div class="image-strip" aria-label="Current product images">
-              @for (image of editing()!.images; track image.id; let index = $index) {
-                <div>
-                  <img [src]="image.publicUrl" alt="" /><button
-                    type="button"
-                    (click)="removeImage(editing()!, index)"
-                    aria-label="Remove product image"
-                  >
-                    Remove
-                  </button>
-                </div>
-              }
-            </div>
-          }
           <div class="action-row">
             <button type="button" class="button" (click)="closeEditor()">Cancel</button
             ><button type="submit" class="button primary" [disabled]="form.invalid || saving()">

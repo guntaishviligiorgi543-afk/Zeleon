@@ -108,8 +108,6 @@ export interface ProductEditorValue {
 
 export interface ProductReferences {
   categories: ProductOption[];
-  types: ProductOption[];
-  flavors: ProductOption[];
 }
 export interface StaffDirectoryEntry {
   user_id: string;
@@ -233,18 +231,10 @@ export class ManagerDashboard {
   }
 
   async getProductReferences(): Promise<ProductReferences> {
-    const [categories, types, flavors] = await Promise.all([
-      this.client.from('categories').select('id,name,slug').order('name'),
-      this.client.from('product_types').select('id,name,slug').order('name'),
-      this.client.from('product_flavors').select('id,name,slug').order('name'),
-    ]);
+    const categories = await this.client.from('categories').select('id,name,slug').order('name');
     if (categories.error) throw categories.error;
-    if (types.error) throw types.error;
-    if (flavors.error) throw flavors.error;
     return {
       categories: (categories.data ?? []) as ProductOption[],
-      types: (types.data ?? []) as ProductOption[],
-      flavors: (flavors.data ?? []) as ProductOption[],
     };
   }
 

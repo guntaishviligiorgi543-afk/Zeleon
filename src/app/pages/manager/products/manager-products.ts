@@ -17,7 +17,7 @@ import {
 export class ManagerProducts implements OnInit {
   private readonly dashboard = inject(ManagerDashboard);
   readonly products = signal<ManagerProduct[]>([]);
-  readonly references = signal<ProductReferences>({ categories: [], types: [], flavors: [] });
+  readonly references = signal<ProductReferences>({ categories: [] });
   readonly loading = signal(true);
   readonly saving = signal(false);
   readonly error = signal('');
@@ -27,15 +27,6 @@ export class ManagerProducts implements OnInit {
   readonly query = signal('');
   readonly pageSize = signal(10);
   readonly currentPage = signal(1);
-  readonly selectedImage = signal<File | null>(null);
-  readonly newType = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(80)],
-  });
-  readonly newFlavor = new FormControl('', {
-    nonNullable: true,
-    validators: [Validators.required, Validators.maxLength(80)],
-  });
   readonly filteredProducts = computed(() => {
     const term = this.query().trim().toLowerCase();
     return term
@@ -89,11 +80,6 @@ export class ManagerProducts implements OnInit {
       Validators.max(99_999_999),
     ]),
     category_id: new FormControl<number | null>(null, Validators.required),
-    product_type_id: new FormControl<number | null>(null),
-    flavor_id: new FormControl<number | null>(null),
-    brand: new FormControl('', { nonNullable: true, validators: Validators.maxLength(120) }),
-    description: new FormControl('', { nonNullable: true, validators: Validators.maxLength(5000) }),
-    is_active: new FormControl(true, { nonNullable: true }),
   });
 
   ngOnInit(): void {
@@ -136,7 +122,6 @@ export class ManagerProducts implements OnInit {
 
   openCreate(): void {
     this.editing.set(null);
-    this.selectedImage.set(null);
     this.success.set('');
     this.error.set('');
     this.form.reset({
@@ -144,18 +129,12 @@ export class ManagerProducts implements OnInit {
       slug: '',
       price: null,
       category_id: null,
-      product_type_id: null,
-      flavor_id: null,
-      brand: '',
-      description: '',
-      is_active: true,
     });
     this.editorOpen.set(true);
   }
 
   openEdit(product: ManagerProduct): void {
     this.editing.set(product);
-    this.selectedImage.set(null);
     this.success.set('');
     this.error.set('');
     this.form.reset({
@@ -163,37 +142,12 @@ export class ManagerProducts implements OnInit {
       slug: product.slug,
       price: Number(product.price),
       category_id: product.category_id,
-      product_type_id: product.product_type_id,
-      flavor_id: product.flavor_id,
-      brand: product.brand ?? '',
-      description: product.description ?? '',
-      is_active: product.is_active,
     });
     this.editorOpen.set(true);
   }
 
   closeEditor(): void {
     if (!this.saving()) this.editorOpen.set(false);
-  }
-
-  onImageSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0] ?? null;
-    this.error.set('');
-    if (!file) {
-      this.selectedImage.set(null);
-      return;
-    }
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-      this.selectedImage.set(null);
-      this.error.set('Use a JPEG, PNG, or WebP product image.');
-      return;
-    }
-    if (file.size > 10 * 1024 * 1024) {
-      this.selectedImage.set(null);
-      this.error.set('Product images must be 10 MB or smaller.');
-      return;
-    }
-    this.selectedImage.set(file);
   }
 
   async save(): Promise<void> {
@@ -203,21 +157,21 @@ export class ManagerProducts implements OnInit {
     this.error.set('');
     this.success.set('');
     const raw = this.form.getRawValue();
+    const existing = this.editing();
     const value: ProductEditorValue = {
       name: raw.name.trim(),
       slug: raw.slug.trim(),
       price: Number(raw.price),
       category_id: Number(raw.category_id),
-      product_type_id: raw.product_type_id ? Number(raw.product_type_id) : null,
-      flavor_id: raw.flavor_id ? Number(raw.flavor_id) : null,
-      brand: raw.brand.trim() || null,
-      description: raw.description.trim() || null,
+      product_type_id: existing?.product_type_id ?? null,
+      flavor_id: existing?.flavor_id ?? null,
+      brand: existing?.brand ?? null,
+      description: existing?.description ?? null,
       currency: 'USD',
-      is_active: raw.is_active,
+      is_active: existing?.is_active ?? true,
     };
     try {
-      const productId = await this.dashboard.saveProduct(value, this.editing()?.id);
-      if (this.selectedImage()) await this.dashboard.uploadImage(productId, this.selectedImage()!);
+      await this.dashboard.saveProduct(value, this.editing()?.id);
       await this.load();
       this.editorOpen.set(false);
       this.success.set(this.editing() ? 'Product changes saved.' : 'Product created.');
@@ -255,25 +209,4 @@ export class ManagerProducts implements OnInit {
     }
   }
 
-  async addReference(kind: 'type' | 'flavor'): Promise<void> {
-    const control = kind === 'type' ? this.newType : this.newFlavor;
-    control.markAsTouched();
-    if (control.invalid) return;
-    try {
-      const option = await this.dashboard.createReference(
-        kind === 'type' ? 'product_types' : 'product_flavors',
-        control.value,
-      );
-      this.references.update((refs) =>
-        kind === 'type'
-          ? { ...refs, types: [...refs.types, option] }
-          : { ...refs, flavors: [...refs.flavors, option] },
-      );
-      this.form.get(kind === 'type' ? 'product_type_id' : 'flavor_id')?.setValue(option.id);
-      control.reset();
-      this.success.set(`${kind === 'type' ? 'Product type' : 'Flavor'} created.`);
-    } catch {
-      this.error.set(`The ${kind} could not be created. It may already exist.`);
-    }
-  }
 }
