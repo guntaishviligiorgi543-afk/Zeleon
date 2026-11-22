@@ -36,7 +36,7 @@
     <div class="headerIcons">
       @if (auth.isAuthenticated()) {
         <a class="profile-link" routerLink="/profile" routerLinkActive="active"
-          [routerLinkActiveOptions]="{ exact: false }" ariaCurrentWhenActive="page">Profile</a>
+          [routerLinkActiveOptions]="{ exact: false }" ariaCurrentWhenActive="page">@if (avatar.url(); as photo) { <img class="header-avatar" [src]="photo" alt="" /> }Profile</a>
         <button class="auth-session-button auth-action" type="button" aria-label="Log out" [disabled]="signingOut()"
           [attr.aria-busy]="signingOut()" (click)="logout()">
           <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true">

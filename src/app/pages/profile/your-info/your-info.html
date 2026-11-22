@@ -1,6 +1,30 @@
 <section aria-labelledby="profile-info-title">
   <p class="eyebrow">YOUR ACCOUNT</p><h2 id="profile-info-title">Profile</h2>
   @if (auth.user(); as user) {
+    <div class="avatar-section">
+      <div class="avatar-picture">
+        @if (preview() || avatar.url(); as picture) {
+          <img [src]="picture" alt="Your profile picture" />
+        } @else {
+          <span aria-label="No profile photo">{{ (auth.displayName() || user.email || 'U').slice(0, 1).toUpperCase() }}</span>
+        }
+      </div>
+      <div class="avatar-tools">
+        <h3>Profile photo</h3>
+        <p>JPG, PNG or WebP · Maximum 5 MB</p>
+        <label class="avatar-button" for="avatar-upload">{{ avatar.url() ? 'Change photo' : 'Upload photo' }}</label>
+        <input id="avatar-upload" type="file" accept="image/jpeg,image/png,image/webp" (change)="selectPhoto($event)" [disabled]="avatar.saving()" />
+        @if (selected()) {
+          <button type="button" (click)="savePhoto()" [disabled]="avatar.saving()">{{ avatar.saving() ? 'Saving…' : 'Save photo' }}</button>
+          <button class="subtle-button" type="button" (click)="clearSelection()" [disabled]="avatar.saving()">Cancel</button>
+        }
+        @if (avatar.url()) {
+          <button class="subtle-button" type="button" (click)="removePhoto()" [disabled]="avatar.saving()">Remove photo</button>
+        }
+      </div>
+    </div>
+    @if (error()) { <p class="avatar-message avatar-error" role="alert">{{ error() }}</p> }
+    @if (success()) { <p class="avatar-message" role="status">{{ success() }}</p> }
     <dl>
       <dt>First name</dt><dd>{{ user.firstName || 'Not provided' }}</dd>
       <dt>Last name</dt><dd>{{ user.lastName || 'Not provided' }}</dd>
