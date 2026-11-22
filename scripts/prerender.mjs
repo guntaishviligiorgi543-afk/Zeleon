@@ -115,6 +115,12 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
       const path = new URL(loc).pathname;
       // No saved profile, cookies, sessions or staff credentials; isolate every page.
       const context = await browser.newContext({ serviceWorkers: 'block', reducedMotion: 'reduce', viewport: { width: 1440, height: 1000 } });
+      // Static HTML cannot solve a browser-specific challenge. This build-only
+      // placeholder never returns a token or invokes a verification callback;
+      // Angular loads the real API when a visitor opens the generated page.
+      await context.addInitScript(() => {
+        window.turnstile = { render: () => 'static-snapshot', getResponse: () => '', reset() {}, remove() {} };
+      });
       const violations = [];
       await context.route('**/*', async route => {
         const request = route.request();
@@ -148,7 +154,7 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
         await page.waitForFunction(() => document.querySelector('a[aria-label="Sign in"]') && document.querySelector('meta[name="robots"]')?.content === 'index, follow');
         if (path.startsWith('/shop/')) await page.locator('#shop-products[aria-busy="false"]').waitFor();
         if (path === '/') await page.waitForFunction(count => document.querySelectorAll('#featured-products a.card:not([data-loop-clone])').length === count &&
-          ![...document.querySelectorAll('app-home [role="status"], app-home [role="alert"]')].some(element => element.textContent?.trim()), rows.length);
+          ![...document.querySelectorAll('app-home [role="status"], app-home [role="alert"]')].some(element => !element.classList.contains('verification-status') && element.textContent?.trim()), rows.length);
         await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
         assert.deepEqual(violations, [], `Non-public request during prerender: ${path}`);
         assert.deepEqual(errors, [], `Angular error during prerender: ${path}`);
@@ -156,6 +162,7 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
         assert.equal(storage.cookies.length, 0, 'Prerender acquired cookies');
         assert(storage.origins.every(origin => origin.localStorage.every(entry => !/auth-token/.test(entry.name))), 'Prerender acquired an auth session');
         await page.evaluate(() => {
+          document.querySelectorAll('.subscriptionForm .verification-status').forEach(element => element.remove());
           // These markers exist only on captured children. Angular replaces them
           // during its normal bootstrap, restoring all original animation behavior.
           document.querySelectorAll('app-root > *').forEach(element => element.setAttribute('data-zeleon-prerender', ''));

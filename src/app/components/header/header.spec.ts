@@ -6,6 +6,7 @@ import { Auth } from '../../services/auth';
 import { createAuthStub } from '../../testing/auth-stub';
 import { User } from '@supabase/supabase-js';
 import { vi } from 'vitest';
+import { Cart } from '../../services/cart';
 
 describe('Header', () => {
   let component: Header;
@@ -52,6 +53,33 @@ describe('Header', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('updates both cart badges with the total quantity and hides them when empty or signed out', async () => {
+    auth.user.set({ id: 'user-1' } as User);
+    await fixture.whenStable();
+    const cart = TestBed.inject(Cart);
+    const product = { id: 1, name: 'Boost', slug: 'boost', price: 12, currency: 'USD', image: '', category: 'classic', categoryName: 'Classic', stock: 20 };
+    expect(fixture.nativeElement.querySelectorAll('.cart-toggle .cart-count, .mobile-cart-toggle .cart-count')).toHaveLength(0);
+    cart.add(product, 2);
+    cart.add({ ...product, id: 2 }, 3);
+    fixture.detectChanges();
+    expect(component.cartCount()).toBe(5);
+    expect(Array.from(fixture.nativeElement.querySelectorAll('.cart-toggle .cart-count, .mobile-cart-toggle .cart-count'), (badge: any) => badge.textContent.trim())).toEqual(['5', '5']);
+    cart.changeQuantity(1, 1);
+    fixture.detectChanges();
+    expect(component.cartCount()).toBe(6);
+    cart.remove(2);
+    fixture.detectChanges();
+    expect(component.cartCount()).toBe(3);
+    cart.clear();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.cart-toggle .cart-count, .mobile-cart-toggle .cart-count')).toHaveLength(0);
+    cart.add(product, 1);
+    auth.user.set(null);
+    await fixture.whenStable();
+    expect(component.cartCount()).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.cart-toggle .cart-count, .mobile-cart-toggle .cart-count')).toHaveLength(0);
   });
 
   it('applies the checkout glass state after one screen and restores it at the top', () => {

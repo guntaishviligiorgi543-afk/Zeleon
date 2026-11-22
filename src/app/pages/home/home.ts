@@ -17,6 +17,10 @@ export class Home {
   readonly productsError = signal(false);
   readonly newsletterBusy = signal(false);
   readonly newsletterMessage = signal('');
+  readonly newsletterVerificationError = signal('');
+  readonly newsletterVerificationLoading = signal(true);
+  private newsletterVerificationTimer?: ReturnType<typeof setTimeout>;
+  private newsletterScriptCleanup?: () => void;
   private newsletterWidgetId: string | null = null;
   private readonly catalog = inject(Products);
   private productRequest?: AbortController;
@@ -30,7 +34,12 @@ export class Home {
       const timer = this.zone.runOutsideAngular(() => setInterval(() => { if (!document.hidden && !this.productsLoading()) void this.loadProducts(true); }, 30000));
       this.destroyRef.onDestroy(() => clearInterval(timer));
     });
-    this.destroyRef.onDestroy(() => this.productRequest?.abort());
+    this.destroyRef.onDestroy(() => {
+      this.productRequest?.abort();
+      clearTimeout(this.newsletterVerificationTimer);
+      this.newsletterScriptCleanup?.();
+      if (this.newsletterWidgetId !== null) (window as any).turnstile?.remove(this.newsletterWidgetId);
+    });
     afterNextRender(() => {
       this.zone.runOutsideAngular(() => this.initializeProductSlider());
     });
@@ -137,25 +146,102 @@ export class Home {
   }
 
 
+  private newsletterVerificationFailed(code: string): void {
+    if (this.destroyRef.destroyed) return;
+    clearTimeout(this.newsletterVerificationTimer);
+    if (code === 'load-timeout' && !(window as any).turnstile) {
+      const script = document.querySelector<HTMLScriptElement>('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]');
+      if (script) script.dataset['newsletterFailed'] = 'true';
+    }
+    this.zone.run(() => {
+      this.newsletterVerificationLoading.set(false);
+      const configuration = code === '110200'
+        ? 'This website address is not authorized for newsletter verification. Please contact ZELEON.'
+        : ['110100', '110110', '400020', '400021', '400070'].includes(code)
+          ? 'Newsletter verification is not configured correctly. Please contact ZELEON.'
+          : 'Unable to connect to Cloudflare verification. Check your connection, allow challenges.cloudflare.com, and try again.';
+      this.newsletterVerificationError.set(`${configuration} (Code: ${code})`);
+    });
+  }
+
+  private waitForNewsletterVerification(): void {
+    clearTimeout(this.newsletterVerificationTimer);
+    this.newsletterVerificationLoading.set(true);
+    this.newsletterVerificationError.set('');
+    this.newsletterVerificationTimer = setTimeout(() => this.newsletterVerificationFailed('load-timeout'), 30000);
+  }
+
   private setupNewsletterCaptcha(): void {
     const siteKey = '0x4AAAAAAGHCqbPtlPdWY31w';
-    if (siteKey.startsWith('REPLACE_')) {
-      this.newsletterMessage.set('Newsletter verification is being configured.');
-      return;
-    }
     const widget = this.element.nativeElement.querySelector<HTMLElement>('#zeleon-newsletter-turnstile');
-    if (!widget) return;
+    if (!widget || this.destroyRef.destroyed) return;
+    this.waitForNewsletterVerification();
     const render = () => {
+      if (this.destroyRef.destroyed) return;
       const turnstile = (window as any).turnstile;
-      if (!turnstile || this.newsletterWidgetId) return;
-      this.newsletterWidgetId = turnstile.render(widget, { sitekey: siteKey, theme: 'auto' });
+      if (!turnstile || this.newsletterWidgetId !== null) return;
+      try {
+        this.newsletterWidgetId = turnstile.render(widget, {
+          sitekey: siteKey, theme: 'auto', size: 'flexible',
+          callback: () => {
+            if (this.destroyRef.destroyed) return;
+            clearTimeout(this.newsletterVerificationTimer);
+            this.zone.run(() => {
+              this.newsletterVerificationLoading.set(false);
+              this.newsletterVerificationError.set('');
+              this.newsletterMessage.set('');
+            });
+          },
+          'error-callback': (code: string) => { this.newsletterVerificationFailed(String(code)); return true; },
+          'expired-callback': () => {
+            if (this.destroyRef.destroyed) return;
+            this.zone.run(() => {
+              this.newsletterVerificationLoading.set(false);
+              this.newsletterVerificationError.set('Verification expired. Please verify again before subscribing.');
+            });
+          },
+          'timeout-callback': () => this.newsletterVerificationFailed('challenge-timeout'),
+        });
+      } catch {
+        this.newsletterVerificationFailed('render-failed');
+      }
     };
     if ((window as any).turnstile) { render(); return; }
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
-    script.async = true;
-    script.onload = render;
-    document.head.appendChild(script);
+    // Reuse a pending script when navigating back to Home; never load the API twice.
+    let script = document.querySelector<HTMLScriptElement>('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]');
+    if (script?.dataset['newsletterFailed'] === 'true') { script.remove(); script = null; }
+    const fresh = !script;
+    script ??= document.createElement('script');
+    const currentScript = script;
+    const failed = () => {
+      currentScript.dataset['newsletterFailed'] = 'true';
+      this.newsletterVerificationFailed('script-load');
+    };
+    this.newsletterScriptCleanup?.();
+    script.addEventListener('load', render);
+    script.addEventListener('error', failed);
+    this.newsletterScriptCleanup = () => {
+      currentScript.removeEventListener('load', render);
+      currentScript.removeEventListener('error', failed);
+    };
+    if (fresh) {
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  }
+
+  retryNewsletterVerification(): void {
+    if (this.newsletterBusy()) return;
+    this.newsletterMessage.set('');
+    const turnstile = (window as any).turnstile;
+    if (this.newsletterWidgetId !== null && turnstile) {
+      this.waitForNewsletterVerification();
+      try { turnstile.reset(this.newsletterWidgetId); }
+      catch { this.newsletterVerificationFailed('reset-failed'); }
+    } else {
+      this.setupNewsletterCaptcha();
+    }
   }
 
   async submitNewsletter(event: Event): Promise<void> {
@@ -170,7 +256,7 @@ export class Home {
       this.newsletterMessage.set('Enter a valid email and accept the newsletter consent.');
       return;
     }
-    if (!captcha) { this.newsletterMessage.set('Complete the human verification first.'); return; }
+    if (!captcha) { this.newsletterMessage.set(this.newsletterVerificationError() || 'Complete the human verification first.'); return; }
     this.newsletterBusy.set(true);
     this.newsletterMessage.set('');
     try {
@@ -187,7 +273,10 @@ export class Home {
       this.newsletterMessage.set(error instanceof Error ? error.message : 'Please try again later.');
     } finally {
       this.newsletterBusy.set(false);
-      if (this.newsletterWidgetId && turnstile) turnstile.reset(this.newsletterWidgetId);
+      if (this.newsletterWidgetId !== null && turnstile) {
+        this.waitForNewsletterVerification();
+        try { turnstile.reset(this.newsletterWidgetId); } catch { this.newsletterVerificationFailed('reset-failed'); }
+      }
     }
   }
 

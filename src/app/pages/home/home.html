@@ -217,6 +217,13 @@
         <label for="checkbox">I agree to receive marketing emails</label>
       </div>
       <div id="zeleon-newsletter-turnstile" aria-label="Human verification"></div>
+      @if (newsletterVerificationLoading()) { <p class="verification-status" role="status">Loading secure verification…</p> }
+      @if (newsletterVerificationError()) {
+        <div class="verification-error" role="alert">
+          <p>{{ newsletterVerificationError() }}</p>
+          <button type="button" (click)="retryNewsletterVerification()" [disabled]="newsletterBusy()">Retry verification</button>
+        </div>
+      }
       <button type="submit" [disabled]="newsletterBusy()">{{ newsletterBusy() ? "Submitting…" : "Subscribe" }}</button>
       <p role="status" aria-live="polite">{{ newsletterMessage() }}</p>
     </form>

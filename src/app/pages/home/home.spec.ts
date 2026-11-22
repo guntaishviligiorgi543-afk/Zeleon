@@ -60,6 +60,61 @@ describe('Home', () => {
     expect(component).toBeTruthy();
   });
 
+  function mockVerification() {
+    let callbacks: Record<string, any> = {};
+    const api = {
+      render: vi.fn((_element, options) => { callbacks = options; return 'newsletter-widget'; }),
+      reset: vi.fn(), remove: vi.fn(), getResponse: vi.fn().mockReturnValue(''),
+    };
+    vi.stubGlobal('turnstile', api);
+    (component as any).setupNewsletterCaptcha();
+    return { api, callbacks };
+  }
+
+  it('shows Cloudflare failures, retries the widget, and clears the error on success', () => {
+    const { api, callbacks } = mockVerification();
+    callbacks['error-callback']('200500');
+    fixture.detectChanges();
+    expect(component.newsletterVerificationLoading()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.verification-error').textContent).toContain('200500');
+    fixture.nativeElement.querySelector('.verification-error button').click();
+    expect(api.reset).toHaveBeenCalledWith('newsletter-widget');
+    expect(component.newsletterVerificationLoading()).toBe(true);
+    callbacks['callback']('verified-token');
+    fixture.detectChanges();
+    expect(component.newsletterVerificationError()).toBe('');
+    expect(component.newsletterVerificationLoading()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.verification-error')).toBeNull();
+    callbacks['expired-callback']();
+    expect(component.newsletterVerificationError()).toContain('expired');
+  });
+
+  it('identifies an unauthorized hostname and never submits without a verification token', async () => {
+    const { callbacks } = mockVerification();
+    const fetch = vi.fn();
+    vi.stubGlobal('fetch', fetch);
+    callbacks['error-callback']('110200');
+    expect(component.newsletterVerificationError()).toContain('not authorized');
+    const form = fixture.nativeElement.querySelector('.subscriptionForm form') as HTMLFormElement;
+    form.querySelector<HTMLInputElement>('input[type=email]')!.value = 'test@example.com';
+    form.querySelector<HTMLInputElement>('input[type=checkbox]')!.checked = true;
+    await component.submitNewsletter({ preventDefault: vi.fn(), target: form } as unknown as Event);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(component.newsletterMessage()).toContain('110200');
+  });
+
+  it('replaces a failed API script instead of silently waiting on it or loading duplicates', () => {
+    const script = document.querySelector<HTMLScriptElement>('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]')!;
+    script.dispatchEvent(new Event('error'));
+    expect(component.newsletterVerificationError()).toContain('script-load');
+    component.retryNewsletterVerification();
+    const scripts = document.querySelectorAll('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]');
+    expect(scripts).toHaveLength(1);
+    expect(scripts[0]).not.toBe(script);
+    component.retryNewsletterVerification();
+    expect(document.querySelectorAll('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]')).toHaveLength(1);
+  });
+
   it('renders catalog products with details links and prices', () => {
     const card = fixture.nativeElement.querySelector('.sec3Slider .card') as HTMLAnchorElement;
     expect(card.textContent).toContain('Berry Blast');
@@ -147,6 +202,7 @@ describe('Home', () => {
 
   afterEach(() => {
     fixture.destroy();
+    document.querySelectorAll('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]').forEach(script => script.remove());
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });

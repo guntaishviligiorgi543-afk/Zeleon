@@ -1,10 +1,20 @@
-import { afterNextRender, Component, DestroyRef, inject, input, NgZone, signal } from '@angular/core';
+import {
+  afterNextRender,
+  Component,
+  computed,
+  DestroyRef,
+  inject,
+  input,
+  NgZone,
+  signal,
+} from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { BurgerMenu } from '../burger-menu/burger-menu';
 import { ProfileAvatar } from '../../services/profile-avatar';
 import { CartSidebar } from '../cart-sidebar/cart-sidebar';
+import { Cart } from '../../services/cart';
 
 @Component({
   imports: [RouterLink, RouterLinkActive, BurgerMenu, CartSidebar, NgTemplateOutlet],
@@ -17,6 +27,10 @@ export class Header {
   readonly scrolled = signal(false);
   readonly auth = inject(Auth);
   readonly avatar = inject(ProfileAvatar);
+  private readonly cart = inject(Cart);
+  readonly cartCount = computed(() =>
+    this.cart.items().reduce((total, line) => total + line.quantity, 0),
+  );
   readonly signingOut = signal(false);
   readonly authError = signal('');
   private readonly router = inject(Router);

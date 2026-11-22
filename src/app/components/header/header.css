@@ -443,4 +443,23 @@ header {
     .site-header .headerContainer,.site-header .headerContainer::before,.site-header .infoslideWrapper { transition:none; }
 }
 
-.headerIcons .profile-link .header-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,.8); }
+.headerIcons .profile-link .header-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 0; }
+
+.cart-toggle,.mobile-cart-toggle { position:relative; }
+.headerIcons .cart-count,.mobile-cart-toggle .cart-count {
+    position:absolute;
+    top:0;
+    right:0;
+    display:grid;
+    place-items:center;
+    min-width:22px;
+    height:22px;
+    padding:0 5px;
+    border:0;
+    border-radius:999px;
+    background:#de1313;
+    color:#fff;
+    font:700 11px/1 'Montserrat',Arial,sans-serif;
+    font-variant-numeric:tabular-nums;
+    pointer-events:none;
+}
