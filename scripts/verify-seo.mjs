@@ -192,8 +192,15 @@ try {
   await page.goto(base + '/shop/', { waitUntil: 'domcontentloaded' });
   await booted();
   for (const category of ['classic', 'boost-blends', 'zero-sugar']) {
-    await page.locator(`.filters a[href="/shop/${category}"]`).click();
-    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop/' + category, { waitUntil: 'domcontentloaded' });
+    // Dynamic catalog filters use /shop?category=..., while SEO landing pages
+    // remain available as canonical /shop/<category>/ routes.
+    await page.locator(`.filters a[href="/shop?category=${category}"]`).click();
+    await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop' && url.searchParams.get('category') === category, { waitUntil: 'domcontentloaded' });
+    await page.locator('#shop-products[aria-busy="false"]').waitFor();
+    assert((await page.locator('.category-description').innerText()).length > 20);
+
+    await page.goto(base + '/shop/' + category + '/', { waitUntil: 'domcontentloaded' });
+    await booted();
     await page.locator('#shop-products[aria-busy="false"]').waitFor();
     await page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'index, follow');
     assert.equal(await page.title(), metadata('/shop/' + category).title);
@@ -204,7 +211,6 @@ try {
       const href = await link.getAttribute('href');
       assert(expected.some(product => `/product/${product.id}` === href));
     }
-    assert((await page.locator('.category-description').innerText()).length > 20);
   }
   await page.locator('.filters a[href="/shop"]').click();
   await page.waitForURL(url => url.pathname.replace(/\/+$/, '') === '/shop', { waitUntil: 'domcontentloaded' });
