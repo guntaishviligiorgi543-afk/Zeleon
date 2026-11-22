@@ -3,6 +3,18 @@ import { ManagerDashboard, ManagerProduct } from '../../../services/manager-dash
 import { ManagerProducts } from './manager-products';
 
 describe('Product editor form', () => {
+  const originalShowModal = Object.getOwnPropertyDescriptor(HTMLDialogElement.prototype, 'showModal');
+  beforeAll(() => {
+    // jsdom does not implement native modal presentation; keep the open state
+    // faithful so form tests exercise the same component lifecycle as a browser.
+    if (!originalShowModal) Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
+      configurable: true,
+      value: function (this: HTMLDialogElement) { this.open = true; },
+    });
+  });
+  afterAll(() => {
+    if (!originalShowModal) Reflect.deleteProperty(HTMLDialogElement.prototype, 'showModal');
+  });
   const references = {
     categories: [{ id: 1, name: 'Classic', slug: 'classic' }],
   };
