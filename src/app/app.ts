@@ -35,6 +35,7 @@ export class App implements AfterViewInit {
   protected readonly router = inject(Router);
   protected readonly ratingRoute = signal(this.isRatingUrl(this.router.url));
   protected readonly checkoutRoute = signal(/^\/checkout(?:[/?#;]|$)/.test(this.router.url));
+  protected readonly newsletterRoute = signal(/^\/newsletter\/(confirm|unsubscribe)(?:[/?#;]|$)/.test(this.router.url));
   protected readonly workspaceRoute = signal(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(this.router.url));
   private readonly injector = inject(Injector);
   private readonly destroyRef = inject(DestroyRef);
@@ -68,6 +69,7 @@ export class App implements AfterViewInit {
       .subscribe((event) => {
         this.ratingRoute.set(this.isRatingUrl(event.urlAfterRedirects));
         this.checkoutRoute.set(/^\/checkout(?:[/?#;]|$)/.test(event.urlAfterRedirects));
+        this.newsletterRoute.set(/^\/newsletter\/(confirm|unsubscribe)(?:[/?#;]|$)/.test(event.urlAfterRedirects));
         this.workspaceRoute.set(/^\/(manager|admin|support)(?:[/?#;]|$)/.test(event.urlAfterRedirects));
         this.refreshAfterRender();
       });

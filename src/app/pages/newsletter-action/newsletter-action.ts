@@ -1,50 +1,71 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+
+type State = 'checking' | 'pending' | 'confirmed' | 'expired' | 'invalid' | 'success' | 'error';
 
 @Component({
   selector: 'app-newsletter-action',
   standalone: true,
   imports: [RouterLink],
-  template: `
-    <section style="max-width:560px;margin:80px auto;padding:30px;text-align:center">
-      <h1>{{ isConfirm ? 'Confirm Newsletter' : 'Unsubscribe from Newsletter' }}</h1>
-      <p role="status">{{ message() }}</p>
-      @if (!completed()) {
-        <button type="button" (click)="submit()" [disabled]="busy()">
-          {{ busy() ? 'Processing…' : (isConfirm ? 'Confirm subscription' : 'Confirm unsubscribe') }}
-        </button>
-      }
-      <p><a routerLink="/">Return to ZELEON</a></p>
-    </section>
-  `,
+  templateUrl: './newsletter-action.html',
+  styleUrl: './newsletter-action.css',
 })
-export class NewsletterAction {
+export class NewsletterAction implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly isConfirm = this.route.snapshot.data['action'] === 'confirm';
   readonly busy = signal(false);
-  readonly completed = signal(false);
-  readonly message = signal('Please confirm your choice.');
-  async submit(): Promise<void> {
-    const token = this.route.snapshot.queryParamMap.get('token');
-    if (!token || !/^[0-9a-f]{64}$/.test(token)) {
-      this.message.set('This link is invalid or incomplete.');
-      return;
+  readonly state = signal<State>('checking');
+  readonly message = signal('');
+  private readonly endpoint = 'https://nunxmgltzvknnmkdvjsw.supabase.co/functions/v1/newsletter-management';
+
+  private get token(): string { return this.route.snapshot.queryParamMap.get('token') ?? ''; }
+
+  private async request(action: string): Promise<{ status?: string; message?: string; error?: string }> {
+    const response = await fetch(this.endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, token: this.token }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Unable to complete your request.');
+    return data;
+  }
+
+  async ngOnInit(): Promise<void> {
+    if (!/^[0-9a-f]{64}$/.test(this.token)) {
+      this.state.set('invalid'); return;
     }
-    this.busy.set(true);
+    if (!this.isConfirm) { this.state.set('pending'); return; }
     try {
-      const response = await fetch('https://nunxmgltzvknnmkdvjsw.supabase.co/functions/v1/newsletter-management', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: this.isConfirm ? 'confirm' : 'unsubscribe', token }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Unable to complete request.');
-      this.message.set(data.message || 'Request completed.');
-      this.completed.set(true);
-    } catch (error) {
-      this.message.set(error instanceof Error ? error.message : 'Please try again later.');
-    } finally {
-      this.busy.set(false);
+      const data = await this.request('status');
+      const status = data.status;
+      this.state.set(status === 'confirmed' ? 'confirmed' : status === 'pending' ? 'pending' : status === 'expired' ? 'expired' : 'invalid');
+    } catch {
+      this.message.set('We could not check this link. Please try again.');
+      this.state.set('error');
     }
+  }
+
+  async submit(): Promise<void> {
+    if (this.busy() || !/^[0-9a-f]{64}$/.test(this.token)) return;
+    this.busy.set(true);
+    this.message.set('');
+    try {
+      const data = await this.request(this.isConfirm ? 'confirm' : 'unsubscribe');
+      if (data.status === 'already_confirmed') this.state.set('confirmed');
+      else {
+        this.message.set(data.message ?? (this.isConfirm ? 'Subscription confirmed.' : 'Subscription cancelled.'));
+        this.state.set('success');
+      }
+    } catch (error) {
+      this.message.set(error instanceof Error ? error.message : 'Please try again.');
+      this.state.set('error');
+    } finally { this.busy.set(false); }
+  }
+
+  async retry(): Promise<void> {
+    this.message.set('');
+    if (this.isConfirm) { this.state.set('checking'); await this.ngOnInit(); }
+    else this.state.set('pending');
   }
 }

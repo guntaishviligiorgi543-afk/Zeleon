@@ -188,7 +188,7 @@ export async function prepare(directory = join(root, 'dist/zeleon/browser')) {
   const privateShell = withHead(shell, { index: false });
   // Always use the untouched browser shell, never the prerendered homepage.
   await writeFile(join(directory, '404.html'), privateShell, 'utf8');
-  const routes = ['login', 'signup', 'profile', 'cart', 'checkout', 'forgot-password', 'reset-password', 'auth/callback', 'staff-auth', 'manager', 'admin', 'support'];
+  const routes = ['login', 'signup', 'profile', 'cart', 'checkout', 'forgot-password', 'reset-password', 'auth/callback', 'staff-auth', 'manager', 'admin', 'support', 'newsletter/confirm', 'newsletter/unsubscribe'];
   for (const path of routes) {
     await mkdir(join(directory, path), { recursive: true });
     await writeFile(join(directory, path, 'index.html'), privateShell, 'utf8');

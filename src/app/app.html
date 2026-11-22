@@ -1,4 +1,4 @@
-@if (!workspaceRoute()) {
+@if (!workspaceRoute() && !newsletterRoute()) {
   <app-header [checkout]="checkoutRoute()" [class.checkout-header-sticky]="checkoutRoute()" [attr.inert]="ratingRoute() ? '' : null"></app-header>
 }
 <main>
@@ -7,12 +7,12 @@
   }
   <router-outlet></router-outlet>
 </main>
-@if (!workspaceRoute() && !checkoutRoute()) {
+@if (!workspaceRoute() && !checkoutRoute() && !newsletterRoute()) {
   <app-footer [attr.inert]="ratingRoute() ? '' : null"></app-footer>
 }
-<app-manager-navigation [attr.inert]="ratingRoute() ? '' : null"></app-manager-navigation>
-@if (!workspaceRoute() && !checkoutRoute() && !ratingRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
+@if (!newsletterRoute()) { <app-manager-navigation [attr.inert]="ratingRoute() ? '' : null"></app-manager-navigation> }
+@if (!workspaceRoute() && !checkoutRoute() && !ratingRoute() && !newsletterRoute() && !router.url.startsWith('/admin') && !router.url.startsWith('/support') && !router.url.startsWith('/staff-auth')) {
   <app-customer-chat></app-customer-chat>
 }
 
-<app-cart-login-dialog></app-cart-login-dialog>
+@if (!newsletterRoute()) { <app-cart-login-dialog></app-cart-login-dialog> }

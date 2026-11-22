@@ -1,0 +1,32 @@
+<section class="newsletter-confirmation" aria-labelledby="newsletter-title">
+  <div class="confirmation-card">
+    <a class="wordmark" routerLink="/" aria-label="ZELEON home"><span class="bolt" aria-hidden="true">ϟ</span> ZELEON</a>
+    <div class="status-icon" [class.done]="state() === 'success' || state() === 'confirmed'" aria-hidden="true">
+      {{ state() === 'success' || state() === 'confirmed' ? '✓' : '✉' }}
+    </div>
+    @if (state() === 'checking') {
+      <h1 id="newsletter-title">Checking your link</h1>
+      <p role="status">Verifying your newsletter confirmation status…</p>
+    } @else if (state() === 'confirmed') {
+      <h1 id="newsletter-title">Already subscribed</h1>
+      <p role="status">This email address has already confirmed its ZELEON newsletter subscription. No further action is needed.</p>
+    } @else if (state() === 'success') {
+      <h1 id="newsletter-title">{{ isConfirm ? 'You’re subscribed!' : 'You’ve unsubscribed' }}</h1>
+      <p role="status">{{ message() }}</p>
+    } @else if (state() === 'expired' || state() === 'invalid') {
+      <h1 id="newsletter-title">{{ state() === 'expired' ? 'Link expired' : 'Link unavailable' }}</h1>
+      <p role="alert">{{ state() === 'expired' ? 'This confirmation link has expired. Return to ZELEON and subscribe again to request a new email.' : 'This link is invalid, no longer active, or has already been used.' }}</p>
+    } @else {
+      <h1 id="newsletter-title">{{ isConfirm ? 'Confirm your subscription' : 'Unsubscribe from ZELEON' }}</h1>
+      <p>{{ isConfirm ? 'Confirm that you want to receive ZELEON product news, new flavors and updates.' : 'You can stop receiving ZELEON newsletter emails at any time.' }}</p>
+      @if (state() === 'error') { <p class="error" role="alert">{{ message() }}</p> }
+      @if (state() === 'pending') {
+        <button class="primary" type="button" (click)="submit()" [disabled]="busy()">{{ busy() ? 'Processing…' : (isConfirm ? 'Confirm subscription' : 'Confirm unsubscribe') }}</button>
+      } @else if (state() === 'error') {
+        <button class="primary" type="button" (click)="retry()" [disabled]="busy()">Try again</button>
+      }
+    }
+    <a class="return-link" routerLink="/">← Return to ZELEON</a>
+    <p class="account-note">Newsletter confirmation is tied to the email address that received the message, not to the account signed in on this device.</p>
+  </div>
+</section>

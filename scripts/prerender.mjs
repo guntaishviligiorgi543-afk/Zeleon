@@ -88,7 +88,7 @@ export async function validatePrerender(directory = join(root, 'dist/zeleon/brow
     assert(!document.querySelector('script[src]'), 'Redirect must not race Angular bootstrap');
     dom.window.close();
   }
-  for (const path of ['404.html', ...['login', 'signup', 'profile', 'cart', 'checkout', 'forgot-password', 'reset-password', 'auth/callback', 'staff-auth', 'manager', 'admin', 'support'].map(path => path + '/index.html')]) {
+  for (const path of ['404.html', ...['login', 'signup', 'profile', 'cart', 'checkout', 'forgot-password', 'reset-password', 'auth/callback', 'staff-auth', 'manager', 'admin', 'support', 'newsletter/confirm', 'newsletter/unsubscribe'].map(path => path + '/index.html')]) {
     const dom = new JSDOM(await readFile(join(directory, path), 'utf8'));
     const document = dom.window.document;
     assert.equal(document.querySelector('app-root')?.innerHTML, '', `Private route contains a snapshot: ${path}`);
