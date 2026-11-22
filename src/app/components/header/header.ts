@@ -3,6 +3,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { BurgerMenu } from '../burger-menu/burger-menu';
+import { ProfileAvatar } from '../../services/profile-avatar';
 import { CartSidebar } from '../cart-sidebar/cart-sidebar';
 
 @Component({
@@ -15,6 +16,7 @@ export class Header {
   readonly checkout = input(false);
   readonly scrolled = signal(false);
   readonly auth = inject(Auth);
+  readonly avatar = inject(ProfileAvatar);
   readonly signingOut = signal(false);
   readonly authError = signal('');
   private readonly router = inject(Router);

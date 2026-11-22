@@ -13,6 +13,12 @@ Deno.serve(async (request: Request) => {
   if (userError || !user) return new Response('Unauthorized', { status: 401 });
 
   const admin = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
+  const avatar = await admin.from('user_avatars').select('storage_path').eq('user_id', user.id).maybeSingle();
+  if (avatar.error) return new Response('Account cleanup failed', { status: 500 });
+  if (avatar.data?.storage_path) {
+    const cleaned = await admin.storage.from('avatars').remove([avatar.data.storage_path]);
+    if (cleaned.error) return new Response('Account cleanup failed', { status: 500 });
+  }
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) return new Response('Account deletion failed', { status: 500 });
   return new Response(null, { status: 204 });

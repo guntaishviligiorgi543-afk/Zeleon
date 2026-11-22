@@ -127,16 +127,14 @@
   </article>
 
   @if (editorOpen()) {
-    <div
+    <dialog
+      #productDialog
       class="dialog-backdrop"
-      (mousedown)="$event.target === $event.currentTarget && closeEditor()"
+      aria-labelledby="product-editor-title"
+      (cancel)="$event.preventDefault(); closeEditor()"
+      (click)="$event.target === $event.currentTarget && closeEditor()"
     >
-      <section
-        class="editor surface"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="product-editor-title"
-      >
+      <section class="editor surface">
         <div class="editor-header">
           <div>
             <h2 id="product-editor-title">{{ editing() ? 'Edit product' : 'Add product' }}</h2>
@@ -233,6 +231,6 @@
           </div>
         </form>
       </section>
-    </div>
+    </dialog>
   }
 </section>

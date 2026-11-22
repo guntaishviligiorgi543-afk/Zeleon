@@ -442,3 +442,5 @@ header {
 @media(prefers-reduced-motion:reduce) {
     .site-header .headerContainer,.site-header .headerContainer::before,.site-header .infoslideWrapper { transition:none; }
 }
+
+.headerIcons .profile-link .header-avatar { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(255,255,255,.8); }

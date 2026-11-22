@@ -167,16 +167,28 @@
 .nav-button {
   padding-inline: 13px;
 }
-.dialog-backdrop {
+/* Native modal dialog enters the browser's top layer, above any fixed
+   navigation, stacking context or transparent overlay. */
+dialog.dialog-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 2147483647;
-  display: grid;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+  margin: 0;
   padding: 20px;
   overflow-y: auto;
-  place-items: start center;
+  border: 0;
+  background: transparent;
+  box-sizing: border-box;
+}
+dialog.dialog-backdrop::backdrop {
   background: rgba(17, 30, 53, 0.48);
-  isolation: isolate;
+}
+dialog.dialog-backdrop[open] {
+  display: grid;
+  place-items: start center;
 }
 .editor {
   position: relative;
@@ -185,7 +197,6 @@
   margin-block: 28px;
   padding: 24px;
   pointer-events: auto;
-  touch-action: manipulation;
 }
 .editor-header {
   display: flex;

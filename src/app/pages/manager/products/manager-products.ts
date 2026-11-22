@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, computed, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { AfterViewChecked, Component, computed, ElementRef, inject, OnInit, OnDestroy, signal, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   ManagerDashboard,
@@ -14,7 +14,16 @@ import {
   templateUrl: './manager-products.html',
   styleUrls: ['../manager-page.css', './manager-products.css'],
 })
-export class ManagerProducts implements OnInit, OnDestroy {
+export class ManagerProducts implements OnInit, OnDestroy, AfterViewChecked {
+  @ViewChild('productDialog') private productDialog?: ElementRef<HTMLDialogElement>;
+
+  ngAfterViewChecked(): void {
+    const dialog = this.productDialog?.nativeElement;
+    if (this.editorOpen() && dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  }
+
   private readonly dashboard = inject(ManagerDashboard);
   readonly products = signal<ManagerProduct[]>([]);
   readonly references = signal<ProductReferences>({ categories: [] });
