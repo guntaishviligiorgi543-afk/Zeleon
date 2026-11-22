@@ -106,7 +106,8 @@
                 }
               </div>
               <p class="prodNam">{{ product.name }}</p>
-              <p class="prodPrice">{{ product.price | currency: product.currency }}</p>
+              @if (product.onSale) { <span class="catalog-sale-badge">SALE</span> }
+              <p class="prodPrice">@if ((product.stock ?? 0) === 0) { <span class="catalog-unavailable">OUT OF STOCK</span> <s>{{ (product.regularPrice ?? product.price) | currency:product.currency }}</s> } @else if (product.onSale) { <s>{{ product.regularPrice | currency:product.currency }}</s> <span class="catalog-sale-price">{{ product.price | currency:product.currency }}</span> } @else { {{ product.price | currency:product.currency }} }</p>
             </a>
           } @empty {
             <p>No products available.</p>

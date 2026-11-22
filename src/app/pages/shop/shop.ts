@@ -1,4 +1,4 @@
-import { afterNextRender, Component, DestroyRef, ElementRef, inject, signal } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, ElementRef, inject, NgZone, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
@@ -6,7 +6,7 @@ import { Product } from '../../models/product';
 import { Products } from '../../services/products';
 import { ProductCard } from '../../components/product-card/product-card';
 
-type Category = 'all' | 'classic' | 'boost-blends' | 'zero-sugar';
+type Category = string;
 type Sort = 'default' | 'priceLowToHigh' | 'priceHighToLow' | 'nameAToZ' | 'nameZToA';
 
 @Component({
@@ -18,6 +18,7 @@ type Sort = 'default' | 'priceLowToHigh' | 'priceHighToLow' | 'nameAToZ' | 'name
 })
 export class Shop {
   readonly products = signal<readonly Product[]>([]);
+  readonly categories = signal<{ id: number; name: string; slug: string }[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
   readonly pageSize = 12;
@@ -25,6 +26,7 @@ export class Shop {
   private readonly catalog = inject(Products);
   private readonly router = inject(Router);
   private request?: AbortController;
+  private readonly zone = inject(NgZone);
 
   constructor() {
     const destroyRef = inject(DestroyRef);
@@ -33,25 +35,26 @@ export class Shop {
       .pipe(takeUntilDestroyed(destroyRef))
       .subscribe(([data, params]) => {
         const category = data['category'] ?? params.get('category');
-        this.selectedCategory = ['classic', 'boost-blends', 'zero-sugar'].includes(category ?? '')
-          ? (category as Category)
-          : 'all';
+        this.selectedCategory = category || 'all';
         this.currentPage.set(1);
       });
     afterNextRender(() => {
       void this.loadProducts();
+      const timer = this.zone.runOutsideAngular(() => setInterval(() => { if (!document.hidden && !this.loading()) void this.loadProducts(true); }, 30000));
+      destroyRef.onDestroy(() => clearInterval(timer));
     });
     destroyRef.onDestroy(() => this.request?.abort());
   }
 
-  async loadProducts(): Promise<void> {
+  async loadProducts(background = false): Promise<void> {
     this.request?.abort();
     const request = (this.request = new AbortController());
-    this.loading.set(true);
+    if (!background) this.loading.set(true);
     this.error.set('');
     try {
-      const products = await this.catalog.getActiveProducts(request.signal);
+      const [products, categories] = await Promise.all([this.catalog.getActiveProducts(request.signal), this.catalog.getCategories()]);
       if (!request.signal.aborted) {
+        this.categories.set(categories);
         this.products.set(products);
         this.currentPage.set(this.pageNumber);
       }
@@ -67,8 +70,12 @@ export class Shop {
     void this.router.navigate(['/product', id]);
   }
   private readonly category = signal<Category>('all');
-  get selectedCategory(): Category { return this.category(); }
-  set selectedCategory(value: Category) { this.category.set(value); }
+  get selectedCategory(): Category {
+    return this.category();
+  }
+  set selectedCategory(value: Category) {
+    this.category.set(value);
+  }
   selectedSort: Sort = 'default';
   readonly sortOpen = signal(false);
   readonly activeSort = signal(0);
@@ -138,21 +145,11 @@ export class Shop {
   }
 
   get selectedCategoryName(): string {
-    return {
-      all: 'All Products',
-      classic: 'Classic',
-      'boost-blends': 'Boost Blends',
-      'zero-sugar': 'Zero Sugar',
-    }[this.selectedCategory];
+    return this.selectedCategory === 'all' ? 'All Products' : this.categories().find(c => c.slug === this.selectedCategory)?.name ?? this.selectedCategory;
   }
 
   get categoryDescription(): string {
-    return {
-      all: '',
-      classic: 'Explore the ZELEON Classic collection and find your next favorite flavor.',
-      'boost-blends': 'Discover the ZELEON Boost Blends collection and choose your next boost.',
-      'zero-sugar': 'Explore ZELEON Zero Sugar energy drinks and find the flavor that suits you.',
-    }[this.selectedCategory];
+    return this.selectedCategory === 'all' ? '' : `Explore the ZELEON ${this.selectedCategoryName} collection and find your next favorite flavor.`;
   }
 
   get displayedProducts(): Product[] {

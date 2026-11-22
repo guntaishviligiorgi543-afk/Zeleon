@@ -32,15 +32,12 @@ try {
   }), logoStyle);
   const slide = () => page.locator('.product-slide:not([inert])');
   assert.equal(await slide().locator('h3').textContent(), names[0]);
-  await page.getByLabel('Full name', { exact: true }).fill('Alex Example');
-  await page.getByLabel('Email address', { exact: true }).fill('invalid-email');
-  await page.getByLabel('City', { exact: true }).focus();
-  assert.equal(await page.locator('#checkout-email').getAttribute('aria-invalid'), 'true');
+  assert.equal(await page.locator('#checkout-demo-title').textContent(), 'Checkout Is Coming Soon!');
+  assert.equal(await page.locator('app-checkout input').count(), 0);
   const total = await page.locator('.summary-total dd').textContent();
   await page.getByRole('button', { name: 'Next cart product', exact: true }).click();
   assert.equal(await slide().locator('h3').textContent(), names[1]);
   assert.equal(await page.locator('.summary-total dd').textContent(), total);
-  assert.equal(await page.getByLabel('Full name', { exact: true }).inputValue(), 'Alex Example');
   await page.getByRole('button', { name: 'Previous cart product', exact: true }).click();
   const increase = slide().getByRole('button', { name: 'Increase quantity', exact: true });
   if (await increase.isEnabled()) {

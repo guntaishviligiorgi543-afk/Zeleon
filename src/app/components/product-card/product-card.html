@@ -1,10 +1,11 @@
+@if (product().onSale && (product().stock ?? 0) > 0) { <span class="sale-badge">SALE</span> }
 @if (product().image) {
   <div class="product-image">
     <img [src]="product().image" [alt]="product().name" loading="lazy" decoding="async" />
     <button
       class="cart-action"
       type="button"
-      [disabled]="cartBusy()"
+      [disabled]="cartBusy() || (product().stock ?? 0) === 0"
       [attr.aria-busy]="cartBusy()"
       [attr.aria-label]="inCart() ? 'Remove ' + product().name + ' from cart' : 'Add ' + product().name + ' to cart'"
       (click)="toggleCart($event)"
@@ -25,7 +26,7 @@
     <button
       class="cart-action"
       type="button"
-      [disabled]="cartBusy()"
+      [disabled]="cartBusy() || (product().stock ?? 0) === 0"
       [attr.aria-busy]="cartBusy()"
       [attr.aria-label]="inCart() ? 'Remove ' + product().name + ' from cart' : 'Add ' + product().name + ' to cart'"
       (click)="toggleCart($event)"
@@ -42,4 +43,8 @@
   </div>
 }
 <p class="prodNam"><a class="product-name-link" [routerLink]="['/product', product().id]" (click)="$event.stopPropagation()">{{ product().name }}</a></p>
-<p class="prodPrice">{{ product().price | currency: product().currency }}</p>
+<p class="prodPrice">
+  @if ((product().stock ?? 0) === 0) { <span class="out-of-stock">OUT OF STOCK</span> <s>{{ (product().regularPrice ?? product().price) | currency: product().currency }}</s> }
+  @else if (product().onSale) { <s>{{ product().regularPrice | currency: product().currency }}</s> <span class="sale-price">{{ product().price | currency: product().currency }}</span> }
+  @else { {{ product().price | currency: product().currency }} }
+</p>

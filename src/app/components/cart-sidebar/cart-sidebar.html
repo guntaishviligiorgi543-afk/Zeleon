@@ -36,10 +36,11 @@
                   </button>
                   <span class="quantity-value" [attr.aria-label]="'Quantity: ' + line.quantity">{{ line.quantity }}</span>
                   <button type="button" class="quantity-plus" [attr.aria-label]="'Increase ' + line.product.name + ' quantity'"
-                    [disabled]="line.quantity >= 99 || removingIds().has(line.product.id)" (click)="changeQuantity(line, 1)">
+                    [disabled]="validating() || !!validationError() || line.quantity >= (line.product.stock ?? 0) || line.quantity >= 99 || removingIds().has(line.product.id)" (click)="changeQuantity(line, 1)">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14" /></svg>
                   </button>
                 </div>
+                @if ((line.product.stock ?? 0) < line.quantity) { <p>Insufficient stock</p> }
                 <p class="line-price">{{ line.product.price * line.quantity | currency: line.product.currency }}</p>
               </div>
               <button type="button" class="remove-item" [attr.aria-label]="'Remove ' + line.product.name"
@@ -60,6 +61,8 @@
     </div>
 
     <footer class="cart-footer">
+      @if (validating()) { <p role="status">Checking availability?</p> }
+      @if (validationError()) { <p role="alert">{{ validationError() }}</p> }
       <div class="estimated-total">
         <span>Estimated total</span>
         <span class="total-values">

@@ -11,11 +11,12 @@ export interface ProductRecord {
   price: number | string;
   currency: string;
   created_at: string;
+  description?: string | null;
   category: { name: string; slug: string } | null;
   images: { storage_path: string; is_primary: boolean; created_at: string }[];
 }
 
-export const PRODUCT_SELECT = 'id,name,slug,price,currency,created_at,category:categories(name,slug),images:product_images(storage_path,is_primary,created_at)';
+export const PRODUCT_SELECT = 'id,name,slug,description,price,currency,created_at,category:categories(name,slug),images:product_images(storage_path,is_primary,created_at)';
 
 @Injectable({ providedIn: 'root' })
 export class Products {
@@ -27,7 +28,7 @@ export class Products {
     if (signal) query = query.abortSignal(signal);
     const { data, error } = await query.overrideTypes<ProductRecord[], { merge: false }>();
     if (error) throw new Error('Products could not be loaded. Please try again.');
-    return (data ?? []).map((row) => this.mapProduct(row));
+    return this.withOffers((data ?? []).map((row) => this.mapProduct(row)), signal);
   }
 
   async getProduct(idOrSlug: string | number, signal?: AbortSignal): Promise<Product | null> {
@@ -39,7 +40,28 @@ export class Products {
     if (signal) query = query.abortSignal(signal);
     const { data, error } = await query.maybeSingle().overrideTypes<ProductRecord, { merge: false }>();
     if (error) throw new Error('This product could not be loaded. Please try again.');
-    return data ? this.mapProduct(data) : null;
+    return data ? (await this.withOffers([this.mapProduct(data)], signal))[0] : null;
+  }
+
+  async getCategories(): Promise<{ id: number; name: string; slug: string }[]> {
+    const { data, error } = await this.client.from('categories').select('id,name,slug').order('name');
+    if (error) throw new Error('Categories could not be loaded. Please try again.');
+    return data ?? [];
+  }
+
+  private async withOffers(products: Product[], signal?: AbortSignal): Promise<Product[]> {
+    if (!products.length) return [];
+    let query = this.client.from('catalog_product_offers').select('*').in('product_id', products.map(p => p.id));
+    if (signal) query = query.abortSignal(signal);
+    const { data, error } = await query;
+    if (error) throw new Error('Current prices and availability could not be loaded.');
+    return products.map(product => {
+      const offer = data?.find(row => String(row.product_id) === String(product.id));
+      const stock = Number(offer?.stock_quantity ?? 0);
+      const price = Number(offer?.effective_price ?? product.price);
+      if (!Number.isInteger(stock) || stock < 0 || !Number.isFinite(price) || price < 0) throw new Error('Invalid catalog availability.');
+      return { ...product, regularPrice: Number(offer?.regular_price ?? product.price), price, stock, onSale: !!offer?.on_sale && stock > 0 };
+    });
   }
 
   private mapProduct(row: ProductRecord): Product {
@@ -51,6 +73,7 @@ export class Products {
     return {
       id: row.id, name: row.name, slug: row.slug,
       price: Number(row.price), currency: row.currency,
+      description: row.description ?? '',
       category: row.category?.slug ?? '', categoryName: row.category?.name ?? '',
       image: path ? this.client.storage.from(environment.productImagesBucket).getPublicUrl(path).data.publicUrl : '',
     };

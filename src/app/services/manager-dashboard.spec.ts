@@ -37,61 +37,25 @@ describe('ManagerDashboard', () => {
     expect(snapshot.productPerformance[0]?.units).toBe(2);
   });
 
-  it('creates and edits products through RLS-protected table operations', async () => {
-    const single = vi.fn().mockResolvedValue({ data: { id: 12 }, error: null });
-    const insert = vi.fn(() => ({ select: () => ({ single }) }));
-    const update = vi.fn(() => ({ eq: () => ({ select: () => ({ single }) }) }));
-    const service = setup({ from: vi.fn(() => ({ insert, update })) });
-    const value = {
-      category_id: 1,
-      product_type_id: null,
-      flavor_id: null,
-      name: 'Product',
-      slug: 'product',
-      description: null,
-      brand: null,
-      price: 10,
-      currency: 'USD' as const,
-      is_active: true,
-    };
-    await expect(service.saveProduct(value)).resolves.toBe(12);
-    await expect(service.saveProduct(value, 12)).resolves.toBe(12);
-    expect(insert).toHaveBeenCalledWith(value);
-    expect(update).toHaveBeenCalledWith(value);
+  it('saves product and stock atomically through an authorized RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({data:12,error:null}); const service=setup({rpc});
+    const value={category_id:1,product_type_id:null,flavor_id:null,name:'Product',slug:'product',description:null,brand:null,price:10,currency:'USD' as const,is_active:false};
+    expect(await service.saveProduct(value,12,{quantity:4,threshold:10,reason:'Restock',expected:1},'catalog/image.webp')).toBe(12);
+    expect(rpc).toHaveBeenCalledWith('catalog_save_product',expect.objectContaining({p_value:value,p_id:12,p_quantity:4,p_expected_quantity:1,p_image_path:'catalog/image.webp'}));
   });
-
-  it('deletes a product and its storage objects only after confirmation is handled by the UI', async () => {
-    const eq = vi.fn().mockResolvedValue({ error: null });
-    const remove = vi.fn().mockResolvedValue({ error: null });
-    const service = setup({
-      from: vi.fn(() => ({ delete: () => ({ eq }) })),
-      storage: { from: vi.fn(() => ({ remove })) },
-    });
-    const product = {
-      id: 2,
-      images: [{ id: 1, storage_path: '2/image.webp', is_primary: true, publicUrl: 'url' }],
-    } as ManagerProduct;
-    await service.deleteProduct(product);
-    expect(eq).toHaveBeenCalledWith('id', 2);
-    expect(remove).toHaveBeenCalledWith(['2/image.webp']);
+  it('deactivates a product and preserves stored objects and history',async()=>{
+    const single=vi.fn().mockResolvedValue({data:{id:2},error:null}); const eq=vi.fn(()=>({select:()=>({single})})); const update=vi.fn(()=>({eq}));
+    await setup({from:()=>({update})}).deleteProduct({id:2,images:[]} as unknown as ManagerProduct);
+    expect(update).toHaveBeenCalledWith({is_active:false}); expect(eq).toHaveBeenCalledWith('id',2);
   });
-
-  it('uploads an approved image and records it against the product', async () => {
-    const upload = vi.fn().mockResolvedValue({ error: null });
-    const remove = vi.fn().mockResolvedValue({ error: null });
-    const insert = vi.fn().mockResolvedValue({ error: null });
-    const service = setup({
-      storage: { from: vi.fn(() => ({ upload, remove })) },
-      from: vi.fn(() => ({ insert })),
-    });
-    const file = new File(['image'], 'product.webp', { type: 'image/webp' });
-    await service.uploadImage(4, file);
-    expect(upload).toHaveBeenCalledOnce();
-    expect(insert).toHaveBeenCalledWith(
-      expect.objectContaining({ product_id: 4, is_primary: true }),
-    );
+  it('uploads a validated image before any database reference changes',async()=>{
+    const upload=vi.fn().mockResolvedValue({error:null}); const from=vi.fn();
+    const service=setup({from,storage:{from:()=>({upload})}});
+    const path=await service.uploadImage(4,new File(['image'],'untrusted.name.webp',{type:'image/webp'}));
+    expect(path).toMatch(/^catalog\/[0-9a-f-]+\.webp$/);expect(upload).toHaveBeenCalledOnce();expect(from).not.toHaveBeenCalled();
+    await expect(service.uploadImage(4,new File(['bad'],'x.svg',{type:'image/svg+xml'}))).rejects.toThrow('Choose');
+    await expect(service.uploadImage(4,new File([new Uint8Array(10485761)],'x.png',{type:'image/png'}))).rejects.toThrow('Choose');
   });
-
   it('uses the existing staff-management Edge Function for assignment and suspension', async () => {
     const invoke = vi.fn().mockResolvedValue({ data: { ok: true }, error: null });
     const service = setup({ functions: { invoke } });

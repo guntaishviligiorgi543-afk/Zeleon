@@ -18,7 +18,7 @@ export class ProductCard {
 
   async toggleCart(event: Event): Promise<void> {
     event.stopPropagation();
-    if (this.cartBusy()) return;
+    if (this.cartBusy() || (this.product().stock ?? 0) === 0) return;
 
     if (!this.cart.requestAccess()) return;
     this.cartBusy.set(true);

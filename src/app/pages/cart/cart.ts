@@ -27,7 +27,7 @@ export class Cart {
     const facts = this.facts().get(String(line.product.id));
     const original = facts?.price ?? line.product.price;
     const price = facts ? checkoutUnitPrice(facts, this.now()) : original;
-    const stock = facts?.stock ?? null;
+    const stock = facts?.stock ?? 0;
     return { ...line, original, price, stock, currency: facts?.currency ?? line.product.currency,
       checked: !!facts, available: !!facts?.active,
       discount: original > price && original > 0 ? Math.round((1 - price / original) * 100) : 0,
@@ -60,7 +60,7 @@ export class Cart {
     const ids = computed(() => JSON.stringify(this.cart.items().map(line => line.product.id)));
     effect(() => { if (this.browserReady()) void this.refresh(JSON.parse(ids())); });
     afterNextRender(() => {
-      const media = matchMedia('(max-width: 760px)');
+      const media = typeof matchMedia === 'function' ? matchMedia('(max-width: 760px)') : { matches: false, addEventListener() {}, removeEventListener() {} };
       const resize = () => { this.perPage.set(media.matches ? 1 : 2); this.page.set(0); };
       resize();
       media.addEventListener('change', resize);
@@ -95,7 +95,17 @@ export class Cart {
     if (!confirm('Remove all products from your cart?')) return;
     this.cart.clear(); this.page.set(0); this.message.set('Your cart has been cleared.');
   }
-  checkout(): void { if (!this.blocked()) void this.router.navigate(['/checkout']); }
+  async checkout(): Promise<void> {
+    if (this.loading()) return;
+    await this.refresh();
+    if (this.blocked()) return;
+    this.loading.set(true);
+    try {
+      await this.catalog.quote(this.cart.items().map(line => ({ productId: line.product.id, quantity: line.quantity })));
+      await this.router.navigate(['/checkout']);
+    } catch (error) { this.error.set(error instanceof Error ? error.message : 'Cart validation failed.'); }
+    finally { this.loading.set(false); }
+  }
   async refresh(ids: readonly (string | number)[] = this.cart.items().map(line => line.product.id)): Promise<void> {
     this.request?.abort();
     const request = this.request = new AbortController();
@@ -103,7 +113,7 @@ export class Cart {
     this.error.set('');
     try {
       const facts = await this.catalog.load(ids, request.signal);
-      if (!request.signal.aborted) { this.facts.set(facts); this.now.set(Date.now()); }
+      if (!request.signal.aborted) { this.facts.set(new Map(facts)); this.cart.refreshAvailability(facts); this.now.set(Date.now()); }
     } catch (error) {
       if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'Prices could not be checked. Please try again.');
     } finally {

@@ -20,20 +20,23 @@
       </div>
       <div class="product-info">
         <h1>{{ item.name }}</h1>
-        <p class="prodPrice" aria-live="polite">{{ totalPrice() | currency: item.currency }} <span>Price</span></p>
+        <p class="prodPrice" aria-live="polite">
+          @if ((item.stock ?? 0) === 0) { <span>OUT OF STOCK</span> <s>{{ (item.regularPrice ?? item.price) | currency:item.currency }}</s> }
+          @else { @if (item.onSale) { <s>{{ (item.regularPrice ?? item.price) * quantity() | currency:item.currency }}</s> } <span [style.color]="item.onSale ? '#c82028' : null">{{ totalPrice() | currency:item.currency }}</span> }
+        </p>
         <div class="quantity-field">
           <label for="product-quantity">Quantity<span aria-hidden="true">*</span></label>
-          <input id="product-quantity" type="number" min="1" max="99" step="1" required [value]="quantity()"
+          <input id="product-quantity" type="number" min="1" [max]="item.stock ?? 0" step="1" required [value]="quantity()"
             (input)="changeQuantity($event)" [attr.aria-invalid]="!validQuantity()" aria-describedby="quantity-error" />
           <p id="quantity-error" class="quantity-error" aria-live="polite">
             @if (!validQuantity()) { Enter a whole number between 1 and 99. }
           </p>
         </div>
         <div class="purchase-actions">
-          <button class="add-cart" type="button" [disabled]="cartBusy() || (!inCart() && !validQuantity())" [attr.aria-busy]="cartBusy()" (click)="addToCart()">{{ inCart() ? 'Added to Cart' : 'Add to Cart' }}</button>
+          <button class="add-cart" type="button" [disabled]="(item.stock ?? 0) === 0 || cartBusy() || (!inCart() && !validQuantity())" [attr.aria-busy]="cartBusy()" (click)="addToCart()">{{ inCart() ? 'Added to Cart' : 'Add to Cart' }}</button>
           <button class="buy-now" type="button" [disabled]="!validQuantity()" (click)="buyNow()">Buy Now</button>
         </div>
-        <p class="product-description">I'm a product description. This is a great place to "sell" your product and grab buyers' attention. Describe your product clearly and concisely. Use unique keywords. Write your own description instead of using manufacturers' copy.</p>
+        <p class="product-description">{{ item.description }}</p>
       </div>
     </div>
   } @else {

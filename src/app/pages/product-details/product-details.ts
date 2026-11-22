@@ -1,4 +1,4 @@
-import { afterNextRender, Component, computed, DestroyRef, inject, signal } from '@angular/core';
+import { afterNextRender, Component, computed, DestroyRef, inject, NgZone, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { CurrencyPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -30,7 +30,7 @@ export class ProductDetails {
   private readonly seo = inject(Seo);
 
   validQuantity(): boolean {
-    return Number.isInteger(this.quantity()) && this.quantity() >= 1 && this.quantity() <= 99;
+    return Number.isInteger(this.quantity()) && this.quantity() >= 1 && this.quantity() <= Math.min(99, this.product()?.stock ?? 0);
   }
 
   changeQuantity(event: Event): void {
@@ -39,7 +39,7 @@ export class ProductDetails {
 
   addToCart(): void {
     const product = this.product();
-    if (!product || this.cartBusy() || (!this.inCart() && !this.validQuantity())) return;
+    if (!product || (product.stock ?? 0) === 0 || this.cartBusy() || (!this.inCart() && !this.validQuantity())) return;
     if (!this.cart.requestAccess()) return;
     this.cartBusy.set(true);
     if (this.inCart()) {
@@ -61,9 +61,12 @@ export class ProductDetails {
   private readonly catalog = inject(Products);
   private readonly destroyRef = inject(DestroyRef);
   private request?: AbortController;
+  private readonly zone = inject(NgZone);
 
   constructor() {
     afterNextRender(() => {
+      const timer = this.zone.runOutsideAngular(() => setInterval(() => { if (!document.hidden && !this.loading()) void this.refreshOffer(); }, 30000));
+      this.destroyRef.onDestroy(() => clearInterval(timer));
       this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
         void this.loadProduct(params.get('id') ?? '');
       });
@@ -72,6 +75,17 @@ export class ProductDetails {
       this.request?.abort();
       clearTimeout(this.cartFeedbackTimer);
     });
+  }
+
+  private async refreshOffer(): Promise<void> {
+    const product = this.product();
+    if (!product) return;
+    try {
+      const updated = await this.catalog.getProduct(product.id);
+      if (this.product()?.id === product.id) { this.product.set(updated); this.seo.productLoaded(updated); }
+    } catch {
+      if (this.product()?.id === product.id) this.product.set({ ...product, stock: 0, onSale: false });
+    }
   }
 
   retry(): void { void this.loadProduct(this.route.snapshot.paramMap.get('id') ?? ''); }

@@ -25,32 +25,10 @@
       All Products
     </a>
 
-    <a
-      routerLink="/shop/classic"
-      class="classic"
-      [class.active]="selectedCategory === 'classic'"
-      [attr.aria-current]="selectedCategory === 'classic' ? 'page' : null"
-    >
-      Classic
-    </a>
+    @for (category of categories(); track category.id) {
+      <a routerLink="/shop" [queryParams]="{category: category.slug}" [class.active]="selectedCategory === category.slug" [attr.aria-current]="selectedCategory === category.slug ? 'page' : null">{{ category.name }}</a>
+    }
 
-    <a
-      routerLink="/shop/boost-blends"
-      class="boostBlends"
-      [class.active]="selectedCategory === 'boost-blends'"
-      [attr.aria-current]="selectedCategory === 'boost-blends' ? 'page' : null"
-    >
-      Boost Blends
-    </a>
-
-    <a
-      routerLink="/shop/zero-sugar"
-      class="zeroSugar"
-      [class.active]="selectedCategory === 'zero-sugar'"
-      [attr.aria-current]="selectedCategory === 'zero-sugar' ? 'page' : null"
-    >
-      Zero Sugar
-    </a>
   </div>
 
   <div class="filterdsQuantity-sort">

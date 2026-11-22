@@ -1,0 +1,5 @@
+alter table storage.objects enable row level security;
+create policy "public product images storage read" on storage.objects as PERMISSIVE for SELECT to "anon","authenticated" using ((bucket_id = 'product-images'::text));
+create policy "staff_delete_product_images" on storage.objects as PERMISSIVE for DELETE to "authenticated" using (((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text])));
+create policy "staff_update_product_images" on storage.objects as PERMISSIVE for UPDATE to "authenticated" using (((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text]))) with check (((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text])));
+create policy "staff_upload_product_images" on storage.objects as PERMISSIVE for INSERT to "authenticated" with check (((bucket_id = 'product-images'::text) AND private.has_staff_access(ARRAY['manager'::text, 'admin'::text])));

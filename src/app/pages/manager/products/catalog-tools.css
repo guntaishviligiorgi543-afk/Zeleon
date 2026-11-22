@@ -1,0 +1,53 @@
+:host {
+  font-family: Montserrat, sans-serif;
+  color: var(--workspace-text, #17233b);
+}
+.surface {
+  padding: 24px;
+  margin: 20px 0;
+}
+.tool-tabs,
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}
+.tool-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--workspace-line, #ddd);
+  overflow-wrap: anywhere;
+}
+.tool-row small {
+  display: block;
+  margin-top: 6px;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+input,
+select {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--workspace-line, #ccc);
+  border-radius: 8px;
+  background: var(--workspace-surface, #fff);
+  color: inherit;
+  font: inherit;
+}
+h3 {
+  margin: 24px 0 12px;
+}

@@ -11,7 +11,8 @@ describe('Products', () => {
   beforeEach(() => {
     result = { data: [], error: null };
     query = {};
-    for (const name of ['select', 'eq', 'order', 'abortSignal', 'maybeSingle']) query[name] = vi.fn(() => query);
+    for (const name of ['select', 'eq', 'order', 'abortSignal', 'maybeSingle', 'in']) query[name] = vi.fn(() => query);
+    query['then'] = ((resolve: (value: unknown) => unknown) => Promise.resolve(resolve({ data: [{ product_id: 1, stock_quantity: 99, effective_price: 15 }], error: result.error }))) as any;
     query['overrideTypes'] = vi.fn(async () => result);
     TestBed.configureTestingModule({ providers: [{ provide: SUPABASE_CLIENT, useValue: {
       from: vi.fn(() => query), storage: { from: () => ({

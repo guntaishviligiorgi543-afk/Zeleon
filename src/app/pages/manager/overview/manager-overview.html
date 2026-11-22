@@ -17,6 +17,9 @@
     </div>
   </header>
 
+  @if (!loading() && lowStock().length) {
+    <div class="notice" role="status"><strong>Low-stock alerts</strong><p>@for (product of lowStock(); track product.id) { {{ product.name }}: {{ product.inventory?.quantity ?? 0 }} units. }</p><a routerLink="/manager/catalog">Review inventory</a></div>
+  }
   @if (error()) {
     <div class="notice error" role="alert">{{ error() }}</div>
   }

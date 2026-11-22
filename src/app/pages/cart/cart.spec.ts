@@ -8,18 +8,18 @@ import { Cart as CartStore } from '../../services/cart';
 import { CheckoutCatalog, CheckoutProductFacts } from '../../services/checkout-catalog';
 
 describe('Cart page', () => {
-  const product = (id: number) => ({ id, name: `Product ${id}`, slug: `${id}`, price: 10, currency: 'USD', category: 'classic', categoryName: 'Classic', image: '' });
+  const product = (id: number) => ({ id, name: `Product ${id}`, slug: `${id}`, price: 10, currency: 'USD', stock: 99, category: 'classic', categoryName: 'Classic', image: '' });
   let facts: Map<string, CheckoutProductFacts>;
   let page: Cart;
   let store: CartStore;
   let fixture: ReturnType<typeof TestBed.createComponent<Cart>>;
   beforeEach(async () => {
     facts = new Map(Array.from({ length: 6 }, (_, i) => [String(i + 1), {
-      price: 10, currency: 'USD', active: true, stock: i === 0 ? 2 : null,
+      price: 10, currency: 'USD', active: true, stock: i === 0 ? 2 : 99,
       sales: i === 0 ? [{ sale_price: 8, is_active: true, starts_at: null, ends_at: null }] : [],
     }]));
     await TestBed.configureTestingModule({ imports: [Cart], providers: [{ provide: Auth, useFactory: createAuthenticatedAuthStub }, provideRouter([]),
-      { provide: CheckoutCatalog, useValue: { load: vi.fn(async () => facts) } },
+      { provide: CheckoutCatalog, useValue: { quote: vi.fn().mockResolvedValue(undefined), load: vi.fn(async () => facts) } },
     ] }).compileComponents();
     store = TestBed.inject(CartStore);
     for (let i = 1; i <= 6; i++) store.add(product(i), 1);
@@ -66,10 +66,10 @@ describe('Cart page', () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
     facts.set('1', { ...facts.get('1')!, stock: 0 });
     await page.refresh();
-    page.checkout(); expect(navigate).not.toHaveBeenCalled();
+    await page.checkout(); expect(navigate).not.toHaveBeenCalled();
     expect(page.canIncrease(page.lines()[0])).toBe(false);
-    facts.set('1', { ...facts.get('1')!, stock: null });
+    facts.set('1', { ...facts.get('1')!, stock: 99 });
     await page.refresh();
-    page.checkout(); expect(navigate).toHaveBeenCalledWith(['/checkout']);
+    await page.checkout(); expect(navigate).toHaveBeenCalledWith(['/checkout']);
   });
 });

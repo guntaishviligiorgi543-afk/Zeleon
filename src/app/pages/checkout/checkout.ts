@@ -29,7 +29,7 @@ export class Checkout {
   readonly error = signal('');
   readonly message = signal('');
   readonly selectedId = signal<string | null>(null);
-  readonly checkoutAvailable = false; // No order endpoint or payment integration exists yet.
+  readonly checkoutAvailable = false; // Learning project: real ordering and payments stay disabled.
   readonly form = this.fb.group({
     fullName: ['', [requiredText, Validators.maxLength(160)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(254)]],
@@ -51,7 +51,7 @@ export class Checkout {
     const facts = this.facts().get(String(line.product.id));
     const original = facts?.price ?? line.product.price;
     const price = facts ? checkoutUnitPrice(facts, this.now()) : original;
-    const stock = facts?.stock ?? null;
+    const stock = facts?.stock ?? 0;
     return { ...line, original, price, stock, currency: facts?.currency ?? line.product.currency,
       checked: !!facts, available: !!facts?.active,
       discount: original > price && original > 0 ? Math.round((1 - price / original) * 100) : 0,
@@ -107,7 +107,7 @@ export class Checkout {
     this.error.set('');
     try {
       const facts = await this.catalog.load(ids, request.signal);
-      if (!request.signal.aborted) { this.facts.set(facts); this.now.set(Date.now()); }
+      if (!request.signal.aborted) { this.facts.set(new Map(facts)); this.cart.refreshAvailability(facts); this.now.set(Date.now()); }
     } catch (error) {
       if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'Prices could not be checked. Please try again.');
     } finally {
@@ -157,9 +157,7 @@ export class Checkout {
     return 'This value is too long.';
   }
   submit(): void {
-    if (!this.cart.requestAccess()) return;
-    this.form.markAllAsTouched();
-    // Never send customer details, frontend prices, or an order to an invented endpoint.
-    this.message.set(this.form.invalid ? 'Please check the highlighted fields.' : 'Ordering is not available yet. No order has been placed and no payment has been taken.');
+    // Portfolio demonstration: this entry point never creates an order or initiates payment.
+    this.message.set('Online ordering and payments are not available yet. No order has been placed and no payment has been taken.');
   }
 }

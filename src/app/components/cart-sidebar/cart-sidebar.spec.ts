@@ -1,3 +1,4 @@
+import { Products } from '../../services/products';
 import { Auth } from '../../services/auth';
 import { createAuthenticatedAuthStub } from '../../testing/auth-stub';
 import { Component } from '@angular/core';
@@ -11,6 +12,7 @@ import { Cart } from '../../services/cart';
 class CartPage {}
 
 describe('CartSidebar', () => {
+  beforeEach(() => TestBed.configureTestingModule({ providers: [{ provide: Products, useValue: { getActiveProducts: vi.fn(async () => TestBed.inject(Cart).items().map(line => line.product)) } }] }));
   afterEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
@@ -53,7 +55,7 @@ describe('CartSidebar', () => {
       expect(dialog.open).toBe(false);
       const cart = TestBed.inject(Cart);
       cart.add({ id: 1, name: 'Test product', slug: 'test', price: 12, currency: 'USD',
-        category: 'classic', categoryName: 'Classic', image: '' }, 2);
+        stock: 99, category: 'classic', categoryName: 'Classic', image: '' }, 2);
       cart.openRequests.next();
       await fixture.whenStable();
       expect(sidebar.opened()).toBe(true);
@@ -90,7 +92,7 @@ describe('CartSidebar', () => {
       transform: 'matrix(1, 0, 0, 1, 100, 0)', opacity: '0.5',
     }) as CSSStyleDeclaration);
     const product = { id: 1, name: 'Test product', slug: 'test', price: 12, currency: 'USD',
-      category: 'classic', categoryName: 'Classic', image: '' };
+      stock: 99, category: 'classic', categoryName: 'Classic', image: '' };
     return { fixture, sidebar, dialog, cart: TestBed.inject(Cart), product };
   }
 

@@ -65,6 +65,15 @@ export async function generate() {
   const api = process.env.SUPABASE_URL || setting('supabaseUrl');
   const products = await fetchProducts(api, process.env.SUPABASE_PUBLISHABLE_KEY || setting('supabasePublishableKey'), fetch, 500,
     'id,is_active,updated_at,created_at,name,slug,price,currency,category:categories(name,slug),images:product_images(storage_path,is_primary,created_at)');
+  const publicRead = async table => {
+    const response = await fetch(new URL(`/rest/v1/${table}?select=*`, api), { headers: { apikey: process.env.SUPABASE_PUBLISHABLE_KEY || setting('supabasePublishableKey') }, signal: AbortSignal.timeout(30000) });
+    assert(response.ok, `Public ${table} snapshot failed`);
+    const data = await response.json(); assert(Array.isArray(data)); return data;
+  };
+  const [offers, categories] = await Promise.all([publicRead('catalog_product_offers'), publicRead('categories')]);
+  await mkdir(join(root, 'tmp'), { recursive: true });
+  await writeFile(join(root, 'tmp/prerender-offers.json'), JSON.stringify(offers), 'utf8');
+  await writeFile(join(root, 'tmp/prerender-categories.json'), JSON.stringify(categories), 'utf8');
   const entries = entriesFor();
   const catalog = products.filter(row => row.is_active === true).map(row => {
     const images = [...(row.images ?? [])].sort((a, b) => Number(b.is_primary) - Number(a.is_primary) || a.created_at.localeCompare(b.created_at) || a.storage_path.localeCompare(b.storage_path));

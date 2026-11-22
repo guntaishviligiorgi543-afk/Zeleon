@@ -1,7 +1,7 @@
 import { CurrencyPipe, DatePipe, DecimalPipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { ManagerDashboard, ManagerSnapshot } from '../../../services/manager-dashboard';
+import { ManagerDashboard, ManagerSnapshot, ManagerProduct } from '../../../services/manager-dashboard';
 
 @Component({
   selector: 'app-manager-overview',
@@ -14,6 +14,7 @@ export class ManagerOverview implements OnInit {
   readonly snapshot = signal<ManagerSnapshot | null>(null);
   readonly loading = signal(true);
   readonly error = signal('');
+  readonly lowStock = signal<ManagerProduct[]>([]);
   readonly maxRevenue = computed(() =>
     Math.max(1, ...(this.snapshot()?.salesSeries.map((point) => point.revenue) ?? [1])),
   );
@@ -26,7 +27,9 @@ export class ManagerOverview implements OnInit {
     this.loading.set(true);
     this.error.set('');
     try {
-      this.snapshot.set(await this.dashboard.getSnapshot());
+      const [snapshot, products] = await Promise.all([this.dashboard.getSnapshot(), this.dashboard.getProducts()]);
+      this.snapshot.set(snapshot);
+      this.lowStock.set(products.filter(p => p.is_active && (p.inventory?.quantity ?? 0) <= (p.inventory?.low_stock_threshold ?? 10)));
     } catch {
       this.error.set(
         'Dashboard data could not be loaded. Verify the Manager session and try again.',

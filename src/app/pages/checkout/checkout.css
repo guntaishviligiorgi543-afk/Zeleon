@@ -132,3 +132,9 @@ dl > .summary-total { margin-top: 4px; padding-top: 18px; border-top: 1px solid 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition: none !important; }
 }
+
+.demo-notice { margin:0 0 32px;padding:clamp(24px,4vw,40px);border:1px solid var(--border);border-radius:24px;background:#101624cc; }
+.demo-notice h1 { margin:0 0 20px;font-size:clamp(26px,4vw,38px);line-height:1.2;letter-spacing:-.035em; }
+.demo-notice p:not(.eyebrow) { max-width:760px;color:var(--muted);line-height:1.75;font-size:14px; }
+.demo-actions { display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-top:24px; }
+.demo-cart-link { display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 22px;border:1px solid var(--border);border-radius:10px; }

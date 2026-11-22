@@ -1,5 +1,13 @@
 <section class="checkout-page" aria-label="Checkout">
   <a class="back-link" routerLink="/shop"><span aria-hidden="true">←</span> Continue shopping</a>
+  <section class="demo-notice" aria-labelledby="checkout-demo-title">
+    <p class="eyebrow">EXPLORE ZELEON</p>
+    <h1 id="checkout-demo-title">Checkout Is Coming Soon!</h1>
+    <p>ZELEON is currently a learning and demonstration project.</p>
+    <p>You can explore our products, discover exciting flavors, and add your favorites to the cart. Online ordering and payments are not available yet.</p>
+    <p>We may introduce these features in the future. Thank you for exploring ZELEON!</p>
+    <nav class="demo-actions" aria-label="Continue exploring"><a class="shop-button" routerLink="/shop">Continue Shopping</a><a class="demo-cart-link" routerLink="/cart">View Cart</a></nav>
+  </section>
   @if (lines().length) {
     <div class="checkout-layout">
       <section class="cart-viewer" aria-labelledby="cart-viewer-title">
@@ -63,25 +71,8 @@
         </div>
         <p class="slide-status" aria-live="polite" aria-atomic="true">Product {{ index() + 1 }} of {{ lines().length }} · {{ current()?.product?.name }}</p>
       </section>
-      <section class="checkout-details" aria-labelledby="delivery-title">
+      <section class="checkout-details" aria-labelledby="summary-title">
         <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-          <p class="eyebrow">THE FINAL DETAILS</p>
-          <h2 id="delivery-title">Shipping information</h2>
-          <p class="section-description">Where should your next boost arrive?</p>
-          <div class="fields">
-            @for (field of fields; track field.key) {
-              <div class="field" [class.wide]="field.wide">
-                <label [for]="'checkout-' + field.key">{{ field.label }}</label>
-                <input [id]="'checkout-' + field.key" [type]="field.type" [formControlName]="field.key"
-                  [autocomplete]="field.autocomplete" [placeholder]="field.placeholder"
-                  [attr.required]="['fullName', 'email', 'address', 'city'].includes(field.key) ? '' : null"
-                  [attr.maxlength]="field.key === 'email' ? 254 : field.key === 'address' ? 300 : field.key === 'fullName' ? 160 : field.key === 'city' ? 100 : field.key === 'phone' ? 30 : 20"
-                  [attr.aria-invalid]="validationMessage(field.key) ? 'true' : null"
-                  [attr.aria-describedby]="validationMessage(field.key) ? 'checkout-' + field.key + '-error' : null" />
-                @if (validationMessage(field.key)) { <p class="field-error" [id]="'checkout-' + field.key + '-error'">{{ validationMessage(field.key) }}</p> }
-              </div>
-            }
-          </div>
           <section class="order-summary" aria-labelledby="summary-title" [attr.aria-busy]="loading()">
             <div class="summary-heading"><h2 id="summary-title">Order summary</h2><button type="button" class="refresh" [disabled]="loading()" (click)="refresh()">{{ loading() ? 'Checking…' : 'Refresh prices' }}</button></div>
             @for (total of totals(); track total.currency) {
@@ -95,7 +86,7 @@
             <p class="estimate-note">Item totals include active discounts. Shipping and tax are not included.</p>
           </section>
           @if (error()) { <p class="checkout-error" role="alert">{{ error() }}</p> }
-          @if (!loading() && !error() && blocked()) { <p class="checkout-error" role="alert">Some items are unavailable, exceed available stock, or cannot be ordered in their current currency. Update your cart before ordering.</p> }
+          @if (!loading() && !error() && blocked()) { <p class="checkout-error" role="alert">Some items are unavailable, exceed available stock, or cannot be ordered in their current currency. You can update your selection in the cart.</p> }
           <button class="place-order" type="submit" [disabled]="!checkoutAvailable || blocked()" aria-describedby="ordering-status">
             <span>{{ loading() ? 'Checking cart…' : 'Place Order' }}</span><span aria-hidden="true">↗</span>
           </button>
@@ -107,7 +98,7 @@
     <section class="empty-cart" aria-labelledby="empty-title">
       <p class="eyebrow">READY FOR YOUR NEXT BOOST?</p>
       <h2 id="empty-title">Your cart is empty.</h2>
-      <p>Add something you love to start your checkout.</p>
+      <p>Explore the catalog and add your favorites to the cart.</p>
       <a routerLink="/shop" class="shop-button">Explore the shop <span aria-hidden="true">↗</span></a>
     </section>
   }

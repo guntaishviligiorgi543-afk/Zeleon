@@ -12,7 +12,7 @@ describe('ProductDetails', () => {
   let component: ProductDetails;
   let harness: RouterTestingHarness;
   const item = { id: 1, name: 'Test product', slug: 'test-product', price: 15, currency: 'USD',
-    category: 'classic', categoryName: 'Classic', image: 'https://example.com/product.jpg' };
+    stock: 99, category: 'classic', categoryName: 'Classic', image: 'https://example.com/product.jpg' };
   let getProduct: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {

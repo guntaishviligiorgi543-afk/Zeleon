@@ -49,10 +49,10 @@ describe('Workspace theme', () => {
   });
 
   for (const [route, labels] of [
-    ['/admin', ['Products', 'Users', 'Support Staff', 'Conversations']],
+    ['/admin', ['Products', 'Catalog tools', 'Newsletter', 'Users', 'Support Staff', 'Conversations']],
     [
       '/manager',
-      ['Overview', 'Products', 'Users', 'Staff', 'Support', 'Orders', 'Analytics', 'Settings'],
+      ['Overview', 'Products', 'Catalog tools', 'Newsletter', 'Users', 'Staff', 'Support', 'Orders', 'Analytics', 'Settings'],
     ],
   ] as const) {
     it(`renders Users in the existing navigation for ${route}`, async () => {

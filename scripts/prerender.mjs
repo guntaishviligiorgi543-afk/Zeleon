@@ -102,6 +102,8 @@ export async function validatePrerender(directory = join(root, 'dist/zeleon/brow
 export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
   const entries = await readEntries(join(directory, 'sitemap.xml'));
   const rows = JSON.parse(await readFile(join(root, 'tmp/prerender-products.json'), 'utf8'));
+  const offers = JSON.parse(await readFile(join(root, 'tmp/prerender-offers.json'), 'utf8'));
+  const categories = JSON.parse(await readFile(join(root, 'tmp/prerender-categories.json'), 'utf8'));
   assert(rows.every(row => row.is_active === true), 'Only active anonymous product rows may be rendered');
   const config = await readFile(join(root, 'src/environments/environment.ts'), 'utf8');
   const apiOrigin = new URL(config.match(/supabaseUrl:\s*'([^']+)'/)[1]).origin;
@@ -124,6 +126,9 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
           let products = rows;
           products = [...products].sort((a, b) => a.created_at.localeCompare(b.created_at) || String(a.id).localeCompare(String(b.id), 'en', { numeric: true }));
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(products), headers: { 'Access-Control-Allow-Origin': server.origin } });
+        }
+        if (request.method() === 'GET' && url.origin === apiOrigin && ['/rest/v1/catalog_product_offers', '/rest/v1/categories'].includes(url.pathname)) {
+          return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(url.pathname.endsWith('/categories') ? categories : offers), headers: { 'Access-Control-Allow-Origin': server.origin } });
         }
         // The newsletter CAPTCHA is intentionally unavailable in the anonymous
         // static snapshot; loading it is neither needed nor appropriate here.

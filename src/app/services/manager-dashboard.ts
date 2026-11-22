@@ -91,6 +91,7 @@ export interface ManagerProduct {
   product_type: ProductOption | null;
   flavor: ProductOption | null;
   images: ManagerProductImage[];
+  inventory?: { quantity: number | null; low_stock_threshold: number } | null;
 }
 
 export interface ProductEditorValue {
@@ -108,6 +109,8 @@ export interface ProductEditorValue {
 
 export interface ProductReferences {
   categories: ProductOption[];
+  flavors?: ProductOption[];
+  types?: ProductOption[];
 }
 export interface StaffDirectoryEntry {
   user_id: string;
@@ -215,7 +218,7 @@ export class ManagerDashboard {
     const { data, error } = await this.client
       .from('products')
       .select(
-        'id,category_id,product_type_id,flavor_id,name,slug,description,brand,price,currency,is_active,updated_at,category:categories(id,name,slug),product_type:product_types(id,name,slug),flavor:product_flavors(id,name,slug),images:product_images(id,storage_path,is_primary)',
+        'id,category_id,product_type_id,flavor_id,name,slug,description,brand,price,currency,is_active,updated_at,category:categories(id,name,slug),product_type:product_types(id,name,slug),flavor:product_flavors(id,name,slug),images:product_images(id,storage_path,is_primary),inventory:product_inventory(quantity,low_stock_threshold)',
       )
       .order('updated_at', { ascending: false });
     if (error) throw error;
@@ -231,86 +234,94 @@ export class ManagerDashboard {
   }
 
   async getProductReferences(): Promise<ProductReferences> {
-    const categories = await this.client.from('categories').select('id,name,slug').order('name');
-    if (categories.error) throw categories.error;
-    return {
-      categories: (categories.data ?? []) as ProductOption[],
-    };
+    const results = await Promise.all(['categories', 'product_flavors', 'product_types'].map(table =>
+      this.client.from(table).select('id,name,slug').order('name')));
+    for (const result of results) if (result.error) throw result.error;
+    return { categories: results[0].data ?? [], flavors: results[1].data ?? [], types: results[2].data ?? [] };
   }
 
-  async saveProduct(value: ProductEditorValue, id?: number): Promise<number> {
-    const request = id
-      ? this.client.from('products').update(value).eq('id', id).select('id').single()
-      : this.client.from('products').insert(value).select('id').single();
-    const { data, error } = await request;
+  async saveProduct(value: ProductEditorValue, id?: number, inventory?: { quantity: number; threshold: number; reason: string; expected: number | null }, imagePath?: string): Promise<number> {
+    const { data, error } = await this.client.rpc('catalog_save_product', {
+      p_value: value, p_id: id ?? null, p_quantity: inventory?.quantity ?? 0,
+      p_threshold: inventory?.threshold ?? 10, p_reason: inventory?.reason ?? 'Catalog edit',
+      p_expected_quantity: inventory?.expected ?? null, p_image_path: imagePath ?? null,
+    });
     if (error) throw error;
-    return Number(data.id);
+    return Number(data);
   }
 
   async deleteProduct(product: ManagerProduct): Promise<void> {
-    const { error } = await this.client.from('products').delete().eq('id', product.id);
+    // Preserve order references, images and inventory history.
+    const { error } = await this.client.from('products').update({ is_active: false }).eq('id', product.id).select('id').single();
     if (error) throw error;
-    const paths = product.images.map((image) => image.storage_path);
-    if (paths.length) {
-      const removed = await this.client.storage.from(environment.productImagesBucket).remove(paths);
-      if (removed.error)
-        throw new Error(
-          'The product was deleted, but one or more stored images require manual cleanup.',
-        );
-    }
   }
 
-  async uploadImage(productId: number, file: File): Promise<void> {
-    const extension = file.name.split('.').pop()?.toLowerCase() ?? 'jpg';
-    const path = `${productId}/${crypto.randomUUID()}.${extension}`;
-    const uploaded = await this.client.storage
-      .from(environment.productImagesBucket)
-      .upload(path, file, {
-        cacheControl: '3600',
-        contentType: file.type,
-        upsert: false,
-      });
-    if (uploaded.error) throw uploaded.error;
-    const { error } = await this.client
-      .from('product_images')
-      .insert({ product_id: productId, storage_path: path, is_primary: true });
-    if (error) {
-      await this.client.storage.from(environment.productImagesBucket).remove([path]);
-      throw error;
-    }
+  async uploadImage(_productId: number, file: File): Promise<string> {
+    const extensions: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' };
+    if (!extensions[file.type] || file.size <= 0 || file.size > 10 * 1024 * 1024) throw new Error('Choose a PNG, JPEG or WebP image up to 10 MB.');
+    const path = `catalog/${crypto.randomUUID()}.${extensions[file.type]}`;
+    const { error } = await this.client.storage.from(environment.productImagesBucket).upload(path, file, { contentType: file.type, upsert: false });
+    if (error) throw error;
+    return path;
+  }
+
+  async cleanupImage(path: string): Promise<void> {
+    // Storage policy rejects deletion while ANY product still references the object.
+    const { error } = await this.client.storage.from(environment.productImagesBucket).remove([path]);
+    if (error) throw new Error('The catalog was saved, but an unused image needs storage cleanup.');
   }
 
   async removeImage(image: ManagerProductImage): Promise<void> {
-    const { error } = await this.client.from('product_images').delete().eq('id', image.id);
+    const { error } = await this.client.rpc('catalog_remove_image', { p_image_id: image.id });
     if (error) throw error;
-    const removed = await this.client.storage
-      .from(environment.productImagesBucket)
-      .remove([image.storage_path]);
-    if (removed.error)
-      throw new Error(
-        'The image record was removed, but the stored object requires manual cleanup.',
-      );
+    await this.cleanupImage(image.storage_path);
   }
 
-  async createReference(
-    table: 'product_types' | 'product_flavors',
-    name: string,
-  ): Promise<ProductOption> {
-    const slug = name
-      .trim()
-      .toLowerCase()
-      .normalize('NFKD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-    if (!slug) throw new Error('Enter a name that can produce a valid URL slug.');
-    const { data, error } = await this.client
-      .from(table)
-      .insert({ name: name.trim(), slug })
-      .select('id,name,slug')
-      .single();
+  async saveReference(table: 'categories' | 'product_types' | 'product_flavors', name: string, slug: string, id?: number): Promise<void> {
+    if (!name.trim() || name.length > 200 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error('Enter a name and a valid lowercase URL slug.');
+    const query = id ? this.client.from(table).update({ name: name.trim(), slug }).eq('id', id) : this.client.from(table).insert({ name: name.trim(), slug });
+    const { error } = await query.select('id').single();
+    if (error) throw new Error('Reference could not be saved. Check for duplicate names or slugs.');
+  }
+
+  async deleteReference(table: 'categories' | 'product_types' | 'product_flavors', id: number): Promise<void> {
+    const { error } = await this.client.from(table).delete().eq('id', id).select('id').single();
+    if (error) throw new Error('Only unused references can be deleted. Reassign their products first.');
+  }
+
+  async createReference(table: 'product_types' | 'product_flavors', name: string): Promise<ProductOption> {
+    const slug = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const { data, error } = await this.client.from(table).insert({ name: name.trim(), slug }).select('id,name,slug').single();
     if (error) throw error;
-    return data as ProductOption;
+    return data;
+  }
+
+  async adjustInventory(productId: number, quantity: number, threshold: number, reason: string, expected: number | null): Promise<void> {
+    const { error } = await this.client.rpc('catalog_adjust_inventory', { p_product_id: productId, p_quantity: quantity, p_threshold: threshold, p_reason: reason, p_expected_quantity: expected });
+    if (error) throw new Error('Stock correction rejected. Reload to check current stock and your staff session.');
+  }
+
+  async inventoryHistory(productId: number): Promise<InventoryMovement[]> {
+    const { data, error } = await this.client.from('inventory_movements').select('*').eq('product_id', productId).order('created_at', { ascending: false }).limit(100);
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  async getDiscounts(): Promise<CatalogDiscount[]> {
+    const results = await Promise.all(['product_sales', 'category_sales'].map(table => this.client.from(table).select('*').order('created_at', { ascending: false })));
+    for (const result of results) if (result.error) throw result.error;
+    return results.flatMap((result, index) => (result.data ?? []).map(row => ({ ...row, kind: index === 0 ? 'product' as const : 'category' as const })));
+  }
+
+  async saveDiscount(kind: 'product' | 'category', value: Record<string, unknown>, id?: number): Promise<void> {
+    const table = kind === 'product' ? 'product_sales' : 'category_sales';
+    const query = id ? this.client.from(table).update(value).eq('id', id) : this.client.from(table).insert(value);
+    const { error } = await query.select('id').single();
+    if (error) throw new Error('Discount rejected. Check stock, dates, price and overlapping discounts.');
+  }
+
+  async cancelDiscount(discount: CatalogDiscount): Promise<void> {
+    await this.saveDiscount(discount.kind, discount.kind === 'product' ? { is_active: false, end_reason: 'cancelled' } : { status: 'cancelled' }, discount.id);
   }
 
   async getStaffDirectory(): Promise<StaffDirectoryEntry[]> {
@@ -514,4 +525,13 @@ export class ManagerDashboard {
     if (!response.ok) throw new Error('The Manager report could not be generated.');
     return response.blob();
   }
+}
+
+export interface InventoryMovement { id: number; delta: number; quantity_after: number; reason: string; note?: string | null; created_at: string; actor_user_id: string | null; order_id: string | null; }
+export interface CatalogDiscount { id: number; kind: 'product' | 'category'; product_id?: number; category_id?: number; sale_price?: number; discount_percent?: number; starts_at: string; ends_at: string; is_active?: boolean; end_reason?: string | null; status?: string; }
+export function discountStatus(sale: CatalogDiscount, now = Date.now()): string {
+  if (sale.kind === 'product' && !sale.is_active) return sale.end_reason ?? 'cancelled';
+  if (sale.kind === 'category' && !['active', 'scheduled'].includes(sale.status ?? '')) return sale.status ?? 'cancelled';
+  if (Date.parse(sale.ends_at) <= now) return 'expired';
+  return Date.parse(sale.starts_at) > now ? 'scheduled' : 'active';
 }

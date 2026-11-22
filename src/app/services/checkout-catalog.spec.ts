@@ -19,25 +19,20 @@ describe('Checkout catalog', () => {
     expect(checkoutUnitPrice({ ...facts, sales: [] }, now)).toBe(10);
   });
 
-  it('reads actual public tables, preserves null and zero stock, and fails closed on query errors', async () => {
-    const records: Record<string, { data: unknown[]; error: unknown }> = {
-      products: { data: [{ id: 1, price: '12.50', currency: 'USD', is_active: true }, { id: 2, price: 10, currency: 'USD', is_active: true }], error: null },
-      product_inventory: { data: [{ product_id: 1, quantity: 0 }], error: null },
-      product_sales: { data: [{ product_id: 1, sale_price: 9, is_active: true, starts_at: null, ends_at: null }], error: null },
-    };
-    const from = vi.fn((table: string) => {
-      const query: Record<string, unknown> = {};
-      for (const method of ['select', 'in', 'eq']) query[method] = vi.fn(() => query);
-      query['abortSignal'] = vi.fn(async () => records[table]);
-      return query;
-    });
+  it('reads the authoritative offer view and fails closed on missing stock or errors', async () => {
+    let result = { data: [{ product_id: 1, regular_price: '12.50', effective_price: '10', currency: 'USD', stock_quantity: 0 }, { product_id: 2, regular_price: 10, effective_price: 8, currency: 'USD', stock_quantity: null }], error: null as unknown };
+    const query: Record<string, unknown> = {};
+    for (const method of ['select','in']) query[method] = vi.fn(() => query);
+    query['abortSignal'] = vi.fn(async () => result);
+    const from = vi.fn(() => query);
     TestBed.configureTestingModule({ providers: [{ provide: SUPABASE_CLIENT, useValue: { from } }] });
     const service = TestBed.inject(CheckoutCatalog);
-    const facts = await service.load([1, 2], new AbortController().signal);
-    expect(facts.get('1')).toMatchObject({ price: 12.5, stock: 0 });
-    expect(facts.get('2')?.stock).toBeNull();
-    expect(from.mock.calls.map(call => call[0])).toEqual(['products', 'product_inventory', 'product_sales']);
-    records['product_sales'].error = { message: 'Private details' };
+    const facts = await service.load([1,2], new AbortController().signal);
+    expect(facts.get('1')).toMatchObject({ price: 12.5, effectivePrice: 10, stock: 0 });
+    expect(facts.get('2')?.stock).toBe(0);
+    expect(from).toHaveBeenCalledWith('catalog_product_offers');
+    expect(checkoutUnitPrice(facts.get('2')!, Date.now())).toBe(8);
+    result.error = { message: 'Private details' };
     await expect(service.load([1], new AbortController().signal)).rejects.toThrow('could not be checked');
   });
 });

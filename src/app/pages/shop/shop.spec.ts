@@ -14,7 +14,7 @@ describe('Shop', () => {
     HTMLElement.prototype.scrollIntoView = vi.fn();
     await TestBed.configureTestingModule({
       imports: [Shop],
-      providers: [provideRouter([]), { provide: Products, useValue: { getActiveProducts: vi.fn().mockResolvedValue([]) } }],
+      providers: [provideRouter([]), { provide: Products, useValue: { getCategories: vi.fn().mockResolvedValue([{ id: 1, name: 'Classic', slug: 'classic' }, { id: 2, name: 'Boost Blends', slug: 'boost-blends' }, { id: 3, name: 'Zero Sugar', slug: 'zero-sugar' }]), getActiveProducts: vi.fn().mockResolvedValue([]) } }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Shop);
@@ -100,7 +100,7 @@ describe('Shop', () => {
     ]);
     await fixture.whenStable();
     expect(fixture.nativeElement.querySelector('.filteredQuantity').textContent.trim()).toBe('2 Products');
-    expect(fixture.nativeElement.querySelector('.filters .classic').getAttribute('href')).toBe('/shop/classic');
+    expect(fixture.nativeElement.querySelector('.filters a:nth-child(2)').getAttribute('href')).toBe('/shop?category=classic');
     component.selectCategory('classic');
     fixture.detectChanges();
     await fixture.whenStable();
@@ -176,7 +176,7 @@ describe('Shop category routes', () => {
     }));
     TestBed.configureTestingModule({ providers: [
       provideRouter(routes.filter(route => route.path?.startsWith('shop'))),
-      { provide: Products, useValue: { getActiveProducts: vi.fn().mockResolvedValue(products) } },
+      { provide: Products, useValue: { getCategories: vi.fn().mockResolvedValue([{ id: 1, name: 'Classic', slug: 'classic' }, { id: 2, name: 'Boost Blends', slug: 'boost-blends' }, { id: 3, name: 'Zero Sugar', slug: 'zero-sugar' }]), getActiveProducts: vi.fn().mockResolvedValue(products) } },
     ] });
     const harness = await RouterTestingHarness.create();
     for (const category of ['classic', 'boost-blends', 'zero-sugar']) {
@@ -188,7 +188,7 @@ describe('Shop category routes', () => {
       expect(harness.routeNativeElement?.querySelectorAll('.product-name-link')).toHaveLength(1);
       expect(harness.routeNativeElement?.querySelector('h1')?.textContent).toContain(shop.selectedCategoryName);
       expect(harness.routeNativeElement?.querySelector('.category-description')?.textContent?.trim()).toBeTruthy();
-      expect(harness.routeNativeElement?.querySelector(`.filters a[href="/shop/${category}"]`)?.getAttribute('aria-current')).toBe('page');
+      expect(harness.routeNativeElement?.querySelector(`.filters a[href="/shop?category=${category}"]`)?.getAttribute('aria-current')).toBe('page');
     }
     const legacy = await harness.navigateByUrl('/shop?category=zero-sugar', Shop);
     await legacy.loadProducts();
@@ -197,6 +197,6 @@ describe('Shop category routes', () => {
     await all.loadProducts();
     harness.detectChanges();
     expect(all.displayedProducts).toHaveLength(3);
-    expect(harness.routeNativeElement?.querySelectorAll('.filters a[href^="/shop/"]')).toHaveLength(3);
+    expect(harness.routeNativeElement?.querySelectorAll('.filters a[href^="/shop?category="]')).toHaveLength(3);
   });
 });

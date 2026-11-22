@@ -36,6 +36,8 @@ export class Cart {
   add(product: Product, quantity: number): boolean {
     if (!this.requestAccess()) return false;
     if (!Number.isInteger(quantity) || quantity < 1 || quantity > 99) return false;
+    const current = this.items().find(item => item.product.id === product.id)?.quantity ?? 0;
+    if (current + quantity > Math.min(99, product.stock ?? 0)) return false;
     this.update((items) => {
       const existing = items.find((item) => item.product.id === product.id);
       return existing ? items.map((item) => item.product.id === product.id
@@ -57,9 +59,20 @@ export class Cart {
     const line = this.items().find((item) => item.product.id === id);
     if (!line) return false;
     const quantity = line.quantity + delta;
-    if (quantity < 1 || (delta === 1 && quantity > 99)) return false;
+    if (quantity < 1 || (delta === 1 && quantity > Math.min(99, line.product.stock ?? 0))) return false;
     this.update((items) => items.map((item) => item.product.id === id
       ? { ...item, quantity } : item));
     return true;
+  }
+
+  refreshAvailability(facts: ReadonlyMap<string, { price: number; effectivePrice?: number; stock: number | null; active: boolean; currency: string }>): void {
+    this.update(items => items.map(line => {
+      const fact = facts.get(String(line.product.id));
+      return { ...line, product: fact ? { ...line.product, regularPrice: fact.price, price: fact.effectivePrice ?? fact.price, stock: fact.active ? fact.stock ?? 0 : 0, currency: fact.currency, onSale: (fact.effectivePrice ?? fact.price) < fact.price } : { ...line.product, stock: 0, onSale: false } };
+    }));
+  }
+
+  refreshProducts(products: readonly Product[]): void {
+    this.update(items => items.map(line => ({ ...line, product: products.find(p => String(p.id) === String(line.product.id)) ?? { ...line.product, stock: 0, onSale: false } })));
   }
 }

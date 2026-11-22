@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 export const MANAGER_ROUTES: Routes = [
+ { path: 'catalog', loadComponent: () => import('./products/catalog-tools').then(m => m.CatalogTools) },
   {
     path: '',
     pathMatch: 'full',

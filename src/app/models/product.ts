@@ -7,4 +7,8 @@ export interface Product {
   category: string;
   categoryName: string;
   image: string;
+  description?: string;
+  regularPrice?: number;
+  stock?: number;
+  onSale?: boolean;
 }

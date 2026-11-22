@@ -206,3 +206,9 @@
     animation-duration: 1200ms;
   }
 }
+
+:host { position: relative; }
+.sale-badge { position:absolute;top:12px;right:12px;z-index:2;background:#c82028;color:white;padding:5px 10px;font-weight:700; }
+.sale-price { color:#c82028; margin-left:8px; }
+.out-of-stock { margin-right:8px;font-size:.75em;font-weight:700; }
+.cart-action:disabled { cursor:not-allowed; }

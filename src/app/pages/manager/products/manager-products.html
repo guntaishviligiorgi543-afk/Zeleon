@@ -63,10 +63,11 @@
               </p>
               <small>{{ product.slug }}</small>
             </div>
+            <span class="status">Stock: {{ product.inventory?.quantity ?? 0 }} @if ((product.inventory?.quantity ?? 0) <= (product.inventory?.low_stock_threshold ?? 10)) { ? Low stock }</span>
             <strong class="product-price">{{ +product.price | currency: product.currency }}</strong>
             <div class="row-actions">
               <button type="button" class="button" (click)="openEdit(product)">Edit</button
-              ><button type="button" class="button danger" (click)="remove(product)">Delete</button>
+              ><button type="button" class="button danger" (click)="remove(product)">Deactivate</button>
             </div>
           </article>
         }
@@ -139,7 +140,7 @@
         <div class="editor-header">
           <div>
             <h2 id="product-editor-title">{{ editing() ? 'Edit product' : 'Add product' }}</h2>
-            <p>Enter the four database fields required to create a product.</p>
+            <p>Manage product information, stock and availability.</p>
           </div>
           <button
             type="button"
@@ -151,6 +152,7 @@
           </button>
         </div>
         <form [formGroup]="form" (ngSubmit)="save()">
+          <h3>Basic Information</h3>
           <div class="form-grid">
             <div class="field">
               <label for="product-name">Product name</label
@@ -174,6 +176,7 @@
                 >Lowercase letters, numbers, and hyphens only.</small
               >
             </div>
+            <h3 class="editor-section-heading">Pricing</h3>
             <div class="field">
               <label for="product-price">Price (USD)</label
               ><input
@@ -188,6 +191,10 @@
                 >Enter a valid non-negative price.</small
               >
             </div>
+
+          </div>
+          <h3>Category and Flavor</h3>
+          <div class="form-grid">
             <div class="field">
               <label for="product-category">Category</label
               ><select id="product-category" formControlName="category_id">
@@ -202,7 +209,22 @@
                 >A category is required.</small
               >
             </div>
+            <label class="field">Flavor<select formControlName="flavor_id"><option [ngValue]="null">No flavor</option>@for (option of references().flavors ?? []; track option.id) { <option [ngValue]="option.id">{{ option.name }}</option> }</select></label>
+            <label class="field">Product type<select formControlName="product_type_id"><option [ngValue]="null">No type</option>@for (option of references().types ?? []; track option.id) { <option [ngValue]="option.id">{{ option.name }}</option> }</select></label>
+            <label class="field">Description<textarea formControlName="description" rows="4"></textarea></label>
           </div>
+          <h3>Inventory</h3>
+          <div class="form-grid">
+            <label class="field">Stock quantity<input type="number" min="0" step="1" formControlName="quantity" required /></label>
+            <label class="field">Low-stock threshold<input type="number" min="0" step="1" formControlName="threshold" required /></label>
+            <label class="field">Correction reason<input [formControl]="stockReason" maxlength="200" required /></label>
+          </div>
+          <h3>Product Image</h3>
+          <label class="field">Upload or replace image (PNG, JPEG, WebP, up to 10 MB)<input type="file" accept="image/png,image/jpeg,image/webp" (change)="selectImage($event)" [disabled]="saving()" /></label>
+          @if (imagePreview()) { <img class="image-preview" [src]="imagePreview()" alt="Product image preview" /> }
+          @if (editing(); as product) { @if (product.images.length) { <button type="button" class="button danger" [disabled]="saving()" (click)="removeImage(product, 0)">Remove image and deactivate</button> } }
+          <h3>Availability</h3>
+          <label><input type="checkbox" formControlName="is_active" /> Active in customer catalog (requires an image)</label>
           <div class="action-row">
             <button type="button" class="button" (click)="closeEditor()">Cancel</button
             ><button type="submit" class="button primary" [disabled]="form.invalid || saving()">

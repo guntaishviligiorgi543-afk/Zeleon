@@ -20,7 +20,7 @@ describe('ProductCard', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('product', {
       id: 1, name: 'Test product', slug: 'test-product', price: 15, currency: 'USD',
-      image: 'https://example.com/product.jpg', category: 'classic', categoryName: 'Classic',
+      image: 'https://example.com/product.jpg', stock: 99, category: 'classic', categoryName: 'Classic',
     });
     await fixture.whenStable();
   });
@@ -66,6 +66,25 @@ describe('ProductCard', () => {
     await request;
     expect(requested).toHaveBeenCalledOnce();
     expect(cart.items()).toEqual([]);
+  });
+
+  it('shows stock label before crossed-out regular price and never starts loading', async () => {
+    fixture.componentRef.setInput('product', { ...component.product(), stock: 0, regularPrice: 15, price: 15 });
+    fixture.detectChanges();
+    const add = vi.spyOn(TestBed.inject(Cart), 'add');
+    const button = fixture.nativeElement.querySelector('.cart-action');
+    expect(button.disabled).toBe(true);
+    expect(fixture.nativeElement.querySelector('.prodPrice').textContent).toContain('OUT OF STOCK');
+    expect(fixture.nativeElement.querySelector('.prodPrice s').textContent).toContain('$15.00');
+    await component.toggleCart(new MouseEvent('click'));
+    expect(add).not.toHaveBeenCalled(); expect(component.cartBusy()).toBe(false);
+  });
+  it('shows a sale badge and both regular and effective prices', () => {
+    fixture.componentRef.setInput('product', { ...component.product(), stock: 5, onSale: true, regularPrice: 15, price: 10 });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.sale-badge').textContent).toBe('SALE');
+    expect(fixture.nativeElement.querySelector('.prodPrice s').textContent).toContain('$15.00');
+    expect(fixture.nativeElement.querySelector('.sale-price').textContent).toContain('$10.00');
   });
 
 });

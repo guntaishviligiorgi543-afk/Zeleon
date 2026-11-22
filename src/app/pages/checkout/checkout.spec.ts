@@ -16,14 +16,14 @@ describe('Checkout', () => {
   let catalog: { load: ReturnType<typeof vi.fn> };
   let facts: Map<string, CheckoutProductFacts>;
   const product = (id: number): Product => ({ id, name: `Product ${id}`, slug: `product-${id}`, price: 10,
-    currency: 'USD', category: 'classic', categoryName: 'Classic', image: '' });
+    currency: 'USD', stock: 99, category: 'classic', categoryName: 'Classic', image: '' });
 
   beforeEach(async () => {
     auth = createAuthStub();
     auth.user.set({ id: 'user-1' });
     facts = new Map([['1', { price: 10, currency: 'USD', active: true, stock: 3,
       sales: [{ sale_price: 8, is_active: true, starts_at: null, ends_at: null }] }],
-      ['2', { price: 20, currency: 'USD', active: true, stock: null, sales: [] }]]);
+      ['2', { price: 20, currency: 'USD', active: true, stock: 99, sales: [] }]]);
     catalog = { load: vi.fn(async () => facts) };
     await TestBed.configureTestingModule({
       imports: [Checkout],
@@ -61,7 +61,7 @@ describe('Checkout', () => {
     expect(component.totals()[0].total).toBe(36);
   });
 
-  it('enforces stock limits and allows missing inventory without calling it out of stock', async () => {
+  it('enforces stock limits and rejects quantities above current inventory', async () => {
     await component.refresh();
     component.changeQuantity(1);
     component.changeQuantity(1);
@@ -88,20 +88,27 @@ describe('Checkout', () => {
     expect(fixture.nativeElement.querySelector('#empty-title').textContent).toBe('Your cart is empty.');
   });
 
-  it('validates fields, prefills authenticated data, and never fabricates order success', async () => {
-    auth.user.set({ id: 'user-1', firstName: 'Alex', lastName: 'Example', email: 'alex@example.com', phoneNumber: '+1 555 123 4567' });
+  it('explains the demonstration and never collects delivery or payment information', () => {
     fixture.detectChanges();
-    expect(component.form.controls.fullName.value).toBe('Alex Example');
-    component.form.controls.email.setValue('invalid');
-    component.form.controls.email.markAsDirty();
-    component.submit();
-    expect(component.validationMessage('email')).toContain('valid email');
-    component.form.patchValue({ email: 'alex@example.com', address: '1 Main St', city: 'Tbilisi' });
-    component.submit();
-    expect(component.form.valid).toBe(true);
+    expect(fixture.nativeElement.querySelector('#checkout-demo-title').textContent).toBe('Checkout Is Coming Soon!');
+    expect(fixture.nativeElement.textContent).toContain('learning and demonstration project');
+    expect(fixture.nativeElement.querySelector('.demo-actions a[href="/shop"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('.demo-actions a[href="/cart"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelectorAll('input').length).toBe(0);
+    expect(fixture.nativeElement.querySelector('.place-order').disabled).toBe(true);
+    const before = cart.items();
+    component.submit(); component.submit();
     expect(component.message()).toContain('No order has been placed');
-    expect(cart.items().length).toBe(2);
+    expect(cart.items()).toEqual(before);
     expect(component.checkoutAvailable).toBe(false);
+  });
+
+  it('keeps the informational notice visible for an empty cart', () => {
+    cart.clear(); fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#checkout-demo-title')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('#empty-title').textContent).toBe('Your cart is empty.');
+    expect(fixture.nativeElement.querySelector('.place-order')).toBeNull();
+    component.submit(); expect(component.message()).toContain('not available');
   });
 
   it('blocks checkout and quantity increases on query failures or deleted products', async () => {

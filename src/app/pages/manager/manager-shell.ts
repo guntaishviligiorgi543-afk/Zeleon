@@ -41,6 +41,7 @@ export class ManagerShell {
   readonly menuOpen = signal(false);
   readonly navItems: ManagerNavItem[] = this.workspaceName === 'Admin' ? [
     { path: '/admin', label: 'Products', icon: 'products', exact: true },
+    { path: '/admin/catalog', label: 'Catalog tools', icon: 'products' },
     { path: '/admin/newsletter', label: 'Newsletter', icon: 'users' },
     { path: '/admin/users', label: 'Users', icon: 'users' },
     { path: '/admin/staff', label: 'Support Staff', icon: 'staff' },
@@ -51,6 +52,7 @@ export class ManagerShell {
   ] : [
     { path: '/manager', label: 'Overview', icon: 'overview', exact: true },
     { path: '/manager/products', label: 'Products', icon: 'products' },
+    { path: '/manager/catalog', label: 'Catalog tools', icon: 'products' },
     { path: '/manager/newsletter', label: 'Newsletter', icon: 'users' },
     { path: '/manager/users', label: 'Users', icon: 'users' },
     { path: '/manager/staff', label: 'Staff', icon: 'staff' },

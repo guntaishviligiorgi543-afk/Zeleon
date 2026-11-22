@@ -71,8 +71,10 @@ describe('Product editor form', () => {
           brand: null,
           description: null,
           currency: 'USD',
-          is_active: true,
+          is_active: false,
         },
+        undefined,
+        {quantity: 0, threshold: 10, reason: 'Catalog correction', expected: null},
         undefined,
       ),
     );
@@ -93,7 +95,7 @@ describe('Product editor form', () => {
       brand: 'ZELEON',
       description: 'Original description',
       currency: 'USD',
-      is_active: true,
+      is_active: false,
       images: [],
       updated_at: '2026-11-12T00:00:00Z',
       category: references.categories[0],
@@ -113,6 +115,8 @@ describe('Product editor form', () => {
       expect(dashboard.saveProduct).toHaveBeenCalledWith(
         expect.objectContaining({ name: 'Updated drink' }),
         42,
+        {quantity: 0, threshold: 10, reason: 'Catalog correction', expected: null},
+        undefined,
       ),
     );
     await vi.waitFor(() => expect(fixture.componentInstance.saving()).toBe(false));

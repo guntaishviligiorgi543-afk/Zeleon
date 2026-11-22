@@ -1,0 +1,249 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Catalog management</h1>
+      <p>Manage categories, flavors, product types, stock and discounts.</p>
+    </div>
+    <button class="button" (click)="load()" [disabled]="loading() || busy()">Refresh</button>
+  </header>
+  <nav class="tool-tabs" aria-label="Catalog management">
+    @for (item of tabs; track item) {
+      <button
+        class="button"
+        [class.primary]="tab === item"
+        (click)="selectTab(item)"
+        [disabled]="busy()"
+      >
+        {{ item }}
+      </button>
+    }
+  </nav>
+  @if (error()) {
+    <p class="notice error" role="alert">{{ error() }}</p>
+  }
+  @if (success()) {
+    <p class="notice success" role="status">{{ success() }}</p>
+  }
+  @if (loading()) {
+    <p role="status">Loading catalog?</p>
+  } @else {
+    @if (['Categories', 'Flavors', 'Product types'].includes(tab)) {
+      <article class="surface">
+        <h2>{{ tab }}</h2>
+        <form (ngSubmit)="saveReference()" #referenceForm="ngForm">
+          <div class="form-grid">
+            <label class="field"
+              >Name<input name="name" [(ngModel)]="reference.name" required maxlength="200"
+            /></label>
+            <label class="field"
+              >URL slug<input
+                name="slug"
+                [(ngModel)]="reference.slug"
+                required
+                maxlength="200"
+                pattern="[a-z0-9]+(-[a-z0-9]+)*"
+            /></label>
+          </div>
+          <div class="action-row">
+            <button class="button primary" [disabled]="busy() || referenceForm.invalid">
+              {{ reference.id ? 'Save changes' : 'Create' }}</button
+            ><button
+              type="button"
+              class="button"
+              (click)="reference = { id: undefined, name: '', slug: '' }"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+        @for (option of options(); track option.id) {
+          <div class="tool-row">
+            <span
+              ><strong>{{ option.name }}</strong> / {{ option.slug }}</span
+            >
+            <div>
+              <button class="button" (click)="editReference(option)" [disabled]="busy()">
+                Edit
+              </button>
+              <button class="button danger" (click)="deleteReference(option)" [disabled]="busy()">
+                Delete unused
+              </button>
+            </div>
+          </div>
+        }
+      </article>
+    }
+    @if (tab === 'Inventory') {
+      <article class="surface">
+        <h2>Inventory correction</h2>
+        <form (ngSubmit)="saveInventory()" #stockForm="ngForm">
+          <div class="form-grid">
+            <label class="field"
+              >Product<select
+                name="product"
+                [(ngModel)]="inventory.productId"
+                (ngModelChange)="selectInventory()"
+              >
+                <option [ngValue]="0">Select product</option>
+                @for (p of products(); track p.id) {
+                  <option [ngValue]="p.id">
+                    {{ p.name }} ? {{ p.inventory?.quantity ?? 0 }} units
+                  </option>
+                }
+              </select></label
+            >
+            <label class="field"
+              >Resulting stock quantity<input
+                name="quantity"
+                type="number"
+                min="0"
+                step="1"
+                max="2147483647"
+                required
+                [(ngModel)]="inventory.quantity"
+            /></label>
+            <label class="field"
+              >Low-stock threshold<input
+                name="threshold"
+                type="number"
+                min="0"
+                step="1"
+                max="2147483647"
+                required
+                [(ngModel)]="inventory.threshold"
+            /></label>
+            <label class="field"
+              >Reason<input name="reason" required maxlength="200" [(ngModel)]="inventory.reason"
+            /></label>
+          </div>
+          <button class="button primary" [disabled]="busy() || stockForm.invalid">
+            Save stock correction
+          </button>
+        </form>
+        <h3>Low-stock alerts</h3>
+        @for (p of products(); track p.id) {
+          @if ((p.inventory?.quantity ?? 0) <= (p.inventory?.low_stock_threshold ?? 10)) {
+            <p>
+              {{ p.name }}: {{ p.inventory?.quantity ?? 0 }} units ?
+              {{ (p.inventory?.quantity ?? 0) === 0 ? 'Out of stock' : 'Low stock' }}
+            </p>
+          }
+        }
+        <h3>Inventory history (latest 100 changes)</h3>
+        @for (movement of movements(); track movement.id) {
+          <div class="tool-row">
+            <span
+              >{{ movement.created_at | date: 'medium' }} ? {{ movement.delta > 0 ? '+' : ''
+              }}{{ movement.delta }} ? {{ movement.quantity_after }} units ? {{ movement.note ?? movement.reason
+              }}<small
+                >Staff: {{ movement.actor_user_id ?? 'System' }} ? Order:
+                {{ movement.order_id ?? '?' }}</small
+              ></span
+            >
+          </div>
+        } @empty {
+          <p>No movements to display.</p>
+        }
+      </article>
+    }
+    @if (tab === 'Discounts') {
+      <article class="surface">
+        <h2>{{ sale.id ? 'Edit discount' : 'Create discount' }}</h2>
+        <p>
+          Times use your local time zone and are stored in UTC. Product discounts override category
+          discounts.
+        </p>
+        <form (ngSubmit)="saveSale()" #saleForm="ngForm">
+          <div class="form-grid">
+            <label class="field"
+              >Discount type<select
+                name="kind"
+                [(ngModel)]="sale.kind"
+                [disabled]="!!sale.id"
+                (ngModelChange)="sale.target = 0"
+              >
+                <option value="product">Product sale price</option>
+                <option value="category">Category percentage</option>
+              </select></label
+            >
+            <label class="field"
+              >Target<select name="target" [(ngModel)]="sale.target" [disabled]="!!sale.id">
+                <option [ngValue]="0">Select target</option>
+                @if (sale.kind === 'product') {
+                  @for (p of products(); track p.id) {
+                    <option [ngValue]="p.id">
+                      {{ p.name }} ({{ +p.price | currency: p.currency }})
+                    </option>
+                  }
+                } @else {
+                  @for (c of options(); track c.id) {
+                    <option [ngValue]="c.id">{{ c.name }}</option>
+                  }
+                }
+              </select></label
+            >
+            <label class="field"
+              >{{ sale.kind === 'product' ? 'Sale price (USD)' : 'Discount (%)'
+              }}<input
+                name="amount"
+                type="number"
+                min="0"
+                step="0.01"
+                required
+                [(ngModel)]="sale.amount"
+            /></label>
+            <label class="field"
+              >Start date and time<input
+                name="starts"
+                type="datetime-local"
+                required
+                [(ngModel)]="sale.starts"
+            /></label>
+            <label class="field"
+              >End date and time<input
+                name="ends"
+                type="datetime-local"
+                required
+                [(ngModel)]="sale.ends"
+            /></label>
+          </div>
+          <div class="action-row">
+            <button class="button primary" [disabled]="busy() || saleForm.invalid">
+              Save discount</button
+            ><button class="button" type="button" (click)="resetSale()">Clear</button>
+          </div>
+        </form>
+      </article>
+      <nav class="tool-tabs" aria-label="Discount filters">
+        @for (item of filters; track item) {
+          <button class="button" [class.primary]="filter === item" (click)="filter = item">
+            {{ item }}
+          </button>
+        }
+      </nav>
+      <article class="surface">
+        @for (s of shownDiscounts(); track s.kind + s.id) {
+          <div class="tool-row">
+            <span
+              ><strong>{{ saleName(s) }}</strong> ? {{ status(s) }} ?
+              {{ s.kind === 'product' ? '$' + s.sale_price : s.discount_percent + '% off'
+              }}<small
+                >{{ s.starts_at | date: 'medium' }} ? {{ s.ends_at | date: 'medium' }}</small
+              ></span
+            >
+            @if (['scheduled', 'active'].includes(status(s))) {
+              <div>
+                <button class="button" [disabled]="busy()" (click)="editSale(s)">Edit</button>
+                <button class="button danger" [disabled]="busy()" (click)="cancelSale(s)">
+                  Cancel
+                </button>
+              </div>
+            }
+          </div>
+        } @empty {
+          <p>No matching discounts.</p>
+        }
+      </article>
+    }
+  }
+</section>

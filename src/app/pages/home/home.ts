@@ -25,7 +25,11 @@ export class Home {
   private readonly destroyRef = inject(DestroyRef);
 
   constructor() {
-    afterNextRender(() => { void this.loadProducts(); this.setupNewsletterCaptcha(); });
+    afterNextRender(() => {
+      void this.loadProducts(); this.setupNewsletterCaptcha();
+      const timer = this.zone.runOutsideAngular(() => setInterval(() => { if (!document.hidden && !this.productsLoading()) void this.loadProducts(true); }, 30000));
+      this.destroyRef.onDestroy(() => clearInterval(timer));
+    });
     this.destroyRef.onDestroy(() => this.productRequest?.abort());
     afterNextRender(() => {
       this.zone.runOutsideAngular(() => this.initializeProductSlider());
@@ -187,10 +191,10 @@ export class Home {
     }
   }
 
-  async loadProducts(): Promise<void> {
+  async loadProducts(background = false): Promise<void> {
     this.productRequest?.abort();
     const request = this.productRequest = new AbortController();
-    this.productsLoading.set(true);
+    if (!background) this.productsLoading.set(true);
     this.productsError.set(false);
     try {
       const products = await this.catalog.getActiveProducts(request.signal);

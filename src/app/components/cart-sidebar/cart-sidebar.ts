@@ -1,3 +1,4 @@
+import { Products } from '../../services/products';
 import { Component, computed, DestroyRef, ElementRef, inject, signal, viewChild } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,6 +15,21 @@ type ProductId = CartLine['product']['id'];
   styleUrl: './cart-sidebar.css',
 })
 export class CartSidebar {
+  private readonly catalog = inject(Products);
+  readonly validating = signal(false);
+  readonly validationError = signal('');
+  private refreshVersion = 0;
+
+  async refreshCatalog(): Promise<void> {
+    const version = ++this.refreshVersion;
+    this.validating.set(true);
+    this.validationError.set('');
+    try {
+      const products = await this.catalog.getActiveProducts();
+      if (version === this.refreshVersion) this.cart.refreshProducts(products);
+    } catch { if (version === this.refreshVersion) this.validationError.set('Availability could not be checked. Open View Cart to retry.'); }
+    finally { if (version === this.refreshVersion) this.validating.set(false); }
+  }
   readonly cart = inject(Cart);
   readonly phase = signal<CartPhase>('closed');
   readonly opened = computed(() => this.phase() !== 'closed');
@@ -65,6 +81,7 @@ export class CartSidebar {
 
   open(): void {
     if (this.phase() === 'open' || this.phase() === 'opening') return;
+    if (this.cart.authenticated()) void this.refreshCatalog();
     const dialog = this.dialog().nativeElement;
     const panel = dialog.querySelector<HTMLElement>('.cart-panel')!;
     const reopening = this.phase() === 'closing';
@@ -145,7 +162,7 @@ export class CartSidebar {
   }
 
   changeQuantity(line: CartLine, delta: -1 | 1): void {
-    if (this.removingIds().has(line.product.id)) return;
+    if (this.validating() || this.validationError() || this.removingIds().has(line.product.id)) return;
     if (this.cart.changeQuantity(line.product.id, delta)) {
       const quantity = this.cart.items().find(item => item.product.id === line.product.id)!.quantity;
       this.status.set(`${line.product.name} quantity: ${quantity}.`);

@@ -799,3 +799,5 @@
         transform: none;
     }
 }
+
+.card { position:relative; } .catalog-sale-badge { position:absolute;top:12px;right:12px;background:#c82028;color:white;padding:5px 10px; } .catalog-sale-price { color:#c82028;margin-left:8px; } .catalog-unavailable { font-size:.7em;font-weight:700;margin-right:8px; }
