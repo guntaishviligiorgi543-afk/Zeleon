@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { Auth } from '../../../services/auth';
 import { ProfileAvatar } from '../../../services/profile-avatar';
 
@@ -8,7 +8,13 @@ import { ProfileAvatar } from '../../../services/profile-avatar';
   styleUrl: './your-info.css',
   templateUrl: './your-info.html',
 })
-export class YourInfo {
+export class YourInfo implements OnInit, OnDestroy {
+  async ngOnInit(): Promise<void> {
+    try { await this.auth.loadPreferredName(); } catch { /* Profile remains usable if preference loading fails. */ }
+  }
+
+  ngOnDestroy(): void { this.clearSelection(); }
+
   readonly auth = inject(Auth);
   readonly avatar = inject(ProfileAvatar);
   readonly preview = signal<string | null>(null);
