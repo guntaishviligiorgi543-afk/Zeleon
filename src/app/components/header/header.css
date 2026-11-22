@@ -251,6 +251,7 @@ header {
 }
 
 .auth-signup-link {
+    flex-shrink: 0;
     max-width: 0;
     overflow: hidden;
     opacity: 0;
@@ -266,7 +267,7 @@ header {
 
 .auth-control-group:hover .auth-signup-link,
 .auth-control-group:focus-within .auth-signup-link {
-    max-width: 70px;
+    max-width: 120px;
     margin-left: 12px;
     opacity: 1;
     transform: translateX(0);
