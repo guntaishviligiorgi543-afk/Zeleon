@@ -127,9 +127,12 @@
   </article>
 
   @if (editorOpen()) {
-    <div
+    <dialog
+      #productDialog
       class="dialog-backdrop"
-      (mousedown)="$event.target === $event.currentTarget && closeEditor()"
+      aria-labelledby="product-editor-title"
+      (cancel)="$event.preventDefault(); closeEditor()"
+      (click)="$event.target === $event.currentTarget && closeEditor()"
     >
       <section
         class="editor surface"
@@ -233,6 +236,6 @@
           </div>
         </form>
       </section>
-    </div>
+    </dialog>
   }
 </section>
