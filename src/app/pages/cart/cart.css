@@ -45,3 +45,6 @@ h3 { font-size: 22px; }
 .checkout-page { padding-top: 160px; }
 @media (max-width: 760px) { .checkout-page { padding-top: 132px; } }
 .product-stage img { position: absolute; inset: 24px; width: calc(100% - 48px); height: calc(100% - 48px); object-fit: contain; }
+
+.action-icon { display:inline-block; width:20px; height:20px; flex-shrink:0; vertical-align:middle; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.quantity button,.arrow { display:grid; place-items:center; }

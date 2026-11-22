@@ -1,4 +1,4 @@
-import { Component, inject, input, signal } from '@angular/core';
+import { afterNextRender, Component, DestroyRef, inject, input, NgZone, signal } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth, authErrorMessage } from '../../services/auth';
@@ -13,10 +13,32 @@ import { CartSidebar } from '../cart-sidebar/cart-sidebar';
 })
 export class Header {
   readonly checkout = input(false);
+  readonly scrolled = signal(false);
   readonly auth = inject(Auth);
   readonly signingOut = signal(false);
   readonly authError = signal('');
   private readonly router = inject(Router);
+
+  constructor() {
+    const destroyRef = inject(DestroyRef);
+    const zone = inject(NgZone);
+    afterNextRender(() => {
+      const update = () => {
+        // One screen of content; recompute on resize for mobile orientation changes.
+        const next = window.scrollY >= window.innerHeight;
+        if (next !== this.scrolled()) zone.run(() => this.scrolled.set(next));
+      };
+      zone.runOutsideAngular(() => {
+        window.addEventListener('scroll', update, { passive: true });
+        window.addEventListener('resize', update);
+      });
+      update();
+      destroyRef.onDestroy(() => {
+        window.removeEventListener('scroll', update);
+        window.removeEventListener('resize', update);
+      });
+    });
+  }
 
   async logout(): Promise<void> {
     if (this.signingOut()) return;

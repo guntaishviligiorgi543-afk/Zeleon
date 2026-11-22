@@ -21,7 +21,7 @@ export class Shop {
   readonly categories = signal<{ id: number; name: string; slug: string }[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
-  readonly pageSize = 12;
+  readonly pageSize = 6;
   readonly currentPage = signal(1);
   private readonly catalog = inject(Products);
   private readonly router = inject(Router);

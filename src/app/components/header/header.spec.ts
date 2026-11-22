@@ -54,6 +54,29 @@ describe('Header', () => {
     expect(component).toBeTruthy();
   });
 
+  it('applies the checkout glass state after one screen and restores it at the top', () => {
+    try {
+      vi.stubGlobal('innerHeight', 800);
+      vi.stubGlobal('scrollY', 799);
+      window.dispatchEvent(new Event('scroll'));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.site-header.is-scrolled')).toBeNull();
+      vi.stubGlobal('scrollY', 800);
+      window.dispatchEvent(new Event('scroll'));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('.site-header.is-scrolled')).not.toBeNull();
+      vi.stubGlobal('innerHeight', 900);
+      window.dispatchEvent(new Event('resize'));
+      fixture.detectChanges();
+      expect(component.scrolled()).toBe(false);
+      vi.stubGlobal('scrollY', 0);
+      window.dispatchEvent(new Event('scroll'));
+      expect(component.scrolled()).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('shows the supplied sign-in icon and Login route without a session', () => {
     const loginLink = fixture.nativeElement.querySelector('.auth-session-link') as HTMLAnchorElement;
     expect(loginLink.getAttribute('href')).toBe('/login');

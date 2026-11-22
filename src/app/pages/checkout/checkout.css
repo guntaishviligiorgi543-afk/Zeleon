@@ -138,3 +138,6 @@ dl > .summary-total { margin-top: 4px; padding-top: 18px; border-top: 1px solid 
 .demo-notice p:not(.eyebrow) { max-width:760px;color:var(--muted);line-height:1.75;font-size:14px; }
 .demo-actions { display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin-top:24px; }
 .demo-cart-link { display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:12px 22px;border:1px solid var(--border);border-radius:10px; }
+
+.action-icon { display:inline-block; width:20px; height:20px; flex-shrink:0; vertical-align:middle; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
+.quantity button,.arrow { display:grid; place-items:center; }

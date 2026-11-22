@@ -31,24 +31,24 @@ describe('Shop', () => {
     fixture.detectChanges();
   }
 
-  it('renders 12 products per page with working page buttons and an accurate range', () => {
+  it('renders 6 products per page with working page buttons and an accurate range', () => {
     addProducts();
-    expect(fixture.nativeElement.querySelectorAll('.productCard').length).toBe(12);
-    expect(fixture.nativeElement.querySelector('.page-summary').textContent).toContain('1–12 of 25');
+    expect(fixture.nativeElement.querySelectorAll('.productCard').length).toBe(6);
+    expect(fixture.nativeElement.querySelector('.page-summary').textContent).toContain('1–6 of 25');
     expect(fixture.nativeElement.querySelector('.pagination button').disabled).toBe(true);
     (fixture.nativeElement.querySelector('[aria-label="Page 2"]') as HTMLButtonElement).click();
     fixture.detectChanges();
-    expect(component.paginatedProducts.map(product => product.id)).toEqual(Array.from({ length: 12 }, (_, i) => i + 13));
+    expect(component.paginatedProducts.map(product => product.id)).toEqual(Array.from({ length: 6 }, (_, i) => i + 7));
     expect(fixture.nativeElement.querySelector('.pagination [aria-current="page"]').textContent.trim()).toBe('2');
     expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.productsContainer'));
     expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalled();
-    component.goToPage(3);
+    component.goToPage(5);
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.productCard').length).toBe(1);
     expect(fixture.nativeElement.querySelector('.page-summary').textContent).toContain('25–25 of 25');
     expect(fixture.nativeElement.querySelector('.pagination button:last-child').disabled).toBe(true);
     component.goToPage(999);
-    expect(component.pageNumber).toBe(3);
+    expect(component.pageNumber).toBe(5);
     component.goToPage(0);
     expect(component.pageNumber).toBe(1);
   });
@@ -58,13 +58,13 @@ describe('Shop', () => {
     component.goToPage(3);
     component.selectCategory('classic');
     expect(component.pageNumber).toBe(1);
-    expect(component.totalPages).toBe(2);
-    component.goToPage(2);
+    expect(component.totalPages).toBe(3);
+    component.goToPage(3);
     expect(component.paginatedProducts.map(product => product.id)).toEqual([13]);
     component.chooseSort('priceHighToLow');
     expect(component.pageNumber).toBe(1);
     expect(component.paginatedProducts[0].id).toBe(13);
-    expect(component.paginatedProducts.at(-1)?.id).toBe(2);
+    expect(component.paginatedProducts.at(-1)?.id).toBe(8);
     expect(component.products()[0].id).toBe(1);
   });
 
@@ -85,7 +85,7 @@ describe('Shop', () => {
   it('keeps page controls compact for large catalogs', () => {
     addProducts(240);
     component.goToPage(10);
-    expect(component.paginationItems).toEqual([1, null, 9, 10, 11, null, 20]);
+    expect(component.paginationItems).toEqual([1, null, 9, 10, 11, null, 40]);
   });
 
   it('should create', () => {

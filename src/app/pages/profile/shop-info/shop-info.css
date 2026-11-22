@@ -5,7 +5,7 @@
 
 .eyebrow {
     margin: 0 0 8px;
-    color: #aaa;
+    color: var(--profile-muted, #adb6ca);
     font-size: 0.72rem;
     letter-spacing: 0.15em;
 }
@@ -24,7 +24,7 @@ h3 {
 }
 
 h3 span {
-    color: #aaa;
+    color: var(--profile-muted, #adb6ca);
     font-size: 0.9rem;
 }
 
@@ -32,9 +32,9 @@ h3 span {
     display: grid;
     gap: 8px;
     padding: 26px;
-    border: 1px dashed #ffffff45;
+    border: 1px dashed #ffffff26;
     border-radius: 12px;
-    color: #aaa;
+    color: var(--profile-muted, #adb6ca);
     text-align: center;
 }
 
@@ -48,8 +48,8 @@ h3 span {
     margin: 8px auto 0;
     padding: 10px 16px;
     border-radius: 8px;
-    background: #fff;
-    color: #111;
+    background: linear-gradient(110deg, #146f86, #7651cd);
+    color: #fff;
     text-decoration: none;
     font-weight: 650;
 }
@@ -57,7 +57,7 @@ h3 span {
 .purchases {
     margin-top: 36px;
     padding-top: 8px;
-    border-top: 1px solid #ffffff25;
+    border-top: 1px solid var(--profile-border, #ffffff1c);
 }
 
 .product-list {
@@ -71,9 +71,9 @@ h3 span {
     align-items: center;
     gap: 16px;
     padding: 12px;
-    border: 1px solid #ffffff25;
+    border: 1px solid var(--profile-border, #ffffff1c);
     border-radius: 12px;
-    background: #181818;
+    background: #080e19;
 }
 
 .product-line img {
@@ -88,6 +88,18 @@ h3 span {
 
 .product-line p {
     margin: 0;
-    color: #aaa;
+    color: var(--profile-muted, #adb6ca);
     font-size: 0.9rem;
 }
+:host { display:block; min-width:0; color:#f6f7ff; font-family:'Montserrat',Arial,sans-serif; }
+*, *::before, *::after { box-sizing:border-box; }
+h2 { font-weight:600; letter-spacing:-.035em; line-height:1.3; }
+.eyebrow { color:var(--profile-cyan, #6ce5ed); font-size:10px; font-weight:600; line-height:1.5; letter-spacing:.18em; }
+button,input,a { font-family:inherit; }
+button,a:has(> svg) { min-height:44px; }
+a:focus-visible,button:focus-visible,input:focus-visible { outline:2px solid var(--profile-cyan, #6ce5ed); outline-offset:4px; }
+
+.empty-state { border-radius:18px; background:#080e19; font-size:13px; line-height:1.7; }
+.empty-state a { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:1px solid #c1c1ff44; border-radius:12px; }
+.product-line { border-radius:18px; background:linear-gradient(135deg,#12222c,#1e1830); }
+.product-line h4 { overflow-wrap:anywhere; }

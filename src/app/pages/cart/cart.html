@@ -1,5 +1,5 @@
 <section class="checkout-page" aria-labelledby="cart-title">
-  <a class="back-link" routerLink="/shop"><span aria-hidden="true">&larr;</span> Continue shopping</a>
+  <a class="back-link" routerLink="/shop"><span aria-hidden="true"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 12H5m6-6-6 6 6 6" /></svg></span> Continue shopping</a>
   <div class="cart-shell">
     <div class="section-heading">
       <div><p class="eyebrow">YOUR SELECTION</p><h1 id="cart-title">Shopping cart</h1></div>
@@ -39,9 +39,9 @@
                   </div>
                   <div class="product-actions">
                     <div class="quantity" role="group" [attr.aria-label]="'Quantity of ' + line.product.name">
-                      <button type="button" aria-label="Decrease quantity" [disabled]="line.quantity <= 1" (click)="changeQuantity(line.product.id, -1)">&minus;</button>
+                      <button type="button" aria-label="Decrease quantity" [disabled]="line.quantity <= 1" (click)="changeQuantity(line.product.id, -1)"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14" /></svg></button>
                       <output>{{ line.quantity }}</output>
-                      <button type="button" aria-label="Increase quantity" [disabled]="!canIncrease(line)" (click)="changeQuantity(line.product.id, 1)">+</button>
+                      <button type="button" aria-label="Increase quantity" [disabled]="!canIncrease(line)" (click)="changeQuantity(line.product.id, 1)"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14M12 5v14" /></svg></button>
                     </div>
                     <button class="remove-button" type="button" [attr.aria-label]="'Delete ' + line.product.name" (click)="remove(line.product.id)">Delete</button>
                   </div>
@@ -50,15 +50,15 @@
             </div>
           </div>
           <div class="carousel-controls">
-            <button class="arrow" type="button" aria-label="Previous cart products" [disabled]="index() === 0" (click)="move(-1)">&larr;</button>
+            <button class="arrow" type="button" aria-label="Previous cart products" [disabled]="index() === 0" (click)="move(-1)"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 12H5m6-6-6 6 6 6" /></svg></button>
             <p class="slide-status" aria-live="polite">Products {{ first() + 1 }}&ndash;{{ last() }} of {{ lines().length }}</p>
-            <button class="arrow" type="button" aria-label="Next cart products" [disabled]="index() >= pages() - 1" (click)="move(1)">&rarr;</button>
+            <button class="arrow" type="button" aria-label="Next cart products" [disabled]="index() >= pages() - 1" (click)="move(1)"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 12h14m-6-6 6 6-6 6" /></svg></button>
           </div>
         </section>
       } @else {
         <section class="empty-cart" aria-labelledby="empty-title">
           <h2 id="empty-title">Your cart is empty.</h2><p>Add something you love to get started.</p>
-          <a class="shop-button" routerLink="/shop">Continue shopping <span aria-hidden="true">&nearr;</span></a>
+          <a class="shop-button" routerLink="/shop">Continue shopping <span aria-hidden="true"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M7 7h10v10" /></svg></span></a>
         </section>
       }
       <aside class="cart-summary" aria-labelledby="summary-title">
@@ -84,7 +84,7 @@
         </section>
         <div class="summary-panel summary-actions">
           <button class="clear-button" type="button" [disabled]="!lines().length" (click)="clear()">Clear cart</button>
-          <button class="place-order" type="button" [disabled]="blocked()" (click)="checkout()">Checkout <span aria-hidden="true">&nearr;</span></button>
+          <button class="place-order" type="button" [disabled]="blocked()" (click)="checkout()">Checkout <span aria-hidden="true"><svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M7 17 17 7M7 7h10v10" /></svg></span></button>
         </div>
       </aside>
     </div>

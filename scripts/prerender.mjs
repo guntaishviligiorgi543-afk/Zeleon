@@ -45,7 +45,7 @@ export function checkRenderedHtml(html, path, catalog, verification) {
     assert(!document.querySelector('app-root [role="alert"]'), `Rendered error state: ${path}`);
     if (path === '/' || path.startsWith('/shop/')) {
       const links = page.querySelectorAll(path === '/' ? '#featured-products a.card:not([data-loop-clone])' : '.product-name-link');
-      assert.equal(links.length, path === '/' ? listing.length : Math.min(listing.length, 12), 'Incomplete category/catalog rendering');
+      assert.equal(links.length, path === '/' ? listing.length : Math.min(listing.length, 6), 'Incomplete category/catalog rendering');
       if (category) {
         assert.equal(page.querySelector('h1')?.textContent.trim(), { classic: 'Classic', 'boost-blends': 'Boost Blends', 'zero-sugar': 'Zero Sugar' }[category]);
         assert(page.querySelector('.category-description')?.textContent.trim(), 'Missing category content');
