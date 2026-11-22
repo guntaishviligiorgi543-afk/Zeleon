@@ -10,6 +10,14 @@ const TYPES: Record<string, string> = {
   'image/webp': 'webp',
 };
 
+export function validateAvatar(file: File): string {
+  const extension = TYPES[file.type];
+  if (!extension || !file.size || file.size > MAX_SIZE) {
+    throw new Error('Choose a JPG, PNG, or WebP image up to 5 MB.');
+  }
+  return extension;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ProfileAvatar {
   private readonly client = inject(SUPABASE_CLIENT);
@@ -54,10 +62,9 @@ export class ProfileAvatar {
   async upload(file: File): Promise<void> {
     const id = this.auth.user()?.id;
     if (!id) throw new Error('Sign in to upload a profile photo.');
-    if (!Object.hasOwn(TYPES, file.type)) throw new Error('Choose a JPG, PNG, or WebP image.');
-    if (!file.size || file.size > MAX_SIZE) throw new Error('Choose an image smaller than 5 MB.');
+    const extension = validateAvatar(file);
     if (this.saving()) return;
-    const newPath = id + '/' + crypto.randomUUID() + '.' + TYPES[file.type];
+    const newPath = id + '/' + crypto.randomUUID() + '.' + extension;
     const oldPath = this.path;
     this.saving.set(true);
     try {
