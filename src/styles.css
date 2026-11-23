@@ -25,15 +25,17 @@ input[type='password']::-ms-clear {
   display: none;
 }
 
-.password-toggle {
+.password-field > .password-toggle {
   position: absolute;
   top: 50%;
   right: 0;
   display: grid;
   width: 40px;
   height: 44px;
+  box-sizing: border-box;
   padding: 0;
   place-items: center;
+  line-height: 1;
   border: 0;
   background: #fff;
   color: #000;
@@ -43,4 +45,4 @@ input[type='password']::-ms-clear {
 
 .password-toggle:hover { opacity: .65; }
 .password-toggle:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
-.password-toggle svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
+.password-toggle svg { display: block; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.8; }
