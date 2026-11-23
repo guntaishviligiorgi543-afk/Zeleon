@@ -56,6 +56,22 @@ describe('Customer account workspace', () => {
     }
     expect(ADMIN_ROUTES.find((route) => route.path === 'users')!.data?.['staffRole']).toBe('admin');
   });
+  it('allows only managers to open the read-only customer profile panel', async () => {
+    role = 'manager';
+    invoke.mockResolvedValue({ data: { users: [{ ...customer, preferred_name: 'Ava', avatar_url: null }], requests: [] }, error: null });
+    const fixture = await create();
+    const button = fixture.nativeElement.querySelector('.user-view-profile') as HTMLButtonElement;
+    expect(button).toBeTruthy();
+    button.click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.user-profile-view').textContent).toContain('Ava');
+    expect(fixture.nativeElement.querySelector('.user-profile-view').textContent).toContain(customer.email);
+    expect(fixture.nativeElement.querySelector('.user-profile-view input')).toBeNull();
+    fixture.nativeElement.querySelector('.user-profile-view-header button').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.user-profile-view')).toBeNull();
+  });
+
   it('lists email, registration date and status, and searches case-insensitively', async () => {
     const fixture = await create();
     const page = fixture.componentInstance;
