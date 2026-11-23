@@ -15,6 +15,7 @@
     }
   </div>
 
+  <div class="shop-toolbar">
   <div class="filters">
     <a
       routerLink="/shop"
@@ -31,72 +32,72 @@
 
   </div>
 
-  <div class="filterdsQuantity-sort">
-    <p class="filteredQuantity">{{ displayedProducts.length }} Products</p>
-
-    <div class="type-filter">
-      <label for="product-type-filter">Product Type</label>
-      <select
-        id="product-type-filter"
-        [value]="selectedProductType()"
-        (change)="selectProductType($any($event.target).value)"
-        aria-label="Filter products by type"
-      >
-        <option value="all">All Types</option>
-        @for (type of productTypes(); track type.slug) {
-          <option [value]="type.slug">{{ type.name }}</option>
-        }
-      </select>
-    </div>
-
-    <div class="sort" (focusout)="sortFocusOut($event)">
-      <p id="sort-label">Sort By</p>
-      <button
-        #sortToggle
-        id="sort"
-        class="sort-toggle"
-        type="button"
-        role="combobox"
-        aria-haspopup="listbox"
-        aria-labelledby="sort-label sort-value"
-        aria-controls="sort-options"
-        [attr.aria-expanded]="sortOpen()"
-        [attr.aria-activedescendant]="sortOpen() ? 'sort-option-' + activeSort() : null"
-        (click)="toggleSort()"
-        (keydown)="sortKeydown($event)"
-      >
-        <span id="sort-value">{{ sortLabel }}</span>
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          aria-hidden="true"
+    <div class="shop-controls">
+      <div class="type-filter">
+        <label for="product-type-filter">Product Type</label>
+        <select
+          id="product-type-filter"
+          [value]="selectedProductType()"
+          (change)="selectProductType($any($event.target).value)"
+          aria-label="Filter products by type"
         >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
-      @if (sortOpen()) {
-        <div id="sort-options" class="sort-options" role="listbox" aria-labelledby="sort-label">
-          @for (option of sortOptions; track option.value; let index = $index) {
-            <button
-              type="button"
-              role="option"
-              tabindex="-1"
-              [id]="'sort-option-' + index"
-              [attr.aria-selected]="selectedSort === option.value"
-              [class.keyboard-active]="activeSort() === index"
-              (mousedown)="$event.preventDefault()"
-              (click)="chooseSort(option.value); sortToggle.focus()"
-            >
-              {{ option.label }}
-            </button>
+          <option value="all">All Types</option>
+          @for (type of productTypes(); track type.slug) {
+            <option [value]="type.slug">{{ type.name }}</option>
           }
-        </div>
-      }
+        </select>
+      </div>
+
+      <div class="sort" (focusout)="sortFocusOut($event)">
+        <p id="sort-label">Sort By</p>
+        <button
+          #sortToggle
+          id="sort"
+          class="sort-toggle"
+          type="button"
+          role="combobox"
+          aria-haspopup="listbox"
+          aria-labelledby="sort-label sort-value"
+          aria-controls="sort-options"
+          [attr.aria-expanded]="sortOpen()"
+          [attr.aria-activedescendant]="sortOpen() ? 'sort-option-' + activeSort() : null"
+          (click)="toggleSort()"
+          (keydown)="sortKeydown($event)"
+        >
+          <span id="sort-value">{{ sortLabel }}</span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        @if (sortOpen()) {
+          <div id="sort-options" class="sort-options" role="listbox" aria-labelledby="sort-label">
+            @for (option of sortOptions; track option.value; let index = $index) {
+              <button
+                type="button"
+                role="option"
+                tabindex="-1"
+                [id]="'sort-option-' + index"
+                [attr.aria-selected]="selectedSort === option.value"
+                [class.keyboard-active]="activeSort() === index"
+                (mousedown)="$event.preventDefault()"
+                (click)="chooseSort(option.value); sortToggle.focus()"
+              >
+                {{ option.label }}
+              </button>
+            }
+          </div>
+        }
+      </div>
     </div>
   </div>
+  <p class="filteredQuantity">{{ displayedProducts.length }} Products</p>
 
   @if (loading()) {
     <p role="status">Loading products…</p>
