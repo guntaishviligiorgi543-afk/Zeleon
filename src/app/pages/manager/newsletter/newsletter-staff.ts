@@ -47,7 +47,7 @@ type SubscriberTab = 'active' | 'pending_confirmation' | 'unsubscribed';
         </nav>
         <p class="list-info">{{ visibleSubscribers().length }} {{ tab() === 'active' ? 'confirmed subscribers' : tab() === 'pending_confirmation' ? 'pending requests' : 'inactive subscribers' }} shown (latest 500 records across all statuses).</p>
         @if (staff.role() === 'manager') {
-          <button type="button" (click)="exportConsentReport()" [disabled]="busy()">Export consent report (CSV)</button>
+          <button type="button" (click)="exportConsentReport()" [disabled]="busy()">Export consent report (PDF)</button>
         }
         <div class="table-wrap">
           <table>
@@ -178,36 +178,38 @@ export class NewsletterStaff {
     this.busy.set(true);
     this.message.set('');
     try {
-      const { data, error } = await this.client.rpc('newsletter_manager_consent_export');
-      if (error) throw error;
-      if (!Array.isArray(data?.subscribers)) throw new Error('The report response was invalid.');
-      const fields = [
-        'email', 'status', 'consent_source', 'consent_policy_version',
-        'consent_at', 'confirmed_at', 'unsubscribed_at', 'created_at',
-      ] as const;
-      // Spreadsheet-safe CSV: prevent email/metadata values from being evaluated as formulas.
-      const escape = (value: unknown): string => {
-        let result = value === null || value === undefined ? '' : String(value);
-        if (/^[\s\u0000-\u001f]*[=+@\-]/.test(result)) result = "'" + result;
-        return '"' + result.replace(/"/g, '""') + '"';
-      };
-      const csv = '\uFEFF' + [
-        fields.join(','),
-        ...data.subscribers.map((row: Record<string, unknown>) =>
-          fields.map(field => escape(row[field])).join(',')),
-      ].join('\r\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      // Generate the PDF on the server: no subscriber data is loaded into the browser
+      // just to export a report, and only verified Managers may call this endpoint.
+      const { data: session, error: sessionError } = await this.client.auth.getSession();
+      if (sessionError || !session.session?.access_token) throw new Error('Please sign in again before exporting.');
+      const response = await fetch(
+        'https://nunxmgltzvknnmkdvjsw.supabase.co/functions/v1/newsletter-consent-report',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + session.session.access_token,
+            'Content-Type': 'application/json',
+          },
+          body: '{}',
+        },
+      );
+      if (!response.ok) {
+        const failure = await response.json().catch(() => ({}));
+        throw new Error(failure.error || 'Unable to generate PDF report.');
+      }
+      const blob = await response.blob();
+      if (blob.type !== 'application/pdf' || blob.size < 100) throw new Error('Invalid PDF response.');
       const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = 'zeleon-newsletter-consent-' + new Date().toISOString().slice(0, 10) + '.csv';
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'zeleon-newsletter-consent-' + new Date().toISOString().slice(0, 10) + '.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      this.message.set('Consent report downloaded (' + data.subscribers.length + ' records).');
+      this.message.set('Consent PDF report downloaded.');
     } catch (error) {
-      this.message.set(error instanceof Error ? error.message : 'Unable to export consent report.');
+      this.message.set(error instanceof Error ? error.message : 'Unable to export consent PDF.');
     } finally {
       this.busy.set(false);
     }
