@@ -334,3 +334,52 @@ section {
   .sort-toggle { min-height: 44px; width: 100%; font-size: 14px; }
   .type-filter select { flex: 1; min-width: 0; max-width: 100%; }
 }
+
+/* Empty catalog state: centered vertically and horizontally inside the grid. */
+.shop-empty-state {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: clamp(320px, 46vh, 540px);
+  box-sizing: border-box;
+  padding: 48px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  gap: 12px;
+  color: #f7f9ff;
+  text-transform: none;
+}
+.shop-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 76px;
+  height: 76px;
+  border: 1px solid rgba(143, 188, 255, .35);
+  border-radius: 50%;
+  background: rgba(72, 129, 224, .09);
+  color: #97c9ff;
+  margin-bottom: 10px;
+}
+.shop-empty-icon svg { width: 35px; height: 35px; }
+.shop-empty-state h2 {
+  margin: 0;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 650;
+  letter-spacing: -.025em;
+}
+.shop-empty-state p {
+  margin: 0;
+  color: #c4cbd7;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+.shop-empty-state > span {
+  color: #8e9caf;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+@media (max-width: 600px) {
+  .shop-empty-state { min-height: 320px; padding: 42px 12px; }
+}

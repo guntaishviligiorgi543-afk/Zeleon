@@ -103,10 +103,22 @@
     <p role="status">Loading products…</p>
   } @else if (error()) {
     <p role="alert">{{ error() }} <button type="button" (click)="loadProducts()">Try again</button></p>
-  } @else if (displayedProducts.length === 0) {
-    <p role="status">No products match the selected filters.</p>
   }
   <div class="productsContainer" id="shop-products" tabindex="-1" aria-label="Products" [attr.aria-busy]="loading()">
+    @if (!loading() && !error() && displayedProducts.length === 0) {
+      <div class="shop-empty-state" role="status">
+        <div class="shop-empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64" fill="none">
+            <circle cx="27" cy="27" r="17" stroke="currentColor" stroke-width="2.5" />
+            <path d="m40 40 15 15" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            <path d="M19 27h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </div>
+        <h2>No products found</h2>
+        <p>No products match the selected filters.</p>
+        <span>Try another category or product type.</span>
+      </div>
+    }
     @for (product of paginatedProducts; track product.id) {
       <div class="productCard" appProductCard [product]="product" [routerLink]="['/product', product.id]"
         tabindex="0" role="link" (keydown.enter)="navigateToProduct(product.id)"></div>
