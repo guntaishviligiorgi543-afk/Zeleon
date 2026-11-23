@@ -212,7 +212,18 @@
         <span class="newsletter-subscribed-icon" aria-hidden="true">✓</span>
         <div><strong>Already subscribed!</strong><span>This email is already subscribed to ZELEON updates.</span></div>
       </div>
+      <button type="button" class="newsletter-unsubscribe-button"
+        [disabled]="newsletterUnsubscribeBusy()"
+        (click)="unsubscribeNewsletter()">
+        {{ newsletterUnsubscribeBusy() ? 'Unsubscribing…' : 'Unsubscribe' }}
+      </button>
+      @if (newsletterUnsubscribeError()) {
+        <p class="newsletter-unsubscribe-error" role="alert">{{ newsletterUnsubscribeError() }}</p>
+      }
     } @else {
+    @if (newsletterUnsubscribeMessage()) {
+      <p class="newsletter-unsubscribe-success" role="status">{{ newsletterUnsubscribeMessage() }}</p>
+    }
     <form (submit)="submitNewsletter($event)">
       <div class="mailInp">
         <label for="email">Email:</label>

@@ -71,6 +71,33 @@ describe('Home', () => {
     expect(section.querySelector('#zeleon-newsletter-turnstile')).not.toBeNull();
   });
 
+  it('shows Unsubscribe only for an active subscriber and keeps private fields hidden', () => {
+    component.newsletterAlreadySubscribed.set(true);
+    fixture.detectChanges();
+    const panel = fixture.nativeElement.querySelector('.subscriptionForm');
+    const unsubscribe = panel.querySelector('.newsletter-unsubscribe-button') as HTMLButtonElement;
+    expect(unsubscribe).toBeTruthy();
+    expect(unsubscribe.textContent).toContain('Unsubscribe');
+    expect(panel.querySelector('input[type="email"]')).toBeNull();
+    expect(panel.querySelector('#zeleon-newsletter-turnstile')).toBeNull();
+    component.newsletterAlreadySubscribed.set(false);
+    fixture.detectChanges();
+    expect(panel.querySelector('.newsletter-unsubscribe-button')).toBeNull();
+  });
+
+  it('unsubscribes via the authenticated RPC and restores the subscription form', async () => {
+    component.newsletterAlreadySubscribed.set(true);
+    const rpc = vi.fn().mockResolvedValue({ data: true, error: null });
+    (component as any).supabase.rpc = rpc;
+    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    await component.unsubscribeNewsletter();
+    expect(rpc).toHaveBeenCalledWith('newsletter_unsubscribe_my_email');
+    expect(component.newsletterAlreadySubscribed()).toBe(false);
+    expect(component.newsletterUnsubscribeMessage()).toContain('successfully unsubscribed');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.subscriptionForm input[type="email"]')).not.toBeNull();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

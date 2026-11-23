@@ -947,3 +947,44 @@
 .subscriptionForm .newsletter-subscribed div { display: grid; gap: 5px; min-width: 0; }
 .subscriptionForm .newsletter-subscribed strong { font-size: 16px; }
 .subscriptionForm .newsletter-subscribed div span { font-size: 13px; line-height: 1.5; }
+
+/* Subscriber-managed newsletter opt-out. */
+.subscriptionForm .newsletter-unsubscribe-button {
+  display: block;
+  margin: 12px auto 0;
+  min-width: 160px;
+  min-height: 44px;
+  padding: 11px 24px;
+  border: 1px solid rgba(255, 255, 255, .8);
+  border-radius: 999px;
+  color: #fff;
+  background: rgba(8, 22, 44, .35);
+  font: 600 14px Arial, Helvetica, sans-serif;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.subscriptionForm .newsletter-unsubscribe-button:hover:not(:disabled) {
+  background: #fff;
+  color: #10233f;
+}
+.subscriptionForm .newsletter-unsubscribe-button:focus-visible {
+  outline: 2px solid #9dccff;
+  outline-offset: 3px;
+}
+.subscriptionForm .newsletter-unsubscribe-button:disabled { opacity: .65; cursor: wait; }
+.subscriptionForm .newsletter-unsubscribe-error,
+.subscriptionForm .newsletter-unsubscribe-success {
+  max-width: 480px;
+  margin: 14px auto;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font: 500 14px/1.6 Arial, Helvetica, sans-serif;
+  text-align: center;
+  text-transform: none;
+}
+.subscriptionForm .newsletter-unsubscribe-error { background: rgba(130, 23, 34, .75); color: #fff; }
+.subscriptionForm .newsletter-unsubscribe-success { background: rgba(25, 112, 68, .8); color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+  .subscriptionForm .newsletter-unsubscribe-button { transition: none; }
+}

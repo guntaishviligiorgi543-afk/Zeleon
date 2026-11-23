@@ -20,6 +20,9 @@ export class Home {
   readonly newsletterVerified = signal(false);
   readonly newsletterMessage = signal('');
   readonly newsletterAlreadySubscribed = signal(false);
+  readonly newsletterUnsubscribeBusy = signal(false);
+  readonly newsletterUnsubscribeMessage = signal('');
+  readonly newsletterUnsubscribeError = signal('');
   private newsletterCheckVersion = 0;
   private readonly supabase = inject(SUPABASE_CLIENT);
   readonly newsletterVerificationError = signal('');
@@ -275,6 +278,40 @@ export class Home {
       if (emailInput.value.trim().toLowerCase() === value) this.newsletterAlreadySubscribed.set(data === true);
     } catch {
       // Do not expose subscription membership or block regular signup on a lookup failure.
+    }
+  }
+
+  async unsubscribeNewsletter(): Promise<void> {
+    if (!this.newsletterAlreadySubscribed() || this.newsletterUnsubscribeBusy()) return;
+    if (!window.confirm('Unsubscribe from ZELEON marketing emails?')) return;
+
+    this.newsletterUnsubscribeBusy.set(true);
+    this.newsletterUnsubscribeError.set('');
+    this.newsletterUnsubscribeMessage.set('');
+    try {
+      const { data, error } = await this.supabase.rpc('newsletter_unsubscribe_my_email');
+      if (error || data !== true) throw new Error('Your subscription could not be cancelled. Please try again.');
+      if (this.destroyRef.destroyed) return;
+      // Prevent an in-flight status lookup from restoring the subscribed state.
+      this.newsletterCheckVersion++;
+      this.newsletterAlreadySubscribed.set(false);
+      this.newsletterUnsubscribeMessage.set('You have successfully unsubscribed from ZELEON marketing emails.');
+      // The form and its Turnstile container are recreated by Angular after the
+      // confirmation panel disappears. Render a fresh widget in the new container.
+      setTimeout(() => {
+        if (this.destroyRef.destroyed) return;
+        const captcha = (window as any).turnstile;
+        if (this.newsletterWidgetId !== null && captcha) {
+          try { captcha.remove(this.newsletterWidgetId); } catch { /* widget may already be detached */ }
+        }
+        this.newsletterWidgetId = null;
+        this.newsletterVerified.set(false);
+        this.setupNewsletterCaptcha();
+      }, 0);
+    } catch (error) {
+      this.newsletterUnsubscribeError.set(error instanceof Error ? error.message : 'Unsubscribe failed. Please try again.');
+    } finally {
+      this.newsletterUnsubscribeBusy.set(false);
     }
   }
 
