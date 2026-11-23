@@ -38,6 +38,10 @@ describe('Products', () => {
 
   it('loads all configured product types independently from products', async () => {
     result.data = [{ id: 1, name: 'Carbonated', slug: 'carbonated' }];
+    // The reference-type query is awaited directly; the default mock resolves
+    // inventory-offer data instead of the configured reference rows.
+    query['then'] = ((resolve: (value: unknown) => unknown) =>
+      Promise.resolve(resolve(result))) as any;
     const types = await service.getProductTypes();
     expect(types).toEqual([{ id: 1, name: 'Carbonated', slug: 'carbonated' }]);
     expect(query['select']).toHaveBeenCalledWith('id,name,slug');
