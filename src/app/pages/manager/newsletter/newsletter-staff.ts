@@ -188,7 +188,7 @@ export class NewsletterStaff {
       // Spreadsheet-safe CSV: prevent email/metadata values from being evaluated as formulas.
       const escape = (value: unknown): string => {
         let result = value === null || value === undefined ? '' : String(value);
-        if (/^[\\s\\u0000-\\u001f]*[=+@\\-]/.test(result)) result = "'" + result;
+        if (/^[\s\u0000-\u001f]*[=+@\-]/.test(result)) result = "'" + result;
         return '"' + result.replace(/"/g, '""') + '"';
       };
       const csv = '\uFEFF' + [
