@@ -212,7 +212,7 @@
         <span class="newsletter-subscribed-icon" aria-hidden="true">✓</span>
         <div><strong>Already subscribed!</strong><span>This email is already subscribed to ZELEON updates.</span></div>
       </div>
-    }
+    } @else {
     <form (submit)="submitNewsletter($event)">
       <div class="mailInp">
         <label for="email">Email:</label>
@@ -233,5 +233,6 @@
       <button type="submit" [disabled]="newsletterBusy() || newsletterAlreadySubscribed()">{{ newsletterAlreadySubscribed() ? "Already Subscribed" : newsletterBusy() ? "Submitting…" : "Subscribe" }}</button>
       <p role="status" aria-live="polite">{{ newsletterMessage() }}</p>
     </form>
+    }
   </div>
 </section>

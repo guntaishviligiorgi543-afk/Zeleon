@@ -56,6 +56,21 @@ describe('Home', () => {
     });
   });
 
+  it('hides email, consent, Turnstile and subscribe actions for an already-subscribed user', () => {
+    component.newsletterAlreadySubscribed.set(true);
+    fixture.detectChanges();
+    const section = fixture.nativeElement.querySelector('.subscriptionForm') as HTMLElement;
+    expect(section.querySelector('.newsletter-subscribed')?.textContent).toContain('Already subscribed!');
+    expect(section.querySelector('input[type="email"]')).toBeNull();
+    expect(section.querySelector('input[type="checkbox"]')).toBeNull();
+    expect(section.querySelector('#zeleon-newsletter-turnstile')).toBeNull();
+    expect(section.querySelector('button[type="submit"]')).toBeNull();
+    component.newsletterAlreadySubscribed.set(false);
+    fixture.detectChanges();
+    expect(section.querySelector('input[type="email"]')).not.toBeNull();
+    expect(section.querySelector('#zeleon-newsletter-turnstile')).not.toBeNull();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
