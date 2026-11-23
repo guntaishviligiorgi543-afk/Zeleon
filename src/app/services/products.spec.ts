@@ -29,6 +29,7 @@ describe('Products', () => {
   const record = {
     id: 1, name: 'Test product', slug: 'test-product', price: '15.00', currency: 'USD', created_at: '2026-01-01',
     category: { name: 'Classic', slug: 'classic' },
+    product_type: { name: 'Functional Energy Drink', slug: 'functional-energy-drink' },
     images: [
       { storage_path: 'older.jpg', is_primary: false, created_at: '2025-01-01' },
       { storage_path: 'primary.jpg', is_primary: true, created_at: '2026-01-01' },
@@ -39,7 +40,8 @@ describe('Products', () => {
     result.data = [record];
     const products = await service.getActiveProducts();
     expect(products[0]).toMatchObject({ id: 1, category: 'classic', categoryName: 'Classic', price: 15,
-      currency: 'USD', image: 'https://example.com/product-images/primary.jpg' });
+      currency: 'USD', image: 'https://example.com/product-images/primary.jpg',
+      productType: 'functional-energy-drink', productTypeName: 'Functional Energy Drink' });
     expect(query['eq']).toHaveBeenCalledWith('is_active', true);
     expect(query['order']).toHaveBeenCalledWith('created_at');
   });
@@ -56,8 +58,8 @@ describe('Products', () => {
 
   it('handles empty results, missing images/categories, and API failures', async () => {
     expect(await service.getActiveProducts()).toEqual([]);
-    result.data = [{ ...record, category: null, images: [] }];
-    expect((await service.getActiveProducts())[0]).toMatchObject({ category: '', image: '' });
+    result.data = [{ ...record, category: null, product_type: null, images: [] }];
+    expect((await service.getActiveProducts())[0]).toMatchObject({ category: '', productType: '', productTypeName: '', image: '' });
     result.error = { message: 'Private server details' };
     await expect(service.getActiveProducts()).rejects.toThrow('Products could not be loaded');
   });

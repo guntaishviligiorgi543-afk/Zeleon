@@ -27,6 +27,8 @@ describe('Shop', () => {
       id: index + 1, name: `Product ${index + 1}`, slug: `product-${index + 1}`,
       price: index + 1, currency: 'USD', image: '',
       category: index < 13 ? 'classic' : 'zero-sugar', categoryName: index < 13 ? 'Classic' : 'Zero Sugar',
+      productType: index % 2 === 0 ? 'fruit-blend' : 'functional-energy-drink',
+      productTypeName: index % 2 === 0 ? 'Fruit Blend' : 'Functional Energy Drink',
     })));
     fixture.detectChanges();
   }
@@ -66,6 +68,25 @@ describe('Shop', () => {
     expect(component.paginatedProducts[0].id).toBe(13);
     expect(component.paginatedProducts.at(-1)?.id).toBe(8);
     expect(component.products()[0].id).toBe(1);
+  });
+
+  it('filters by product type alongside category and sorting and resets the page', () => {
+    addProducts(25);
+    component.productTypes.set([{slug:'fruit-blend', name:'Fruit Blend'}, {slug:'functional-energy-drink',name:'Functional Energy Drink'}]);
+    component.goToPage(3);
+    component.selectProductType('fruit-blend');
+    fixture.detectChanges();
+    expect(component.pageNumber).toBe(1);
+    expect(component.displayedProducts.length).toBe(13);
+    expect(component.displayedProducts.every(product => product.productType === 'fruit-blend')).toBe(true);
+    component.selectCategory('classic');
+    expect(component.displayedProducts.length).toBe(7);
+    component.chooseSort('priceHighToLow');
+    expect(component.displayedProducts[0].id).toBe(13);
+    const select = fixture.nativeElement.querySelector('#product-type-filter') as HTMLSelectElement;
+    expect(select).toBeTruthy();
+    component.selectProductType('all');
+    expect(component.displayedProducts.length).toBe(13);
   });
 
   it('clamps after inventory changes and hides controls for empty or single-page results', () => {

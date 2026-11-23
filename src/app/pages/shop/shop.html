@@ -34,6 +34,21 @@
   <div class="filterdsQuantity-sort">
     <p class="filteredQuantity">{{ displayedProducts.length }} Products</p>
 
+    <div class="type-filter">
+      <label for="product-type-filter">Product Type</label>
+      <select
+        id="product-type-filter"
+        [value]="selectedProductType()"
+        (change)="selectProductType($any($event.target).value)"
+        aria-label="Filter products by type"
+      >
+        <option value="all">All Types</option>
+        @for (type of productTypes(); track type.slug) {
+          <option [value]="type.slug">{{ type.name }}</option>
+        }
+      </select>
+    </div>
+
     <div class="sort" (focusout)="sortFocusOut($event)">
       <p id="sort-label">Sort By</p>
       <button
@@ -88,7 +103,7 @@
   } @else if (error()) {
     <p role="alert">{{ error() }} <button type="button" (click)="loadProducts()">Try again</button></p>
   } @else if (displayedProducts.length === 0) {
-    <p role="status">No products found in this category.</p>
+    <p role="status">No products match the selected filters.</p>
   }
   <div class="productsContainer" id="shop-products" tabindex="-1" aria-label="Products" [attr.aria-busy]="loading()">
     @for (product of paginatedProducts; track product.id) {
