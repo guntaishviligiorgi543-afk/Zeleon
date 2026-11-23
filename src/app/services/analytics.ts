@@ -44,8 +44,13 @@ export class Analytics {
     this.consent.set(value);
     this.preferencesOpen.set(false);
     try { localStorage.setItem(CONSENT_KEY, value); } catch { /* no persistence */ }
-    if (value === 'accepted') this.load();
-    else if (this.started && window.gtag) {
+    if (value === 'accepted') {
+      if (this.started && window.gtag) {
+        window.gtag('consent', 'update', { analytics_storage: 'granted' });
+        this.lastPage = null;
+        this.pageView(this.router.url);
+      } else this.load();
+    } else if (this.started && window.gtag) {
       window.gtag('consent', 'update', {
         analytics_storage: 'denied', ad_storage: 'denied',
         ad_user_data: 'denied', ad_personalization: 'denied',
@@ -68,11 +73,13 @@ export class Analytics {
     this.started = true;
     window.dataLayer = window.dataLayer ?? [];
     window.gtag = (...args: unknown[]) => { window.dataLayer!.push(args); };
-    window.gtag('js', new Date());
+    // Set the default synchronously before any gtag initialization or data events.
+    // Google Tag Assistant otherwise reports that consent is not configured.
     window.gtag('consent', 'default', {
       analytics_storage: 'denied', ad_storage: 'denied',
       ad_user_data: 'denied', ad_personalization: 'denied',
     });
+    window.gtag('js', new Date());
     window.gtag('consent', 'update', { analytics_storage: 'granted' });
     // We record route views explicitly without sending URL query parameters.
     window.gtag('config', GA4_MEASUREMENT_ID, { send_page_view: false });
