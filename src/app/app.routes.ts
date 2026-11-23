@@ -29,6 +29,9 @@ export const routes: Routes = [
   { path: 'shop/classic', loadComponent: () => import('./pages/shop/shop').then(m => m.Shop), data: { category: 'classic' } },
   { path: 'shop/boost-blends', loadComponent: () => import('./pages/shop/shop').then(m => m.Shop), data: { category: 'boost-blends' } },
   { path: 'shop/zero-sugar', loadComponent: () => import('./pages/shop/shop').then(m => m.Shop), data: { category: 'zero-sugar' } },
+  { path: 'privacy-policy', data: { kind: 'privacy' }, loadComponent: () => import('./pages/legal/legal-page').then(m => m.LegalPage) },
+  { path: 'terms-of-use', data: { kind: 'terms' }, loadComponent: () => import('./pages/legal/legal-page').then(m => m.LegalPage) },
+  { path: 'cookie-policy', data: { kind: 'cookies' }, loadComponent: () => import('./pages/legal/legal-page').then(m => m.LegalPage) },
   {
     path: 'our-story',
     loadComponent: () => import('./pages/our-story/our-story').then(m => m.OurStory),

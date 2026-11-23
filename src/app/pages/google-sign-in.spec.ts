@@ -28,6 +28,12 @@ for (const page of [Login, Signup]) {
       expect(button.querySelector('svg')).not.toBeNull();
       button.click();
       fixture.detectChanges();
+      if (page === Signup) {
+        expect(auth.signInWithGoogle).not.toHaveBeenCalled();
+        (component as Signup).termsChecked.set(true);
+        (component as Signup).privacyChecked.set(true);
+        await (component as Signup).confirmRegistration();
+      }
       expect(auth.signInWithGoogle).toHaveBeenCalledExactlyOnceWith('/profile/security');
       expect(auth.signUp).not.toHaveBeenCalled();
       expect(auth.signIn).not.toHaveBeenCalled();
@@ -39,7 +45,13 @@ for (const page of [Login, Signup]) {
       const { auth, component } = setup();
       let finish!: () => void;
       auth.signInWithGoogle.mockImplementationOnce(() => new Promise<void>(resolve => { finish = resolve; }));
-      const first = component.googleSignIn();
+      let first: Promise<void>;
+      if (page === Signup) {
+        await component.googleSignIn();
+        (component as Signup).termsChecked.set(true);
+        (component as Signup).privacyChecked.set(true);
+        first = (component as Signup).confirmRegistration();
+      } else first = component.googleSignIn();
       await component.googleSignIn();
       await component.submit();
       expect(auth.signInWithGoogle).toHaveBeenCalledOnce();
@@ -55,10 +67,16 @@ for (const page of [Login, Signup]) {
       const { auth, component } = setup();
       auth.signInWithGoogle.mockRejectedValueOnce(new Error('Provider secret should not be shown'));
       await component.googleSignIn();
+      if (page === Signup) {
+        (component as Signup).termsChecked.set(true);
+        (component as Signup).privacyChecked.set(true);
+        await (component as Signup).confirmRegistration();
+      }
       expect(component.pending()).toBe(false);
       expect(component.status()).toContain('Please try again');
       expect(component.status()).not.toContain('secret');
       await component.googleSignIn();
+      if (page === Signup) await (component as Signup).confirmRegistration();
       expect(auth.signInWithGoogle).toHaveBeenCalledTimes(2);
     });
   });

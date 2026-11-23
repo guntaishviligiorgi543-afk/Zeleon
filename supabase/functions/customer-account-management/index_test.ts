@@ -11,7 +11,7 @@ function setup(options: {role?: string; aal?: string; session?: boolean; rpcErro
   const emails: RequestInit[] = [];
   const record = {id:'request',target_user_id:'customer',requested_by:'admin',action:'suspend',status:'executed',reason:'Evidence',manager_reply:'Reviewed evidence'};
   function query(table: string, caller: boolean) {
-    const result = {data: options.queryError && !caller ? null : table === 'staff_roles' ? [{user_id:'manager'}] : table === 'customer_account_states' ? [{user_id:'customer',status:'suspended'}] : [record],error: options.queryError && !caller ? new Error('database error') : null};
+    const result = {data: options.queryError && !caller ? null : table === 'staff_roles' ? [{user_id:'manager'}] : table === 'customer_account_states' ? [{user_id:'customer',status:'suspended'}] : table === 'user_preferred_names' ? [{user_id:'customer', preferred_name:'Ava'}] : table === 'user_avatars' ? [] : [record],error: options.queryError && !caller ? new Error('database error') : null};
     const builder = {
       select: (_columns: string) => builder,
       eq: (key: string,value: unknown) => {calls.push({name:table+'.eq',args:{key,value}});return builder;},
@@ -75,6 +75,19 @@ Deno.test('paginates customers and limits Admin request history to the owner',as
   assertEquals(test.calls.filter(c=>c.name==='listUsers').map(c=>c.args),[1,2]);
   assert(test.calls.some(c=>c.name==='customer_account_actions.eq'&&JSON.stringify(c.args)===JSON.stringify({key:'requested_by',value:'admin'})));
 });
+Deno.test('returns profile fields only for active MFA managers',async()=>{
+  const manager=setup({role:'manager'});
+  const mgr=await manager.request({action:'list'});
+  assertEquals(mgr.status,200);
+  const managerBody=await mgr.json();
+  assertEquals(managerBody.users[0].preferred_name,'Ava');
+  assertEquals(managerBody.users[0].avatar_url,null);
+  const admin=setup({role:'admin'});
+  const adm=await admin.request({action:'list'});
+  const adminBody=await adm.json();
+  assertEquals(Object.hasOwn(adminBody.users[0],'preferred_name'),false);
+});
+
 Deno.test('fails closed when directory restriction state cannot be read',async()=>{
   const test=setup({queryError:true});
   assertEquals((await test.request({action:'list'})).status,503);

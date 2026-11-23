@@ -16,3 +16,41 @@
 }
 
 @if (!newsletterRoute()) { <app-cart-login-dialog></app-cart-login-dialog> }
+
+@if (analytics.consent() === null && !analytics.preferencesOpen() && !workspaceRoute() && !ratingRoute() && !newsletterRoute()) {
+  <aside class="zeleon-analytics-consent" role="region" aria-label="Cookie choices">
+    <div><strong>ZELEON respects your privacy</strong>
+      <p>Essential storage supports sign-in and security. With your permission, optional Google Analytics helps us improve your experience. <a routerLink="/cookie-policy">Cookie Policy</a></p>
+    </div>
+    <div class="zeleon-analytics-actions">
+      <button type="button" (click)="analytics.setConsent('rejected')">Reject Optional</button>
+      <button type="button" (click)="openCookiePreferences()">Customize</button>
+      <button type="button" class="accept" (click)="analytics.setConsent('accepted')">Accept All</button>
+    </div>
+  </aside>
+}
+@if (analytics.preferencesOpen()) {
+  <div class="zeleon-privacy-overlay" role="presentation">
+    <section class="zeleon-privacy-modal" role="dialog" aria-modal="true" aria-labelledby="cookie-modal-heading">
+      <h2 id="cookie-modal-heading">Cookie preferences</h2>
+      <p>Choose what can be stored for optional analytics. Necessary storage supports account and security features.</p>
+      <div class="zeleon-cookie-row"><div><strong>Strictly necessary</strong><small>Authentication, security, remembering your choices.</small></div><span>Always active</span></div>
+      <label class="zeleon-cookie-row"><div><strong>Analytics</strong><small>Anonymous site usage, product views and cart interactions.</small></div><input type="checkbox" [checked]="cookieDraft()" (change)="cookieDraft.set($any($event.target).checked)" /></label>
+      <p>Read our <a routerLink="/privacy-policy">Privacy Policy</a> and <a routerLink="/cookie-policy">Cookie Policy</a>.</p>
+      <div class="zeleon-analytics-actions"><button type="button" (click)="analytics.preferencesOpen.set(false)">Cancel</button><button type="button" class="accept" (click)="saveCookiePreferences()">Save choices</button></div>
+    </section>
+  </div>
+}
+@if (legal.required() && !workspaceRoute() && !router.url.startsWith('/staff-auth')) {
+  <div class="zeleon-privacy-overlay zeleon-legal-gate">
+    <section class="zeleon-privacy-modal" role="dialog" aria-modal="true" aria-labelledby="legal-gate-title">
+      <h2 id="legal-gate-title">Welcome to ZELEON</h2>
+      <p>Our legal documents have been updated. Please review the current terms before continuing with your account.</p>
+      <label class="zeleon-check"><input type="checkbox" [checked]="legal.termsChecked()" (change)="legal.termsChecked.set($any($event.target).checked)" /> I agree to the <a routerLink="/terms-of-use" target="_blank">Terms of Use</a> (required).</label>
+      <label class="zeleon-check"><input type="checkbox" [checked]="legal.privacyChecked()" (change)="legal.privacyChecked.set($any($event.target).checked)" /> I acknowledge the <a routerLink="/privacy-policy" target="_blank">Privacy Policy</a> (required).</label>
+      <label class="zeleon-check"><input type="checkbox" [checked]="legal.analyticsChecked()" (change)="legal.analyticsChecked.set($any($event.target).checked)" /> Allow optional Google Analytics (optional).</label>
+      @if (legal.error()) { <p role="alert">{{ legal.error() }}</p> }
+      <div class="zeleon-analytics-actions"><button type="button" class="accept" [disabled]="!legal.termsChecked() || !legal.privacyChecked() || legal.saving()" (click)="legal.accept()">{{ legal.saving() ? 'Saving…' : 'Agree & Continue' }}</button></div>
+    </section>
+  </div>
+}

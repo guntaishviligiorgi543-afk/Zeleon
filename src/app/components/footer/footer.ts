@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { Analytics } from '../../services/analytics';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -7,4 +8,4 @@ import { RouterLink } from '@angular/router';
   styleUrl: './footer.css',
   templateUrl: './footer.html',
 })
-export class Footer {}
+export class Footer { readonly analytics = inject(Analytics); }

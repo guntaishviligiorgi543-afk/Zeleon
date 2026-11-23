@@ -1,4 +1,6 @@
 import { Auth } from './services/auth';
+import { Analytics } from './services/analytics';
+import { LegalConsents } from './services/legal-consents';
 import { CartLoginDialog } from './components/cart-login-dialog/cart-login-dialog';
 import {
   AfterRenderRef,
@@ -14,7 +16,7 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterOutlet, RouterLink } from '@angular/router';
 import { AOS_ENGINE } from './aos-engine';
 import { filter } from 'rxjs';
 import { Header } from './components/header/header';
@@ -25,13 +27,16 @@ import { ManagerNavigation } from './components/manager-navigation/manager-navig
 import { legacyRatingPath } from './pages/support-rating/rating-link';
 
 @Component({
-  imports: [CartLoginDialog, RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat, Home],
+  imports: [RouterLink, CartLoginDialog, RouterOutlet, Header, Footer, ManagerNavigation, CustomerChat, Home],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
+  protected readonly analytics = inject(Analytics);
+  protected readonly legal = inject(LegalConsents);
+  protected readonly cookieDraft = signal(false);
   protected readonly router = inject(Router);
   protected readonly ratingRoute = signal(this.isRatingUrl(this.router.url));
   protected readonly checkoutRoute = signal(/^\/checkout(?:[/?#;]|$)/.test(this.router.url));
@@ -54,6 +59,13 @@ export class App implements AfterViewInit {
         void this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url }, replaceUrl: true });
       }
     });
+  }
+  protected openCookiePreferences(): void {
+    this.cookieDraft.set(this.analytics.consent() === 'accepted');
+    this.analytics.openPreferences();
+  }
+  protected saveCookiePreferences(): void {
+    this.analytics.setConsent(this.cookieDraft() ? 'accepted' : 'rejected');
   }
   private checkoutOrCart(): boolean {
     return /^\/(cart|checkout)(?:[/?#;]|$)/.test(this.router.url);

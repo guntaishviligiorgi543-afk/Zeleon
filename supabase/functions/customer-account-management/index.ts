@@ -74,10 +74,26 @@ export async function handleRequest(request: Request, makeClient = createClient,
       const states = await rows<{user_id:string;status:string}>('customer_account_states', 'user_id,status', 'user_id');
       const roles = await rows<{user_id:string}>('staff_roles', 'user_id', 'user_id');
       const requests = await rows('customer_account_actions', '*', 'id');
+      // The Manager alone can inspect public-facing profile details. No password,
+      // token, auth metadata, or staff record is included in this directory.
+      const names = role === 'manager'
+        ? await rows<{user_id:string;preferred_name:string|null}>('user_preferred_names', 'user_id,preferred_name', 'user_id')
+        : [];
+      const avatars = role === 'manager'
+        ? await rows<{user_id:string;storage_path:string}>('user_avatars', 'user_id,storage_path', 'user_id')
+        : [];
+      const preferred = new Map(names.map(n => [n.user_id, n.preferred_name]));
+      const avatarPaths = new Map(avatars.map(a => [a.user_id, a.storage_path]));
       requests.sort((a,b) => String(b.created_at).localeCompare(String(a.created_at)));
       const staffIds = new Set(roles.map(r => r.user_id));
       const statuses = new Map(states.map(r => [r.user_id, r.status]));
-      return json({ users: customers.filter(u => !staffIds.has(u.id) && !u.is_anonymous).map(u => ({ id: u.id, email: u.email ?? '', created_at: u.created_at, status: statuses.get(u.id) ?? 'active' })), requests });
+      return json({ users: customers.filter(u => !staffIds.has(u.id) && !u.is_anonymous).map(u => ({ id: u.id, email: u.email ?? '', created_at: u.created_at, status: statuses.get(u.id) ?? 'active',
+        ...(role === 'manager' ? {
+          preferred_name: preferred.get(u.id) ?? null,
+          avatar_url: avatarPaths.has(u.id)
+            ? db.storage.from('avatars').getPublicUrl(avatarPaths.get(u.id)!).data.publicUrl : null,
+        } : {}),
+      })), requests });
     }
     // Every transition reauthorizes and commits atomically under the caller JWT.
     const result = await caller.rpc('customer_account_transition', { p_action: action, p_payload: body });

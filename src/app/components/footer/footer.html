@@ -30,8 +30,9 @@
           <h2>Support &amp; Legal</h2>
           <ul>
             <li><a routerLink="/contact" fragment="faq">FAQ</a></li>
-            <li><span>Privacy Policy</span></li>
-            <li><span>Terms &amp; Conditions</span></li>
+            <li><a routerLink="/privacy-policy">Privacy Policy</a></li>
+            <li><a routerLink="/terms-of-use">Terms of Use</a></li>
+            <li><a routerLink="/cookie-policy">Cookie Policy</a></li>
           </ul>
         </div>
         <div class="link-group">
@@ -68,6 +69,7 @@
     <div class="wordmark" aria-hidden="true">ZELEON</div>
     <div class="footer-bottom">
       <p>© 2026 ZELEON. All rights reserved.</p>
+      <div class="footer-legal-bottom"><a routerLink="/privacy-policy">Privacy Policy</a><a routerLink="/terms-of-use">Terms of Use</a><a routerLink="/cookie-policy">Cookie Policy</a><button type="button" (click)="analytics.openPreferences()">Cookie Settings</button></div>
       <p class="closing-line">Born to move.</p>
     </div>
   </div>

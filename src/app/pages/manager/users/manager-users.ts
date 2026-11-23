@@ -10,6 +10,8 @@ type Customer = {
   email: string;
   created_at: string;
   status: 'active' | 'suspended' | 'deactivated';
+  preferred_name?: string | null;
+  avatar_url?: string | null;
 };
 type Request = {
   id: string;
@@ -33,6 +35,11 @@ export class ManagerUsers implements OnInit {
   readonly auth = inject(Auth);
   readonly isManager = this.access.role() === 'manager';
   readonly users = signal<Customer[]>([]);
+  readonly viewingProfile = signal<Customer | null>(null);
+  viewProfile(user: Customer): void {
+    if (this.isManager) this.viewingProfile.set(user);
+  }
+  closeProfile(): void { this.viewingProfile.set(null); }
   readonly requests = signal<Request[]>([]);
   readonly search = signal('');
   readonly reason = signal<Record<string, string>>({});
@@ -77,6 +84,7 @@ export class ManagerUsers implements OnInit {
     try {
       const data = await this.call('list');
       this.users.set(data.users ?? []);
+      this.viewingProfile.set(null);
       this.requests.set(data.requests ?? []);
     } catch (e) {
       this.error.set(e instanceof Error ? e.message : 'Could not load users');

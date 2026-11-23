@@ -14,6 +14,28 @@
   @if (success()) {
     <div class="notice success" role="status">{{ success() }}</div>
   }
+  @if (isManager && viewingProfile(); as profile) {
+    <section class="surface user-profile-view" aria-label="Customer profile details">
+      <div class="user-profile-view-header">
+        <h2>Customer profile · Read only</h2>
+        <button type="button" class="button" (click)="closeProfile()">Close</button>
+      </div>
+      <div class="user-profile-details">
+        @if (profile.avatar_url) {
+          <img class="user-profile-avatar" [src]="profile.avatar_url" alt="Customer profile photo" referrerpolicy="no-referrer" />
+        } @else {
+          <span class="user-profile-avatar user-profile-avatar-empty" aria-hidden="true">?</span>
+        }
+        <dl>
+          <dt>Preferred name</dt><dd>{{ profile.preferred_name || 'Not set' }}</dd>
+          <dt>Email</dt><dd>{{ profile.email }}</dd>
+          <dt>Account status</dt><dd>{{ profile.status }}</dd>
+          <dt>Registered</dt><dd>{{ profile.created_at | date: 'MMM d, y, HH:mm' }}</dd>
+          <dt>User ID</dt><dd class="user-profile-id">{{ profile.id }}</dd>
+        </dl>
+      </div>
+    </section>
+  }
   <article class="surface user-surface">
     <div class="surface-heading">
       <div>
@@ -38,6 +60,9 @@
               ><small>Registered {{ u.created_at | date: 'MMM d, y, HH:mm' }}</small>
             </div>
             <span class="user-status">{{ u.status }}</span>
+            @if (isManager) {
+              <button class="button user-view-profile" type="button" (click)="viewProfile(u)" [attr.aria-label]="'View profile for ' + u.email">View profile</button>
+            }
             @if (!isManager && u.status === 'active') {
               <div class="user-controls">
                 <select
