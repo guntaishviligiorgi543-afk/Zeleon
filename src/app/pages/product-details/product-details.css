@@ -36,3 +36,7 @@ button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid 
   .product-layout { grid-template-columns: minmax(0, 1fr); }
   .product-info { padding-top: 0; }
 }
+
+.product-type-info { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin: -6px 0 22px; text-transform:none; }
+.product-type-info span { color:#aaa; font-size:13px; }
+.product-type-info strong { color:#fff; font-size:13px; font-weight:600; border:1px solid #666; padding:7px 12px; }

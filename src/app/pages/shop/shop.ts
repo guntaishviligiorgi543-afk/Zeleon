@@ -19,6 +19,8 @@ type Sort = 'default' | 'priceLowToHigh' | 'priceHighToLow' | 'nameAToZ' | 'name
 export class Shop {
   readonly products = signal<readonly Product[]>([]);
   readonly categories = signal<{ id: number; name: string; slug: string }[]>([]);
+  readonly selectedProductType = signal('all');
+  readonly productTypes = signal<{ slug: string; name: string }[]>([]);
   readonly loading = signal(true);
   readonly error = signal('');
   readonly pageSize = 6;
@@ -36,6 +38,7 @@ export class Shop {
       .subscribe(([data, params]) => {
         const category = data['category'] ?? params.get('category');
         this.selectedCategory = category || 'all';
+        this.selectedProductType.set(params.get('type') || 'all');
         this.currentPage.set(1);
       });
     afterNextRender(() => {
@@ -56,6 +59,11 @@ export class Shop {
       if (!request.signal.aborted) {
         this.categories.set(categories);
         this.products.set(products);
+        const available = new Map<string, string>();
+        for (const product of products) {
+          if (product.productType && product.productTypeName) available.set(product.productType, product.productTypeName);
+        }
+        this.productTypes.set([...available].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name)));
         this.currentPage.set(this.pageNumber);
       }
     } catch (error) {
@@ -154,7 +162,8 @@ export class Shop {
 
   get displayedProducts(): Product[] {
     const products = this.products().filter(
-      (product) => this.selectedCategory === 'all' || product.category === this.selectedCategory,
+      (product) => (this.selectedCategory === 'all' || product.category === this.selectedCategory)
+        && (this.selectedProductType() === 'all' || product.productType === this.selectedProductType()),
     );
     switch (this.selectedSort) {
       case 'priceLowToHigh':
@@ -168,6 +177,11 @@ export class Shop {
       default:
         return products;
     }
+  }
+
+  selectProductType(value: string): void {
+    this.selectedProductType.set(value);
+    this.currentPage.set(1);
   }
 
   selectCategory(category: Category): void {

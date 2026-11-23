@@ -20,6 +20,9 @@
       </div>
       <div class="product-info">
         <h1>{{ item.name }}</h1>
+        @if (item.productTypeName) {
+          <p class="product-type-info"><span>Product Type</span><strong>{{ item.productTypeName }}</strong></p>
+        }
         <p class="prodPrice" aria-live="polite">
           @if ((item.stock ?? 0) === 0) { <span>OUT OF STOCK</span> <s>{{ (item.regularPrice ?? item.price) | currency:item.currency }}</s> }
           @else { @if (item.onSale) { <s>{{ (item.regularPrice ?? item.price) * quantity() | currency:item.currency }}</s> } <span [style.color]="item.onSale ? '#c82028' : null">{{ totalPrice() | currency:item.currency }}</span> }

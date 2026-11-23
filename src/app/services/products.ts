@@ -13,10 +13,11 @@ export interface ProductRecord {
   created_at: string;
   description?: string | null;
   category: { name: string; slug: string } | null;
+  product_type: { name: string; slug: string } | null;
   images: { storage_path: string; is_primary: boolean; created_at: string }[];
 }
 
-export const PRODUCT_SELECT = 'id,name,slug,description,price,currency,created_at,category:categories(name,slug),images:product_images(storage_path,is_primary,created_at)';
+export const PRODUCT_SELECT = 'id,name,slug,description,price,currency,created_at,category:categories(name,slug),product_type:product_types(name,slug),images:product_images(storage_path,is_primary,created_at)';
 
 @Injectable({ providedIn: 'root' })
 export class Products {
@@ -75,6 +76,7 @@ export class Products {
       price: Number(row.price), currency: row.currency,
       description: row.description ?? '',
       category: row.category?.slug ?? '', categoryName: row.category?.name ?? '',
+      productType: row.product_type?.slug ?? '', productTypeName: row.product_type?.name ?? '',
       image: path ? this.client.storage.from(environment.productImagesBucket).getPublicUrl(path).data.publicUrl : '',
     };
   }
