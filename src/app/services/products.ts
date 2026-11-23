@@ -50,6 +50,12 @@ export class Products {
     return data ?? [];
   }
 
+  async getProductTypes(): Promise<{ id: number; name: string; slug: string }[]> {
+    const { data, error } = await this.client.from('product_types').select('id,name,slug').order('name');
+    if (error) throw new Error('Product types could not be loaded. Please try again.');
+    return data ?? [];
+  }
+
   private async withOffers(products: Product[], signal?: AbortSignal): Promise<Product[]> {
     if (!products.length) return [];
     let query = this.client.from('catalog_product_offers').select('*').in('product_id', products.map(p => p.id));

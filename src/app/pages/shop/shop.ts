@@ -55,15 +55,12 @@ export class Shop {
     if (!background) this.loading.set(true);
     this.error.set('');
     try {
-      const [products, categories] = await Promise.all([this.catalog.getActiveProducts(request.signal), this.catalog.getCategories()]);
+      const [products, categories, types] = await Promise.all([this.catalog.getActiveProducts(request.signal), this.catalog.getCategories(), this.catalog.getProductTypes()]);
       if (!request.signal.aborted) {
         this.categories.set(categories);
         this.products.set(products);
-        const available = new Map<string, string>();
-        for (const product of products) {
-          if (product.productType && product.productTypeName) available.set(product.productType, product.productTypeName);
-        }
-        this.productTypes.set([...available].map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name)));
+        // Show every configured type, including ones without currently active products.
+        this.productTypes.set(types.map(({ slug, name }) => ({ slug, name })));
         this.currentPage.set(this.pageNumber);
       }
     } catch (error) {

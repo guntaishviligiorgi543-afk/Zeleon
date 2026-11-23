@@ -14,7 +14,7 @@ describe('Shop', () => {
     HTMLElement.prototype.scrollIntoView = vi.fn();
     await TestBed.configureTestingModule({
       imports: [Shop],
-      providers: [provideRouter([]), { provide: Products, useValue: { getCategories: vi.fn().mockResolvedValue([{ id: 1, name: 'Classic', slug: 'classic' }, { id: 2, name: 'Boost Blends', slug: 'boost-blends' }, { id: 3, name: 'Zero Sugar', slug: 'zero-sugar' }]), getActiveProducts: vi.fn().mockResolvedValue([]) } }],
+      providers: [provideRouter([]), { provide: Products, useValue: { getProductTypes: vi.fn().mockResolvedValue([{ id: 1, name: 'Carbonated', slug: 'carbonated' }, { id: 2, name: 'Non-Carbonated', slug: 'non-carbonated' }, { id: 3, name: 'Fruit Blend', slug: 'fruit-blend' }, { id: 4, name: 'Functional Energy Drink', slug: 'functional-energy-drink' }]), getCategories: vi.fn().mockResolvedValue([{ id: 1, name: 'Classic', slug: 'classic' }, { id: 2, name: 'Boost Blends', slug: 'boost-blends' }, { id: 3, name: 'Zero Sugar', slug: 'zero-sugar' }]), getActiveProducts: vi.fn().mockResolvedValue([]) } }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Shop);
@@ -68,6 +68,16 @@ describe('Shop', () => {
     expect(component.paginatedProducts[0].id).toBe(13);
     expect(component.paginatedProducts.at(-1)?.id).toBe(8);
     expect(component.products()[0].id).toBe(1);
+  });
+
+  it('offers types without products and returns an empty result for those types', async () => {
+    await component.loadProducts();
+    fixture.detectChanges();
+    expect(component.productTypes().map(type => type.slug)).toContain('carbonated');
+    expect([...fixture.nativeElement.querySelectorAll('#product-type-filter option')].map((option: HTMLOptionElement) => option.value)).toContain('non-carbonated');
+    component.selectProductType('carbonated');
+    fixture.detectChanges();
+    expect(component.displayedProducts).toHaveLength(0);
   });
 
   it('filters by product type alongside category and sorting and resets the page', () => {
@@ -197,7 +207,7 @@ describe('Shop category routes', () => {
     }));
     TestBed.configureTestingModule({ providers: [
       provideRouter(routes.filter(route => route.path?.startsWith('shop'))),
-      { provide: Products, useValue: { getCategories: vi.fn().mockResolvedValue([{ id: 1, name: 'Classic', slug: 'classic' }, { id: 2, name: 'Boost Blends', slug: 'boost-blends' }, { id: 3, name: 'Zero Sugar', slug: 'zero-sugar' }]), getActiveProducts: vi.fn().mockResolvedValue(products) } },
+      { provide: Products, useValue: { getProductTypes: vi.fn().mockResolvedValue([{ id: 1, name: 'Carbonated', slug: 'carbonated' }, { id: 2, name: 'Non-Carbonated', slug: 'non-carbonated' }, { id: 3, name: 'Fruit Blend', slug: 'fruit-blend' }, { id: 4, name: 'Functional Energy Drink', slug: 'functional-energy-drink' }]), getCategories: vi.fn().mockResolvedValue([{ id: 1, name: 'Classic', slug: 'classic' }, { id: 2, name: 'Boost Blends', slug: 'boost-blends' }, { id: 3, name: 'Zero Sugar', slug: 'zero-sugar' }]), getActiveProducts: vi.fn().mockResolvedValue(products) } },
     ] });
     const harness = await RouterTestingHarness.create();
     for (const category of ['classic', 'boost-blends', 'zero-sugar']) {

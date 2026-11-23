@@ -36,6 +36,14 @@ describe('Products', () => {
     ],
   };
 
+  it('loads all configured product types independently from products', async () => {
+    result.data = [{ id: 1, name: 'Carbonated', slug: 'carbonated' }];
+    const types = await service.getProductTypes();
+    expect(types).toEqual([{ id: 1, name: 'Carbonated', slug: 'carbonated' }]);
+    expect(query['select']).toHaveBeenCalledWith('id,name,slug');
+    expect(query['order']).toHaveBeenCalledWith('name');
+  });
+
   it('maps nested categories, numeric prices, and primary Storage images', async () => {
     result.data = [record];
     const products = await service.getActiveProducts();
