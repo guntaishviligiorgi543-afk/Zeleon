@@ -11,9 +11,9 @@
 .footer {
   color: #000;
   background: #fff;
-  height: 60vh;
+  min-height: 60vh;
   border-radius: 60px;
-  overflow: auto;
+  overflow: visible;
   font-family: Arial, Helvetica, sans-serif;
 }
 

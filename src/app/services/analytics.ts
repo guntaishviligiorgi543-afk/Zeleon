@@ -3,6 +3,8 @@ import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter } from 'rxjs';
 import { Product } from '../models/product';
+import { Auth } from './auth';
+import { SUPABASE_CLIENT } from './supabase';
 
 export const GA4_MEASUREMENT_ID = 'G-844EV84VWF';
 const CONSENT_KEY = 'zeleon-analytics-consent-v1';
@@ -20,6 +22,8 @@ declare global {
 @Injectable({ providedIn: 'root' })
 export class Analytics {
   private readonly router = inject(Router);
+  private readonly auth = inject(Auth);
+  private readonly db = inject(SUPABASE_CLIENT);
   private readonly destroyRef = inject(DestroyRef);
   readonly consent = signal<ConsentChoice>(null);
   readonly preferencesOpen = signal(false);
@@ -51,6 +55,11 @@ export class Analytics {
       }
     } catch { /* storage may be restricted */ }
     try { localStorage.setItem(CONSENT_KEY, value); } catch { /* no persistence */ }
+    if (this.auth.user()?.id) {
+      void this.db.rpc('update_my_analytics_consent', { p_analytics: value === 'accepted' }).then(({ error }) => {
+        if (error) console.warn('Analytics preference sync could not be saved.');
+      });
+    }
     if (typeof window !== 'undefined') (window as unknown as Record<string, unknown>)['ga-disable-' + GA4_MEASUREMENT_ID] = value !== 'accepted';
     if (value === 'accepted') {
       if (this.started && window.gtag) {

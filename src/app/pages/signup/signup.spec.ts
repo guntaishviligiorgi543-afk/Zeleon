@@ -41,6 +41,11 @@ describe('Signup', () => {
     component.form.controls.confirmPassword.setValue('valid passphrase');
     expect(component.form.valid).toBe(true);
     await component.submit();
+    expect(component.termsDialog()).toBe(true);
+    expect(auth.signUp).not.toHaveBeenCalled();
+    component.termsChecked.set(true);
+    component.privacyChecked.set(true);
+    await component.confirmRegistration();
     expect(auth.signUp).toHaveBeenCalledExactlyOnceWith('person+test@example.com', 'valid passphrase', {
       firstName: 'Nino', lastName: 'Example', preferredName: 'Nini',
     });
@@ -62,8 +67,11 @@ describe('Signup', () => {
     component.form.setValue({ firstName: 'Test', lastName: 'Person', preferredName: '', email: 'test@example.com', password: 'longpassword', confirmPassword: 'longpassword' });
     let finish!: (value: any) => void;
     auth.signUp.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
-    const request = component.submit();
     await component.submit();
+    component.termsChecked.set(true);
+    component.privacyChecked.set(true);
+    const request = component.confirmRegistration();
+    await component.confirmRegistration();
     expect(auth.signUp).toHaveBeenCalledOnce();
     expect(component.pending()).toBe(true);
     finish({ hasSession: true });
@@ -71,6 +79,7 @@ describe('Signup', () => {
     component.form.patchValue({ password: 'longpassword', confirmPassword: 'longpassword' });
     auth.signUp.mockRejectedValueOnce({ status: 429 });
     await component.submit();
+    await component.confirmRegistration();
     expect(component.result()?.success).toBe(false);
     expect(component.result()?.message).toContain('Too many attempts');
     fixture.detectChanges();
@@ -83,6 +92,9 @@ describe('Signup', () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
     component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: 'Nini', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
+    component.termsChecked.set(true);
+    component.privacyChecked.set(true);
+    await component.confirmRegistration();
     expect(component.verificationOpen()).toBe(true);
     expect(component.result()).toBeNull();
     expect(auth.user()).toBeNull();
@@ -106,6 +118,9 @@ describe('Signup', () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
     component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
+    component.termsChecked.set(true);
+    component.privacyChecked.set(true);
+    await component.confirmRegistration();
     component.verificationCode.set('00000000');
     auth.verifyEmailOtp.mockRejectedValueOnce({ code: 'otp_expired' });
     await component.verifyEmail();
@@ -119,6 +134,9 @@ describe('Signup', () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
     component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
+    component.termsChecked.set(true);
+    component.privacyChecked.set(true);
+    await component.confirmRegistration();
     expect(component.verificationOpen()).toBe(true);
     fixture.detectChanges();
     fixture.nativeElement.querySelector('.registration-cancel').click();
@@ -131,6 +149,9 @@ describe('Signup', () => {
     auth.signUp.mockResolvedValueOnce({ hasSession: false });
     component.form.setValue({ firstName: 'Nino', lastName: 'Example', preferredName: '', email: 'person@example.com', password: 'valid passphrase', confirmPassword: 'valid passphrase' });
     await component.submit();
+    component.termsChecked.set(true);
+    component.privacyChecked.set(true);
+    await component.confirmRegistration();
     expect(document.body.style.overflow).toBe('hidden');
     fixture.destroy();
     expect(document.body.style.overflow).toBe(previous);

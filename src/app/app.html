@@ -17,7 +17,7 @@
 
 @if (!newsletterRoute()) { <app-cart-login-dialog></app-cart-login-dialog> }
 
-@if (analytics.consent() === null && !analytics.preferencesOpen()) {
+@if (analytics.consent() === null && !analytics.preferencesOpen() && !workspaceRoute() && !ratingRoute() && !newsletterRoute()) {
   <aside class="zeleon-analytics-consent" role="region" aria-label="Cookie choices">
     <div><strong>ZELEON respects your privacy</strong>
       <p>Essential storage supports sign-in and security. With your permission, optional Google Analytics helps us improve your experience. <a routerLink="/cookie-policy">Cookie Policy</a></p>
