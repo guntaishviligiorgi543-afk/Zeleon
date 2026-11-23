@@ -31,8 +31,9 @@ export class Login {
     this.pending.set(true);
     this.status.set('');
     try {
-      const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
-      await this.auth.signInWithGoogle(typeof returnUrl === 'string' ? returnUrl : null);
+      const query = this.router.parseUrl(this.router.url).queryParams;
+      const returnUrl = query['returnUrl'];
+      await this.auth.signInWithGoogle(query['consultation'] === '1' ? '/contact?consultation=1' : typeof returnUrl === 'string' ? returnUrl : null);
     } catch (error) {
       this.status.set(authErrorMessage(error));
       this.pending.set(false);
