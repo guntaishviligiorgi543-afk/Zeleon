@@ -249,9 +249,13 @@
             @if (!editing() && step() > 0) {
               <button type="button" class="button" [disabled]="saving()" (click)="changeStep(step() - 1)">Back</button>
             }
-            <button type="submit" class="button primary" [disabled]="saving()">
-              {{ saving() ? 'Saving?' : (!editing() && step() < 3 ? 'Next' : 'Save product') }}
-            </button>
+            @if (!editing() && step() < 3) {
+              <button type="button" class="button primary" [disabled]="saving()" (click)="nextStep()">Next</button>
+            } @else {
+              <button type="submit" class="button primary" [disabled]="saving()">
+                {{ saving() ? 'Saving...' : 'Save product' }}
+              </button>
+            }
           </div>
         </form>
       </section>

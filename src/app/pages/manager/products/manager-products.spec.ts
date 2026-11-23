@@ -59,16 +59,18 @@ describe('Product editor form', () => {
     type('product-name', 'Test energy drink');
     type('product-slug', 'test-energy-drink');
     type('product-price', '4.50');
-    fixture.componentInstance.nextStep();
+    expect(fixture.componentInstance.form.getRawValue()).toEqual(expect.objectContaining({name: 'Test energy drink', slug: 'test-energy-drink', price: 4.5}));
+    (fixture.nativeElement.querySelector('.action-row button.primary') as HTMLButtonElement).click();
     fixture.detectChanges();
+    expect(fixture.componentInstance.step()).toBe(1);
     const select = fixture.nativeElement.querySelector('#product-category') as HTMLSelectElement;
     select.selectedIndex = 1;
     select.dispatchEvent(new Event('change', { bubbles: true }));
     fixture.detectChanges();
     expect(fixture.componentInstance.form.valid).toBe(true);
-    fixture.componentInstance.nextStep();
+    (fixture.nativeElement.querySelector('.action-row button.primary') as HTMLButtonElement).click();
     fixture.detectChanges();
-    fixture.componentInstance.nextStep();
+    (fixture.nativeElement.querySelector('.action-row button.primary') as HTMLButtonElement).click();
     fixture.detectChanges();
     const submit = fixture.nativeElement.querySelector(
       'button[type="submit"]',
