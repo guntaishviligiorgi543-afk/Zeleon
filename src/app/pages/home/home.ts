@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { Products } from '../../services/products';
 import { Product } from '../../models/product';
 import { HomeHero } from './hero/hero';
+import { SUPABASE_CLIENT } from '../../services/supabase';
 
 @Component({
   imports: [CurrencyPipe, RouterLink, HomeHero],
@@ -18,6 +19,9 @@ export class Home {
   readonly newsletterBusy = signal(false);
   readonly newsletterVerified = signal(false);
   readonly newsletterMessage = signal('');
+  readonly newsletterAlreadySubscribed = signal(false);
+  private newsletterCheckVersion = 0;
+  private readonly supabase = inject(SUPABASE_CLIENT);
   readonly newsletterVerificationError = signal('');
   readonly newsletterVerificationLoading = signal(true);
   private newsletterVerificationTimer?: ReturnType<typeof setTimeout>;
@@ -32,11 +36,13 @@ export class Home {
   constructor() {
     afterNextRender(() => {
       void this.loadProducts(); this.setupNewsletterCaptcha();
+      void this.checkNewsletterSubscription(true);
       const timer = this.zone.runOutsideAngular(() => setInterval(() => { if (!document.hidden && !this.productsLoading()) void this.loadProducts(true); }, 30000));
       this.destroyRef.onDestroy(() => clearInterval(timer));
     });
     this.destroyRef.onDestroy(() => {
       this.productRequest?.abort();
+      this.newsletterCheckVersion++;
       clearTimeout(this.newsletterVerificationTimer);
       this.newsletterScriptCleanup?.();
       if (this.newsletterWidgetId !== null) (window as any).turnstile?.remove(this.newsletterWidgetId);
@@ -249,6 +255,33 @@ export class Home {
     }
   }
 
+  /**
+   * Only inspect the currently signed-in user's verified address.
+   * Anonymous email lookups would reveal private marketing-list membership.
+   */
+  async checkNewsletterSubscription(prefill = false): Promise<void> {
+    const version = ++this.newsletterCheckVersion;
+    this.newsletterAlreadySubscribed.set(false);
+    try {
+      const { data: { session } } = await this.supabase.auth.getSession();
+      if (!session?.user?.email || this.destroyRef.destroyed || version !== this.newsletterCheckVersion) return;
+      const emailInput = this.element.nativeElement.querySelector<HTMLInputElement>('.subscriptionForm input[type="email"]');
+      if (!emailInput) return;
+      if (prefill && !emailInput.value.trim()) emailInput.value = session.user.email;
+      const value = emailInput.value.trim().toLowerCase();
+      if (value !== session.user.email.trim().toLowerCase()) return;
+      const { data, error } = await this.supabase.rpc('newsletter_my_active_status');
+      if (this.destroyRef.destroyed || version !== this.newsletterCheckVersion || error) return;
+      if (emailInput.value.trim().toLowerCase() === value) this.newsletterAlreadySubscribed.set(data === true);
+    } catch {
+      // Do not expose subscription membership or block regular signup on a lookup failure.
+    }
+  }
+
+  newsletterEmailChanged(): void {
+    void this.checkNewsletterSubscription();
+  }
+
   async submitNewsletter(event: Event): Promise<void> {
     event.preventDefault();
     if (this.newsletterBusy()) return;
@@ -257,6 +290,10 @@ export class Home {
     const consent = form.querySelector<HTMLInputElement>('input[type="checkbox"]');
     const turnstile = (window as any).turnstile;
     const captcha = this.newsletterWidgetId && turnstile ? turnstile.getResponse(this.newsletterWidgetId) : '';
+    if (this.newsletterAlreadySubscribed()) {
+      this.newsletterMessage.set('You are already subscribed to the ZELEON newsletter.');
+      return;
+    }
     if (!email?.validity.valid || !consent?.checked) {
       this.newsletterMessage.set('Enter a valid email and accept the newsletter consent.');
       return;

@@ -207,10 +207,16 @@
   <div class="subscriptionForm">
     <h4><span>unlock </span> exclusive access</h4>
     <p>The highest-rated formulas chosen by our active community daily</p>
+    @if (newsletterAlreadySubscribed()) {
+      <div class="newsletter-subscribed" role="status" aria-live="polite">
+        <span class="newsletter-subscribed-icon" aria-hidden="true">✓</span>
+        <div><strong>Already subscribed!</strong><span>This email is already subscribed to ZELEON updates.</span></div>
+      </div>
+    }
     <form (submit)="submitNewsletter($event)">
       <div class="mailInp">
         <label for="email">Email:</label>
-        <input type="email" id="email" name="email" required #newsletterEmail />
+        <input type="email" id="email" name="email" required #newsletterEmail (input)="newsletterEmailChanged()" />
       </div>
       <div class="chekbox">
         <input type="checkbox" id="checkbox" name="checkbox" required #newsletterConsent />
@@ -224,7 +230,7 @@
           <button type="button" (click)="retryNewsletterVerification()" [disabled]="newsletterBusy()">Retry verification</button>
         </div>
       }
-      <button type="submit" [disabled]="newsletterBusy() || !newsletterVerified()">{{ newsletterBusy() ? "Submitting…" : "Subscribe" }}</button>
+      <button type="submit" [disabled]="newsletterBusy() || !newsletterVerified() || newsletterAlreadySubscribed()">{{ newsletterAlreadySubscribed() ? "Already Subscribed" : newsletterBusy() ? "Submitting..." : "Subscribe" }}</button>
       <p role="status" aria-live="polite">{{ newsletterMessage() }}</p>
     </form>
   </div>
