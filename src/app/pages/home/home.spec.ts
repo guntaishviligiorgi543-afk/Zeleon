@@ -98,6 +98,23 @@ describe('Home', () => {
     expect(fixture.nativeElement.querySelector('.subscriptionForm input[type="email"]')).not.toBeNull();
   });
 
+  it('does not initiate Turnstile on initial render; starts on form interaction', () => {
+    expect(component.newsletterCaptchaStarted()).toBe(false);
+    const form = fixture.nativeElement.querySelector('.subscriptionForm form') as HTMLFormElement;
+    expect(form).toBeTruthy();
+    form.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    expect(component.newsletterCaptchaStarted()).toBe(true);
+    expect(component.newsletterVerificationLoading()).toBe(true);
+  });
+
+  it('does not start Turnstile when already subscribed', () => {
+    component.newsletterAlreadySubscribed.set(true);
+    fixture.detectChanges();
+    component.startNewsletterVerification();
+    expect(component.newsletterCaptchaStarted()).toBe(false);
+    expect(fixture.nativeElement.querySelector('#zeleon-newsletter-turnstile')).toBeNull();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -172,6 +189,7 @@ describe('Home', () => {
   });
 
   it('replaces a failed API script instead of silently waiting on it or loading duplicates', () => {
+    component.startNewsletterVerification();
     const script = document.querySelector<HTMLScriptElement>('script[src^="https://challenges.cloudflare.com/turnstile/v0/api.js"]')!;
     script.dispatchEvent(new Event('error'));
     expect(component.newsletterVerificationError()).toContain('script-load');
