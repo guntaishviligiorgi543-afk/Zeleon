@@ -237,7 +237,13 @@
           }
           @if (editing() || step() === 3) {
           <h3 class="step-heading" tabindex="-1">Product Image</h3>
-          <label class="field">Upload or replace image (PNG, JPEG, WebP, up to 10 MB)<input type="file" accept="image/png,image/jpeg,image/webp" (change)="selectImage($event)" [disabled]="saving()" /></label>
+          <div class="field image-upload">
+            <label for="product-image">Upload or replace image</label>
+            <input #imageInput id="product-image" class="image-file-input" type="file" accept="image/png,image/jpeg,image/webp" (change)="selectImage($event)" [disabled]="saving()" tabindex="-1" aria-describedby="product-image-help" />
+            <button type="button" class="button image-picker-button" [disabled]="saving()" (click)="openImagePicker(imageInput)" aria-describedby="product-image-help">Choose a file</button>
+            <small id="product-image-help">PNG, JPEG or WebP, up to 10 MB.</small>
+            <span aria-live="polite">{{ imageName() || (imagePreview() ? 'Current product image' : 'No file chosen') }}</span>
+          </div>
           @if (imagePreview()) { <img class="image-preview" [src]="imagePreview()" alt="Product image preview" /> }
           @if (editing(); as product) { @if (product.images.length) { <button type="button" class="button danger" [disabled]="saving()" (click)="removeImage(product, 0)">Remove image and deactivate</button> } }
           <h3>Availability</h3>

@@ -64,19 +64,42 @@ export class ManagerProducts implements OnInit, OnDestroy, AfterViewChecked {
   readonly editing = signal<ManagerProduct | null>(null);
   readonly query = signal('');
   readonly imagePreview = signal('');
+  readonly imageName = signal('');
   private imageFile?: File;
   readonly stockReason = new FormControl('Catalog correction', { nonNullable: true, validators: [Validators.required, Validators.maxLength(200)] });
   ngOnDestroy(): void { this.clearImage(); }
   private clearImage(): void {
     if (this.imagePreview().startsWith('blob:')) URL.revokeObjectURL(this.imagePreview());
-    this.imagePreview.set(''); this.imageFile = undefined;
+    this.imagePreview.set(''); this.imageName.set(''); this.imageFile = undefined;
   }
+  openImagePicker(input: HTMLInputElement): void {
+    if (this.saving()) return;
+    this.error.set('');
+    try {
+      // Keep the picker call synchronous with the user's button click.
+      if (typeof input.showPicker === 'function') input.showPicker();
+      else input.click();
+    } catch {
+      try { input.click(); }
+      catch { this.error.set('The file picker could not open. Try opening this page in your browser.'); }
+    }
+  }
+
   selectImage(event: Event): void {
-    this.clearImage();
-    const file = (event.target as HTMLInputElement).files?.[0];
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
     if (!file) return;
-    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size <= 0 || file.size > 10 * 1024 * 1024) { this.error.set('Choose PNG, JPEG or WebP up to 10 MB.'); return; }
-    this.imageFile = file; this.imagePreview.set(URL.createObjectURL(file));
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type) || file.size <= 0 || file.size > 10 * 1024 * 1024) {
+      this.error.set('Choose PNG, JPEG or WebP up to 10 MB.');
+      input.value = '';
+      return;
+    }
+    this.clearImage();
+    this.error.set('');
+    this.imageFile = file;
+    this.imageName.set(file.name);
+    this.imagePreview.set(URL.createObjectURL(file));
+    input.value = '';
   }
   readonly pageSize = signal(10);
   readonly currentPage = signal(1);
