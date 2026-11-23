@@ -133,6 +133,12 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
           products = [...products].sort((a, b) => a.created_at.localeCompare(b.created_at) || String(a.id).localeCompare(String(b.id), 'en', { numeric: true }));
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(products), headers: { 'Access-Control-Allow-Origin': server.origin } });
         }
+        if (request.method() === 'GET' && url.origin === apiOrigin && url.pathname === '/rest/v1/product_types') {
+          // The public Shop now reads every configured Product Type. This type list
+          // is not SEO content, so keep prerender deterministic and private-data-free.
+          // The actual browser still loads the full live list from Supabase.
+          return route.fulfill({ status: 200, contentType: 'application/json', body: '[]', headers: { 'Access-Control-Allow-Origin': server.origin } });
+        }
         if (request.method() === 'GET' && url.origin === apiOrigin && ['/rest/v1/catalog_product_offers', '/rest/v1/categories'].includes(url.pathname)) {
           return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(url.pathname.endsWith('/categories') ? categories : offers), headers: { 'Access-Control-Allow-Origin': server.origin } });
         }
@@ -152,7 +158,7 @@ export async function prerender(directory = join(root, 'dist/zeleon/browser')) {
         const selector = selectors[path] ?? 'app-shop';
         await page.locator(`app-root main ${selector}`).waitFor();
         await page.waitForFunction(() => document.querySelector('a[aria-label="Sign in"]') && document.querySelector('meta[name="robots"]')?.content === 'index, follow');
-        if (path.startsWith('/shop/')) await page.locator('#shop-products[aria-busy="false"]').waitFor();
+        if (path.startsWith('/shop/')) await page.waitForFunction(() => document.querySelector('#shop-products')?.getAttribute('aria-busy') === 'false');
         if (path === '/') await page.waitForFunction(count => document.querySelectorAll('#featured-products a.card:not([data-loop-clone])').length === count &&
           ![...document.querySelectorAll('app-home [role="status"], app-home [role="alert"]')].some(element => !element.classList.contains('verification-status') && element.textContent?.trim()), rows.length);
         await page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
