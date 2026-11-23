@@ -1,0 +1,29 @@
+<section class="page contact-inbox-page">
+<header class="page-header"><div><h1>Contact Inbox</h1><p>Contact Us messages · Administrator replies delivered to the sender's email address.</p></div><button type="button" class="button" (click)="refresh()" [disabled]="loading() || sending()">Refresh</button></header>
+@if(error()){<div class="notice error" role="alert">{{error()}}</div>}
+@if(success()){<div class="notice success" role="status">{{success()}}</div>}
+<div class="inbox-grid">
+ <div class="surface inquiry-list"><div class="surface-heading"><div><h2>Customer messages</h2><p>{{openCount()}} open · {{inquiries().length}} recent</p></div></div>
+ @if(loading()){<p class="empty">Loading messages…</p>}
+ @for(item of inquiries();track item.id){
+ <button type="button" class="inquiry-card" [class.selected]="selected()?.id===item.id" (click)="select(item)">
+ <span class="inquiry-title"><strong>{{item.first_name}} {{item.last_name}}</strong><span class="status" [class.resolved]="item.status==='replied'">{{item.status}}</span></span>
+ <small>{{item.email}} · {{item.created_at | date:'MMM d, y, HH:mm'}}</small>
+ <span class="excerpt">{{item.message}}</span>
+ </button>
+ }@empty{ @if(!loading()){<p class="empty">No contact messages yet.</p>} }
+ </div>
+ <article class="surface inquiry-detail">
+ @if(selected();as item){
+ <div class="surface-heading"><div><h2>{{item.first_name}} {{item.last_name}}</h2><p>{{item.email}} · {{item.created_at | date:'medium'}}</p></div><span class="status">{{item.status}}</span></div>
+ <div class="inquiry-body"><h3>Message</h3><p>{{item.message}}</p></div>
+ @if(item.status==='replied'){<div class="inquiry-body"><h3>Sent reply</h3><p>{{item.reply_body}}</p><small>Sent {{item.replied_at | date:'medium'}}</small></div>}
+ @if(item.status==='open'){
+ <div class="reply-form"><label for="contact-reply">Reply by email</label><textarea id="contact-reply" rows="7" maxlength="4000" minlength="10" [value]="reply()" (input)="reply.set($any($event.target).value)" placeholder="Write a clear, helpful response…"></textarea>
+ <p>For unresolved questions, the customer can request an office consultation. Do not share an unverified office address.</p>
+ <button type="button" class="button primary" [disabled]="sending() || reply().trim().length < 10" (click)="send()">{{sending()?'Sending…':'Send Email Reply'}}</button></div>
+ }
+ @if(item.status==='sending'){<div class="notice">An email reply is currently being processed.</div>}
+ }@else{<p class="empty">Select a message to read and reply.</p>}
+ </article>
+</div></section>
