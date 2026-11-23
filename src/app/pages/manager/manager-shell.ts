@@ -47,9 +47,11 @@ export class ManagerShell {
     { path: '/admin/staff', label: 'Support Staff', icon: 'staff' },
     { path: '/admin/support', label: 'Conversations', icon: 'support' },
     { path: '/admin/contact', label: 'Contact Inbox', icon: 'support' },
+    { path: '/admin/consultations', label: 'Consultations', icon: 'analytics' },
   ] : this.workspaceName === 'Support' ? [
     { path: '/support/newsletter', label: 'Newsletter', icon: 'users' },
     { path: '/support', label: 'My Conversations', icon: 'support', exact: true },
+    { path: '/support/consultations', label: 'Consultations & Calendar', icon: 'analytics' },
   ] : [
     { path: '/manager', label: 'Overview', icon: 'overview', exact: true },
     { path: '/manager/products', label: 'Products', icon: 'products' },
@@ -59,6 +61,7 @@ export class ManagerShell {
     { path: '/manager/staff', label: 'Staff', icon: 'staff' },
     { path: '/manager/support', label: 'Support', icon: 'support' },
     { path: '/manager/contact', label: 'Contact Inbox', icon: 'support' },
+    { path: '/manager/meetings', label: 'Meetings', icon: 'analytics' },
     { path: '/manager/orders', label: 'Orders', icon: 'orders' },
     { path: '/manager/analytics', label: 'Analytics', icon: 'analytics' },
     { path: '/manager/settings', label: 'Settings', icon: 'settings' },

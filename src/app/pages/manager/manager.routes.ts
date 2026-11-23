@@ -8,6 +8,7 @@ export const MANAGER_ROUTES: Routes = [
     loadComponent: () => import('./overview/manager-overview').then((m) => m.ManagerOverview),
   },
   { path: 'newsletter', loadComponent: () => import('./newsletter/newsletter-staff').then(m => m.NewsletterStaff) },
+  { path: 'meetings', loadComponent: () => import('./consultations/consultation-workspace').then(m => m.ConsultationWorkspace) },
   { path: 'contact', loadComponent: () => import('./contact/contact-inbox').then(m => m.ContactInbox) },
   { path: 'users', loadComponent: () => import('./users/manager-users').then(m => m.ManagerUsers) },
   {
