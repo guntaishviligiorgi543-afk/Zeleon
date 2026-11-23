@@ -43,7 +43,15 @@ export class Analytics {
   setConsent(value: 'accepted' | 'rejected'): void {
     this.consent.set(value);
     this.preferencesOpen.set(false);
+    try {
+      const existing = document.cookie.split('; ').filter(part => /^_ga(?:_|=)/.test(part));
+      if (value === 'rejected') for (const cookie of existing) {
+        const key = cookie.split('=')[0];
+        document.cookie = key + '=; Max-Age=0; Path=/; SameSite=Lax';
+      }
+    } catch { /* storage may be restricted */ }
     try { localStorage.setItem(CONSENT_KEY, value); } catch { /* no persistence */ }
+    if (typeof window !== 'undefined') (window as Window & Record<string, unknown>)['ga-disable-' + GA4_MEASUREMENT_ID] = value !== 'accepted';
     if (value === 'accepted') {
       if (this.started && window.gtag) {
         window.gtag('consent', 'update', { analytics_storage: 'granted' });
@@ -71,6 +79,7 @@ export class Analytics {
       return;
     }
     this.started = true;
+    (window as Window & Record<string, unknown>)['ga-disable-' + GA4_MEASUREMENT_ID] = false;
     window.dataLayer = window.dataLayer ?? [];
     window.gtag = (...args: unknown[]) => { window.dataLayer!.push(args); };
     // Set the default synchronously before any gtag initialization or data events.

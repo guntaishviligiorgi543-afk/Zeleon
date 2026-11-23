@@ -62,3 +62,17 @@ main > app-home[inert] {
   .zeleon-analytics-actions {width:100%;}
   .zeleon-analytics-actions button {flex:1 1 145px;}
 }
+
+.zeleon-analytics-consent a,.zeleon-privacy-modal a{color:#8cd6ff;text-decoration:underline;}
+.zeleon-privacy-overlay{position:fixed;inset:0;z-index:100001;background:#010b18c7;display:grid;place-items:center;padding:18px;overflow:auto;box-sizing:border-box;}
+.zeleon-privacy-modal{width:min(100%,540px);max-height:calc(100vh - 36px);overflow-y:auto;box-sizing:border-box;background:#10243b;color:#f4faff;border:1px solid #6391b3;border-radius:20px;padding:clamp(22px,4vw,34px);box-shadow:0 22px 90px #0009;font:14px/1.7 Montserrat,Arial,sans-serif}
+.zeleon-privacy-modal h2{font-size:24px;margin:0 0 10px;line-height:1.25;color:white}
+.zeleon-privacy-modal p{font-size:12px;color:#e1ecf5;line-height:1.7;margin:8px 0 16px}
+.zeleon-cookie-row{display:flex;gap:16px;justify-content:space-between;align-items:center;padding:18px 0;border-bottom:1px solid #ffffff2a}
+.zeleon-cookie-row strong,.zeleon-cookie-row small{display:block}
+.zeleon-cookie-row small{color:#aec4d5;font-size:11px;margin-top:4px}
+.zeleon-cookie-row input,.zeleon-check input{width:19px;height:19px;accent-color:#75d4ff;flex-shrink:0}
+.zeleon-cookie-row span{color:#9ddcfc;font-size:11px;white-space:nowrap}
+.zeleon-check{display:flex;align-items:flex-start;gap:10px;margin:17px 0;font-size:13px;line-height:1.7}
+.zeleon-legal-gate{z-index:100002}
+.zeleon-privacy-modal button:disabled{opacity:.5;cursor:not-allowed}

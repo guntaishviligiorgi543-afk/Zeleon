@@ -1,0 +1,45 @@
+<article class="legal-page">
+  <div class="legal-container">
+    <a routerLink="/" class="legal-back">← Back to ZELEON</a>
+    <p class="legal-eyebrow">ZELEON · Legal information</p>
+    @switch (kind) {
+      @case ('privacy') {
+        <h1>Privacy Policy</h1>
+        <p class="legal-lead">How ZELEON handles information when you browse, create an account, or contact us.</p>
+        <p class="legal-date">Version: {{ effectiveDate }}</p>
+        <h2>1. Who we are</h2><p>ZELEON is an online energy-drink storefront project. For privacy requests, use our <a routerLink="/contact">contact page</a>. Additional operator contact and legal-entity details must be provided before commercial launch.</p>
+        <h2>2. Information we process</h2><p>When you register, we process your name, email address, and account authentication data through Supabase. You may also choose a preferred name and upload a profile picture. If you contact support or subscribe to the newsletter, we process the details you submit to provide the requested service. The checkout form may show shipping-related fields, but real orders and payments are currently disabled.</p>
+        <h2>3. Why we process it</h2><p>We use account details to authenticate users, provide profile and support features, secure the service, respond to requests, and maintain account preferences. Optional Google Analytics helps us understand visits, product views, cart additions, and site usage only when you allow analytics.</p>
+        <h2>4. Service providers</h2><p>Supabase provides authentication, database and storage services. GitHub Pages hosts the website. Google Analytics 4 is used for optional site analytics. Cloudflare Turnstile helps protect selected forms against automated abuse. Resend may deliver account and newsletter-related emails. Each provider may process data according to its own role and terms.</p>
+        <h2>5. Storage and retention</h2><p>Account information is generally retained while an account remains active, subject to security, legal, and operational requirements. Technical logs, consent records, and messages may have different retention periods. We do not publish a fixed retention schedule that has not yet been validated.</p>
+        <h2>6. Your choices</h2><p>You may change your profile information, request account deletion through the site's security settings, decline optional analytics, and revisit <a routerLink="/cookie-policy">Cookie Policy</a>. To make an access, correction or other privacy request, use our <a routerLink="/contact">contact page</a>.</p>
+        <h2>7. Security</h2><p>We use access restrictions and authenticated services to protect data, but no online service can guarantee absolute security. Never submit payment card details or sensitive personal information to a support form.</p>
+        <h2>8. Updates</h2><p>Material policy revisions will be versioned and, when appropriate, shown to registered users for acknowledgment.</p>
+      }
+      @case ('terms') {
+        <h1>Terms of Use</h1>
+        <p class="legal-lead">Terms for browsing and using a ZELEON account.</p>
+        <p class="legal-date">Version: {{ effectiveDate }}</p>
+        <h2>1. Service status</h2><p>ZELEON is currently a demonstration storefront. Product information is illustrative, and checkout, payments, actual purchases and fulfillment are not enabled. No purchase contract is formed by adding an item to a cart.</p>
+        <h2>2. Accounts</h2><p>Provide accurate registration information, protect your credentials, and keep access to your account secure. You are responsible for activity performed with your credentials, except where the law provides otherwise.</p>
+        <h2>3. Acceptable use</h2><p>Do not use the website for unlawful activity, impersonation, automated abuse, disruption, unauthorized access, or attacks on other users or the service.</p>
+        <h2>4. Products and content</h2><p>Descriptions, images, names and illustrative pricing may change. Do not interpret site content as medical or nutritional advice. Product availability and suitability are not guaranteed.</p>
+        <h2>5. Intellectual property</h2><p>Site layout, branding and original materials are protected to the extent permitted by applicable law. Third-party trademarks remain the property of their respective owners.</p>
+        <h2>6. Suspension and deletion</h2><p>Access may be restricted to address security issues, abuse or violations of these terms, subject to applicable legal rights. You can request account deletion through profile security settings.</p>
+        <h2>7. Liability and changes</h2><p>The demonstration service may change or be interrupted. Nothing in these terms excludes rights or protections that cannot lawfully be excluded. We may revise these terms with a new version date and request renewed acceptance when appropriate.</p>
+        <h2>8. Questions</h2><p>Contact us using the <a routerLink="/contact">contact page</a>. Legal-entity identity and jurisdiction details must be confirmed before commercial launch.</p>
+      }
+      @case ('cookies') {
+        <h1>Cookie Policy</h1>
+        <p class="legal-lead">Your choices about browser storage and optional analytics.</p>
+        <p class="legal-date">Version: {{ effectiveDate }}</p>
+        <h2>1. What we use</h2><p>Cookies are small browser records. ZELEON also uses localStorage and sessionStorage, which are different browser storage technologies. This policy covers them together for transparency.</p>
+        <h2>2. Essential storage</h2><p>Authentication and security tools may use cookies or browser storage to keep you signed in, protect requests and support account flows. Some preferences, such as your choice about analytics, are stored locally so the site remembers them. These functions are not dependent on optional analytics consent.</p>
+        <h2>3. Optional analytics</h2><p>With your permission, Google Analytics 4 (measurement ID G-844EV84VWF) measures aggregate website use, page views and shopping interactions. We do not intentionally submit your email, password or private account pages as analytics parameters. Analytics is off unless you accept it.</p>
+        <h2>4. Other third-party technology</h2><p>Cloudflare Turnstile is used on selected anti-abuse flows, such as newsletter forms. Security technology may use its own browser signals and storage independently of Google Analytics consent.</p>
+        <h2>5. Change your choice</h2><p>Use “Cookie Settings” in the footer whenever you want to allow or refuse optional analytics. You can also clear website data in your browser's settings. Refusing optional analytics does not prevent access to the storefront.</p>
+        <h2>6. Updates and contact</h2><p>Changes to these practices will be documented with a new version date. For questions, see our <a routerLink="/contact">contact page</a>.</p>
+      }
+    }
+  </div>
+</article>

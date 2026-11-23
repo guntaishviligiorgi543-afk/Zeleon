@@ -4,6 +4,8 @@ import { FormBuilder, FormsModule, ReactiveFormsModule, ValidatorFn, Validators 
 import { Router, RouterLink } from '@angular/router';
 import { Auth, authErrorMessage } from '../../services/auth';
 import { PasswordToggle } from '../../directives/password-toggle.directive';
+import { LegalConsents } from '../../services/legal-consents';
+import { Analytics } from '../../services/analytics';
 
 const passwordsMatch: ValidatorFn = (form) =>
   form.get('password')?.value === form.get('confirmPassword')?.value ? null : { passwordMismatch: true };
@@ -16,6 +18,12 @@ const passwordsMatch: ValidatorFn = (form) =>
 })
 export class Signup {
   readonly submitted = signal(false);
+  readonly termsDialog = signal(false);
+  readonly termsChecked = signal(false);
+  readonly privacyChecked = signal(false);
+  readonly analyticsChecked = signal(false);
+  private googlePending = false;
+  readonly analytics = inject(Analytics);
   readonly status = signal('');
   readonly pending = signal(false);
   readonly result = signal<{ success: boolean; title: string; message: string } | null>(null);
@@ -55,6 +63,26 @@ export class Signup {
 
   async googleSignIn(): Promise<void> {
     if (this.pending()) return;
+    this.googlePending = true;
+    this.analyticsChecked.set(this.analytics.consent() === 'accepted');
+    this.termsDialog.set(true);
+  }
+
+  async confirmRegistration(): Promise<void> {
+    if (!this.termsChecked() || !this.privacyChecked() || this.pending()) return;
+    this.termsDialog.set(false);
+    const selected = this.analyticsChecked();
+    LegalConsents.stageSignup(selected);
+    this.analytics.setConsent(selected ? 'accepted' : 'rejected');
+    if (this.googlePending) {
+      this.googlePending = false;
+      return this.performGoogleSignIn();
+    }
+    return this.createAccount();
+  }
+
+  private async performGoogleSignIn(): Promise<void> {
+    if (this.pending()) return;
     this.pending.set(true);
     this.status.set('');
     try {
@@ -77,6 +105,13 @@ export class Signup {
     this.form.markAllAsTouched();
     this.status.set('');
     if (this.form.invalid) return;
+    this.googlePending = false;
+    this.analyticsChecked.set(this.analytics.consent() === 'accepted');
+    this.termsDialog.set(true);
+  }
+
+  private async createAccount(): Promise<void> {
+    if (this.form.invalid || this.pending()) return;
     this.pending.set(true);
     try {
       const { firstName, lastName, preferredName, email, password } = this.form.getRawValue();
@@ -90,6 +125,7 @@ export class Signup {
         this.openVerification(email.trim());
       }
     } catch (error) {
+      LegalConsents.clearSignup();
       this.showResult({ success: false, title: 'Registration Failed', message: this.registrationError(error) });
     } finally { this.pending.set(false); }
   }

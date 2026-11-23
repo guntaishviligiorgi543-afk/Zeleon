@@ -111,3 +111,19 @@
     </section>
   </div>
 }
+
+@if (termsDialog()) {
+  <div class="registration-overlay">
+    <section class="registration-dialog signup-terms-dialog" role="dialog" aria-modal="true" aria-labelledby="signup-terms-title">
+      <h2 id="signup-terms-title">Before you join ZELEON</h2>
+      <p>Please review and acknowledge our legal documents. Optional analytics is your choice.</p>
+      <label class="signup-consent-check"><input type="checkbox" [checked]="termsChecked()" (change)="termsChecked.set($any($event.target).checked)"> I agree to the <a routerLink="/terms-of-use" target="_blank">Terms of Use</a> (required).</label>
+      <label class="signup-consent-check"><input type="checkbox" [checked]="privacyChecked()" (change)="privacyChecked.set($any($event.target).checked)"> I acknowledge the <a routerLink="/privacy-policy" target="_blank">Privacy Policy</a> (required).</label>
+      <label class="signup-consent-check"><input type="checkbox" [checked]="analyticsChecked()" (change)="analyticsChecked.set($any($event.target).checked)"> I allow optional Google Analytics (optional).</label>
+      <div class="signup-consent-actions">
+        <button type="button" class="registration-cancel" (click)="termsDialog.set(false)">Cancel</button>
+        <button type="button" class="registration-action" [disabled]="!termsChecked() || !privacyChecked()" (click)="confirmRegistration()">Agree &amp; Create Account</button>
+      </div>
+    </section>
+  </div>
+}
