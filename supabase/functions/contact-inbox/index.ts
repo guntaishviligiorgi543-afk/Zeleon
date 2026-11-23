@@ -8,7 +8,7 @@ const db = createClient(url, serviceKey, {auth:{persistSession:false,autoRefresh
 const encoder = new TextEncoder();
 const asEmail = (value: unknown) => String(value ?? '').trim().toLowerCase();
 const escapeHtml = (value: string) => value.replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]!));
-const safeName = (value: unknown) => String(value ?? '').trim().replace(/[\\u0000-\\u001f\\u007f]/g, ' ').trim();
+const safeName = (value: unknown) => String(value ?? '').trim().replace(/[\u0000-\u001f\u007f]/g, ' ').trim();
 async function hash(value: string): Promise<string> { return [...new Uint8Array(await crypto.subtle.digest('SHA-256', encoder.encode(value)))].map(x=>x.toString(16).padStart(2,'0')).join(''); }
 function cors(origin: string | null): Record<string,string> { return {'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin','Access-Control-Allow-Headers':'content-type,authorization,apikey,x-client-info','Access-Control-Allow-Methods':'POST,OPTIONS',...(origin && origins.has(origin)?{'Access-Control-Allow-Origin':origin}:{})}; }
 
@@ -65,10 +65,10 @@ Deno.serve(async (req) => {
   if(action!=='list'&&action!=='reply')return json({error:'Unknown operation.'},400);
   if(!token)return json({error:'Staff login required.'},401);
   const caller=createClient(url,anonKey,{global:{headers:{Authorization:'Bearer '+token}},auth:{persistSession:false,autoRefreshToken:false}});
-  const verified=await caller.auth.getUser();
+  const verified=await db.auth.getUser(token);
   if(verified.error||!verified.data.user)return json({error:'Staff login required.'},401);
-  const assurance=await caller.auth.mfa.getAuthenticatorAssuranceLevel();
-  if(assurance.error||assurance.data.currentLevel!=='aal2')return json({error:'Staff MFA required.'},403);
+  const assurance=await caller.auth.getClaims(token);
+  if(assurance.error||assurance.data?.claims.aal!=='aal2')return json({error:'Staff MFA required.'},403);
   const [grant,assignment]=await Promise.all([caller.rpc('staff_session',{p_touch:false}),caller.from('staff_roles').select('role,status').eq('user_id',verified.data.user.id).maybeSingle()]);
   if(grant.error||grant.data!==true||assignment.error||assignment.data?.status!=='active'||!['admin','manager'].includes(assignment.data.role))return json({error:'Staff access denied.'},403);
   if(action==='list'){
@@ -87,8 +87,8 @@ Deno.serve(async (req) => {
    if(!api)throw new Error('Email provider unavailable');
    const person=escapeHtml(row.data.first_name);
    const safeReply=escapeHtml(reply).replace(/\n/g,'<br>');
-   const markup='<div style="background:#f1f7fd;padding:32px;color:#1b334d;font-family:Arial,sans-serif"><div style="max-width:560px;margin:auto;background:white;border-radius:16px;padding:32px"><h2 style="color:#1973aa">⚡ ZELEON</h2><p>Hello '+person+',</p><p>Our team has reviewed your Contact Us message.</p><p style="line-height:1.7;white-space:normal">'+safeReply+'</p><p>If this response does not resolve your concern, reply to this email to request information about an in-person consultation. An office visit can only be arranged after our team confirms the location and appointment.</p><p style="font-size:12px;color:#60738c">ZELEON Customer Experience · zeleon.store</p></div></div>';
-   const sent=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+api,'Content-Type':'application/json','Idempotency-Key':'contact-reply-'+id},body:JSON.stringify({from:'ZELEON <no-reply@zeleon.store>',to:[row.data.email],subject:'ZELEON — Response to your contact request',html:markup,reply_to:'no-reply@zeleon.store'})});
+   const markup='<div style="background:#f1f7fd;padding:32px;color:#1b334d;font-family:Arial,sans-serif"><div style="max-width:560px;margin:auto;background:white;border-radius:16px;padding:32px"><h2 style="color:#1973aa">⚡ ZELEON</h2><p>Hello '+person+',</p><p>Our team has reviewed your Contact Us message.</p><p style="line-height:1.7;white-space:normal">'+safeReply+'</p><p>If this response does not resolve your concern, please send another message through our Contact Us page to request an in-person consultation. Any office visit is subject to confirmation of an appointment and location.</p><p style="font-size:12px;color:#60738c">ZELEON Customer Experience · zeleon.store</p></div></div>';
+   const sent=await fetch('https://api.resend.com/emails',{method:'POST',headers:{Authorization:'Bearer '+api,'Content-Type':'application/json','Idempotency-Key':'contact-reply-'+id},body:JSON.stringify({from:'ZELEON <no-reply@zeleon.store>',to:[row.data.email],subject:'ZELEON — Response to your contact request',html:markup})});
    if(!sent.ok)throw new Error('Email provider rejected the request: '+sent.status);
    const saved=await db.from('contact_inquiries').update({status:'replied',reply_body:reply,replied_by:verified.data.user.id,replied_at:new Date().toISOString(),processing_at:null}).eq('id',id).eq('status','sending');
    if(saved.error)throw saved.error;
