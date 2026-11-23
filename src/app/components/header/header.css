@@ -386,7 +386,7 @@ header {
 
 /* Match the checkout header's frame and keep the existing navigation. */
 .site-header .headerContainer {
-    width:calc(100% - 40px);
+    width:calc(100% - 30px);
     max-width:none;
     height:var(--checkout-header-height,148px);
     top:0;
