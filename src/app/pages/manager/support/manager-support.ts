@@ -2,6 +2,7 @@ import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { Auth } from '../../../services/auth';
 import { StaffAccess } from '../../../services/staff-access';
 import {
   ManagerDashboard,
@@ -20,6 +21,7 @@ import {
 export class ManagerSupport implements OnInit {
   private readonly dashboard = inject(ManagerDashboard);
   readonly access = inject(StaffAccess);
+  readonly auth = inject(Auth);
   readonly isSupport = this.access.role() === 'support';
   readonly section = signal<'conversations' | 'ratings'>('conversations');
   readonly ratings = signal<SupportRatingEntry[]>([]);

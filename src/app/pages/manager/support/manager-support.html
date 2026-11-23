@@ -172,7 +172,7 @@
           <button type="button" class="thread-back" aria-label="Back to conversations" (click)="closeThread()">← Back</button>
         </header>
         <div class="thread-content-scroll">
-          @if (isSupport && conversation.subject?.toLowerCase()?.includes('consultation')) {
+          @if (isSupport && conversation.subject?.toLowerCase()?.includes('consultation') && conversation.assigned_support_id === auth.user()?.id) {
           <div class="thread-actions">
             <a class="button primary" [routerLink]="['/support/consultations']" [queryParams]="{conversation:conversation.id}">Forward agreed consultation to Admin</a>
           </div>

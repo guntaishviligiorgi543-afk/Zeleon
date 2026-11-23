@@ -12,19 +12,32 @@
 @if(role==='support'){
 <article class="surface cbox"><div class="surface-heading"><h2>Refer consultation to Admin</h2></div><p>Agree with the customer in Support Chat, claim the conversation, then send the request to Admin. Subject: Consultation.</p>
 <div class="cfields"><label>Customer conversation
+@if(forwardedFromChat() && selectedCustomer()){
+<input type="text" [value]="(selectedCustomer()?.customer_first_name || 'Customer') + ' ' + (selectedCustomer()?.customer_last_name || '')" readonly aria-label="Customer selected from Support Chat" />
+}@else{
 <select [ngModel]="conversation()" (ngModelChange)="conversation.set($event)">
 <option value="">Select a Consultation conversation</option>
 @for(chat of consultationChats();track chat.id){
 <option [value]="chat.id">{{(chat.customer_first_name || 'Customer') + ' ' + (chat.customer_last_name || '')}} · {{chat.customer_email || 'No email'}} · {{chat.subject}}</option>
 }
-</select></label>
+</select>
+}</label>
 <label>Manager<select [ngModel]="manager()" (ngModelChange)="manager.set($event)"><option value="">Choose manager</option>@for(id of managers();track id){<option [value]="id">{{id.slice(0,8)}}…</option>}</select></label>
 <label>Agreed date/time<input type="datetime-local" [ngModel]="date()" (ngModelChange)="date.set($event)"></label>
 <label>Minutes<input type="number" min="15" max="180" [ngModel]="duration()" (ngModelChange)="duration.set(+$event)"></label></div>
+@if(selectedCustomer();as chat){
+<div class="c-selected-customer" role="status">
+ <strong>Customer details (automatically loaded from Support Chat)</strong>
+ <p><span>Name:</span> {{chat.customer_first_name || 'Customer'}} {{chat.customer_last_name || ''}}</p>
+ <p><span>Email:</span> {{chat.customer_email || 'Not provided'}}</p>
+ <p><span>Subject:</span> {{chat.subject}}</p>
+ <p><span>Conversation:</span> <code>{{chat.id}}</code></p>
+</div>
+}
 @if(!consultationChats().length){<p>No assigned Consultation conversations yet. Open My Conversations, claim the customer's chat, and use “Forward agreed consultation to Admin”.</p>}
 <label class="cwide">Reason<textarea maxlength="2000" rows="3" [ngModel]="reason()" (ngModelChange)="reason.set($event)"></textarea></label>
 <label class="ccheck"><input type="checkbox" [ngModel]="confirmed()" (ngModelChange)="confirmed.set($event)">Customer agreed to this time in Support Chat</label>
-<button class="button primary csubmit" type="button" (click)="request()" [disabled]="loading()||!confirmed()||!conversation()||!date()||!manager()||reason().trim().length<10">Forward to Admin</button></article>
+<button class="button primary csubmit" type="button" (click)="request()" [disabled]="loading()||!confirmed()||!selectedCustomer()||!date()||!manager()||reason().trim().length<10">Forward to Admin</button></article>
 }
 @if(role!=='support'){
 <article class="surface cbox"><div class="surface-heading"><h2>Consultation requests</h2></div>

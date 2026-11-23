@@ -31,6 +31,8 @@ export class ConsultationWorkspace implements OnInit {
  readonly error=signal('');
  readonly success=signal('');
  readonly conversation=signal('');
+ readonly forwardedFromChat=signal(false);
+ readonly selectedCustomer=computed(()=>this.consultationChats().find(chat=>chat.id===this.conversation())??null);
  readonly consultationChats=signal<Array<{id:string;customer_first_name:string|null;customer_last_name:string|null;customer_email:string|null;subject:string|null;assigned_support_id:string|null}>>([]);
  readonly manager=signal('');
  readonly date=signal('');
@@ -43,7 +45,12 @@ export class ConsultationWorkspace implements OnInit {
  readonly startTime=signal('10:00');
  readonly endTime=signal('18:00');
  readonly days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
- ngOnInit():void{this.conversation.set(this.route.snapshot.queryParamMap.get('conversation')||'');void this.refresh();}
+ ngOnInit():void{
+  const forwarded=this.route.snapshot.queryParamMap.get('conversation')||'';
+  this.conversation.set(forwarded);
+  this.forwardedFromChat.set(!!forwarded);
+  void this.refresh();
+ }
  private async api(action:string,extra:Record<string,unknown>={}):Promise<any>{
   const {data,error}=await this.client.functions.invoke('consultation-management',{body:{action,...extra}});
   if(error){let message='Unable to reach consultation service.';try{const response=await error.context?.json();if(response?.error)message=response.error;}catch{}throw new Error(message);}
@@ -66,13 +73,20 @@ export class ConsultationWorkspace implements OnInit {
       .order('updated_at',{ascending:false}).limit(100);
     if(conversations.error)throw conversations.error;
     this.consultationChats.set((conversations.data??[]).filter(c=>/consultation/i.test(c.subject??'')));
+    if(this.forwardedFromChat() && !this.consultationChats().some(c=>c.id===this.conversation())){
+      this.error.set('The selected conversation is not assigned to you. Claim it in Support Chat first, then select Forward to Admin.');
+      this.forwardedFromChat.set(false);
+      this.conversation.set('');
+    }
    }
   }catch(e){this.error.set(e instanceof Error?e.message:'Cannot load meetings');}
   finally{this.loading.set(false);}
  }
  async act(action:string,extra:Record<string,unknown>):Promise<void>{
   if(this.loading())return;this.loading.set(true);this.error.set('');this.success.set('');
-  try{const result=await this.api(action,extra);this.success.set(result.message||'Saved');this.selected.set(null);this.actionNote.set('');this.confirmed.set(false);}
+  try{const result=await this.api(action,extra);this.success.set(result.message||'Saved');this.selected.set(null);this.actionNote.set('');this.confirmed.set(false);
+   if(action==='request'){this.conversation.set('');this.forwardedFromChat.set(false);this.reason.set('');this.date.set('');}
+  }
   catch(e){this.error.set(e instanceof Error?e.message:'Action failed');}
   finally{this.loading.set(false);}
   if(!this.error())await this.refresh();
