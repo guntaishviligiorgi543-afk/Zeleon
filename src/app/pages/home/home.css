@@ -449,7 +449,7 @@
 .reviewBox .firstp {
   font-size: 1.4rem;
   width: 80%;
-  justify-self: center;
+  margin-inline: auto;
 }
 
 .reviewBox .lastp {
