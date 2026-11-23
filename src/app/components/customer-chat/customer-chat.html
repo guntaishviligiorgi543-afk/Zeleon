@@ -9,7 +9,7 @@
       </div></header>
       @if (!auth.initialized()) { <p class="zc-note">Loading account…</p> }
       @else if (!auth.isAuthenticated()) {
-        <div class="zc-empty"><h3>How can we help?</h3><p>Sign in to message our support team and keep your conversation history.</p><a [routerLink]="['/login']" [queryParams]="deepLink() ? { supportChat: deepLink() } : {}">Sign in to chat</a></div>
+        <div class="zc-empty"><h3>How can we help?</h3><p>Sign in to message our support team and keep your conversation history.</p><a [routerLink]="['/login']" [queryParams]="consultationRequested() ? { consultation: '1' } : deepLink() ? { supportChat: deepLink() } : {}">Sign in to chat</a></div>
       } @else {
         @if (error()) { <p class="zc-error" role="alert">{{ error() }}</p> }
         @if (undoIds().length) {
@@ -67,7 +67,7 @@
         } @else {
           <form class="zc-new" (submit)="$event.preventDefault(); create(subject, firstMessage)">
             <h3>New request</h3>
-            <label for="zc-subject">Subject</label><input #subject id="zc-subject" maxlength="150" required placeholder="What do you need help with?" />
+            <label for="zc-subject">Subject</label><input #subject id="zc-subject" maxlength="150" required [value]="consultationRequested() ? 'Consultation' : ''" placeholder="What do you need help with?" />
             <label for="zc-first">Message</label><textarea #firstMessage id="zc-first" maxlength="10000" rows="3" required placeholder="Describe your question…"></textarea>
             <button type="submit" [disabled]="sending()">{{ sending() ? 'Sending…' : 'Start conversation' }}</button>
           </form>

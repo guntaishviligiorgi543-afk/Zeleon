@@ -57,9 +57,12 @@ export class Login {
       this.form.controls.password.reset();
       const returnUrl = this.router.parseUrl(this.router.url).queryParams['returnUrl'];
       const supportChat = this.router.parseUrl(this.router.url).queryParams['supportChat'];
+      const consultation = this.router.parseUrl(this.router.url).queryParams['consultation'];
       const ratingPath = legacyRatingPath(this.router.parseUrl(this.router.url).queryParams);
       if (ratingPath) {
         await this.router.navigateByUrl(ratingPath);
+      } else if (consultation === '1') {
+        await this.router.navigate(['/contact'], { queryParams: { consultation: '1' } });
       } else if (typeof supportChat === 'string' && /^[0-9a-f-]{36}$/i.test(supportChat)) {
         await this.router.navigate(['/'], { queryParams: { supportChat } });
       } else if (

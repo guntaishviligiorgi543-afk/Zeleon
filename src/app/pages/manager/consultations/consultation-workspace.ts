@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SUPABASE_CLIENT } from '../../../services/supabase';
 import { StaffAccess } from '../../../services/staff-access';
+import { Auth } from '../../../services/auth';
 
 type RecordData = Record<string, any>;
 @Component({
@@ -14,6 +15,7 @@ type RecordData = Record<string, any>;
 export class ConsultationWorkspace implements OnInit {
  private readonly client=inject(SUPABASE_CLIENT);
  private readonly staff=inject(StaffAccess);
+ private readonly auth=inject(Auth);
  private readonly route=inject(ActivatedRoute);
  readonly role=this.staff.role();
  readonly requests=signal<RecordData[]>([]);
@@ -83,8 +85,8 @@ export class ConsultationWorkspace implements OnInit {
   const min=(v:string)=>{const parts=v.split(':').map(Number);return parts[0]*60+parts[1];};
   const start=min(this.startTime()),end=min(this.endTime());
   if(end<=start){this.error.set('End must be after start');return;}
-  this.windows.update(w=>[...w,{manager_id:this.managers()[0],weekday:this.day(),start_minute:start,end_minute:end}]);
+  this.windows.update(w=>[...w,{manager_id:this.auth.user()?.id,weekday:this.day(),start_minute:start,end_minute:end}]);
  }
  removeWindow(i:number):void{this.windows.update(w=>w.filter((_,idx)=>idx!==i));}
- saveWindows():void{void this.act('availability',{windows:this.windows().filter(w=>w.manager_id===this.managers()[0]).map(w=>({weekday:w.weekday,start_minute:w.start_minute,end_minute:w.end_minute}))});}
+ saveWindows():void{void this.act('availability',{windows:this.windows().filter(w=>w.manager_id===this.auth.user()?.id).map(w=>({weekday:w.weekday,start_minute:w.start_minute,end_minute:w.end_minute}))});}
 }

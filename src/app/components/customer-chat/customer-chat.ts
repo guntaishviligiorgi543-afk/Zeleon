@@ -25,6 +25,7 @@ export class CustomerChat {
   private readonly injector = inject(Injector);
   readonly deepLink = signal<string | null>(null);
   readonly opened = signal(false);
+  readonly consultationRequested = signal(false);
   readonly busy = signal(false);
   readonly sending = signal(false);
   readonly error = signal('');
@@ -56,6 +57,11 @@ export class CustomerChat {
       if (ratingPath) {
         void this.router.navigateByUrl(ratingPath, { replaceUrl: true });
         return;
+      }
+      if (params.get('consultation') === '1') {
+        this.opened.set(true);
+        this.consultationRequested.set(true);
+        void this.load().then(() => { this.startNew(); this.focusView('#zc-subject'); });
       }
       const id = params.get('supportChat');
       if (!id || !/^[0-9a-f-]{36}$/i.test(id)) return;
