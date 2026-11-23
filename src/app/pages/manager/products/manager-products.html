@@ -221,7 +221,7 @@
               >
             </div>
             <label class="field">Flavor<select formControlName="flavor_id"><option [ngValue]="null">No flavor</option>@for (option of references().flavors ?? []; track option.id) { <option [ngValue]="option.id">{{ option.name }}</option> }</select></label>
-            <label class="field">Product type<select formControlName="product_type_id"><option [ngValue]="null">No type</option>@for (option of references().types ?? []; track option.id) { <option [ngValue]="option.id">{{ option.name }}</option> }</select></label>
+            <label class="field">Product type<select formControlName="product_type_id"><option [ngValue]="null">Select product type (optional)</option>@for (option of references().types ?? []; track option.id) { <option [ngValue]="option.id">{{ option.name }}</option> }</select><small>Drink format (for example Carbonated or Fruit Blend). Independent of the storefront category. Select only if verified.</small></label>
 
           </div>
           }

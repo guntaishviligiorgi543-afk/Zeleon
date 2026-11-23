@@ -30,6 +30,9 @@
     @if (['Categories', 'Flavors', 'Product types'].includes(tab)) {
       <article class="surface">
         <h2>{{ tab }}</h2>
+        @if (tab === 'Product types') {
+          <p>Product types describe drink formats (e.g. Carbonated, Non-Carbonated, Fruit Blend). They are separate from the Classic, Boost Blends and Zero Sugar storefront categories. You can create and edit types here.</p>
+        }
         <form (ngSubmit)="saveReference()" #referenceForm="ngForm">
           <div class="form-grid">
             <label class="field"
