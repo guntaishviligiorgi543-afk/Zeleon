@@ -31,7 +31,7 @@ Deno.serve(async(req)=>{
   // The address must be the verified email of the caller's Supabase account.
   // Do not trust the submitted email or any user ID supplied by the browser.
   const bearer=req.headers.get("authorization")||"";
-  const match=/^Bearer\\s+(.+)$/i.exec(bearer);
+  const match=/^Bearer\s+(.+)$/i.exec(bearer);
   if(!match)return reply({error:"Sign in to your ZELEON account before subscribing."},401,origin);
   const {data:{user},error:authError}=await admin.auth.getUser(match[1]);
   if(authError||!user||!user.email||!user.email_confirmed_at)return reply({error:"Sign in with a verified ZELEON account to subscribe."},401,origin);
