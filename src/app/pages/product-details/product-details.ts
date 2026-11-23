@@ -107,7 +107,7 @@ export class ProductDetails {
       if (!request.signal.aborted) {
         this.product.set(product);
         this.seo.productLoaded(product);
-        this.analytics.productEvent('view_item', product);
+        if (product) this.analytics.productEvent('view_item', product);
       }
     } catch (error) {
       if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'This product could not be loaded.');
