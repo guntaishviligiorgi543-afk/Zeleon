@@ -173,7 +173,43 @@ export class NewsletterStaff {
     finally { this.busy.set(false); }
   }
 
-  exportConsentReport(): void {
-    this.message.set('Consent PDF export requires the protected server-side report endpoint; it is not enabled yet.');
+  async exportConsentReport(): Promise<void> {
+    if (this.staff.role() !== 'manager' || this.busy()) return;
+    this.busy.set(true);
+    this.message.set('');
+    try {
+      const { data, error } = await this.client.rpc('newsletter_manager_consent_export');
+      if (error) throw error;
+      if (!Array.isArray(data?.subscribers)) throw new Error('The report response was invalid.');
+      const fields = [
+        'email', 'status', 'consent_source', 'consent_policy_version',
+        'consent_at', 'confirmed_at', 'unsubscribed_at', 'created_at',
+      ] as const;
+      // Spreadsheet-safe CSV: prevent email/metadata values from being evaluated as formulas.
+      const escape = (value: unknown): string => {
+        let result = value === null || value === undefined ? '' : String(value);
+        if (/^[\\s\\u0000-\\u001f]*[=+@\\-]/.test(result)) result = "'" + result;
+        return '"' + result.replace(/"/g, '""') + '"';
+      };
+      const csv = '\uFEFF' + [
+        fields.join(','),
+        ...data.subscribers.map((row: Record<string, unknown>) =>
+          fields.map(field => escape(row[field])).join(',')),
+      ].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'zeleon-newsletter-consent-' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      this.message.set('Consent report downloaded (' + data.subscribers.length + ' records).');
+    } catch (error) {
+      this.message.set(error instanceof Error ? error.message : 'Unable to export consent report.');
+    } finally {
+      this.busy.set(false);
+    }
   }
 }
