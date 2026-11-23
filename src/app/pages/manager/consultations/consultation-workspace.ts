@@ -31,6 +31,7 @@ export class ConsultationWorkspace implements OnInit {
  readonly error=signal('');
  readonly success=signal('');
  readonly conversation=signal('');
+ readonly consultationChats=signal<Array<{id:string;customer_first_name:string|null;customer_last_name:string|null;customer_email:string|null;subject:string|null;assigned_support_id:string|null}>>([]);
  readonly manager=signal('');
  readonly date=signal('');
  readonly duration=signal(45);
@@ -56,6 +57,16 @@ export class ConsultationWorkspace implements OnInit {
    this.requests.set(list.requests||[]);this.meetings.set(list.meetings||[]);this.notes.set(list.notifications||[]);
    this.slots.set(calendar.slots||[]);this.windows.set(calendar.availability||[]);this.managers.set(calendar.managers||[]);
    if(!this.manager()&&calendar.managers?.length===1)this.manager.set(calendar.managers[0]);
+   if(this.role==='support'){
+    const currentId=this.auth.user()?.id;
+    const conversations=await this.client.from('support_conversations')
+      .select('id,customer_first_name,customer_last_name,customer_email,subject,assigned_support_id')
+      .eq('assigned_support_id',currentId??'00000000-0000-0000-0000-000000000000')
+      .ilike('subject','%consultation%')
+      .order('updated_at',{ascending:false}).limit(100);
+    if(conversations.error)throw conversations.error;
+    this.consultationChats.set((conversations.data??[]).filter(c=>/consultation/i.test(c.subject??'')));
+   }
   }catch(e){this.error.set(e instanceof Error?e.message:'Cannot load meetings');}
   finally{this.loading.set(false);}
  }
@@ -70,7 +81,7 @@ export class ConsultationWorkspace implements OnInit {
  local(value:string):string{return new Date(value).toLocaleString('en-GB',{timeZone:'Asia/Tbilisi',dateStyle:'medium',timeStyle:'short'});}
  time(n:number):string{return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');}
  request():void{
-  if(!this.confirmed()||!this.conversation()||!this.manager()||!this.date()||this.reason().trim().length<10)return;
+  if(!this.confirmed()||!this.consultationChats().some(c=>c.id===this.conversation())||!this.manager()||!this.date()||this.reason().trim().length<10)return;
   void this.act('request',{conversationId:this.conversation().trim(),managerId:this.manager(),start:this.utc(this.date()),duration:this.duration(),reason:this.reason().trim(),customerAgreed:true});
  }
  action(m:RecordData,kind:'postpone'|'not_held'|'cancel'|'notify_postponed'):void{
