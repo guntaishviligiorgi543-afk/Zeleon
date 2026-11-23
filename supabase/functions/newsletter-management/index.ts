@@ -28,6 +28,14 @@ Deno.serve(async(req)=>{
  if(action==="subscribe"){
   const email=String(input.email||"").trim().toLowerCase();
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254||input.consent!==true)return reply({error:"Valid email and consent required"},400,origin);
+  // The address must be the verified email of the caller's Supabase account.
+  // Do not trust the submitted email or any user ID supplied by the browser.
+  const bearer=req.headers.get("authorization")||"";
+  const match=/^Bearer\\s+(.+)$/i.exec(bearer);
+  if(!match)return reply({error:"Sign in to your ZELEON account before subscribing."},401,origin);
+  const {data:{user},error:authError}=await admin.auth.getUser(match[1]);
+  if(authError||!user||!user.email||!user.email_confirmed_at)return reply({error:"Sign in with a verified ZELEON account to subscribe."},401,origin);
+  if(user.email.trim().toLowerCase()!==email)return reply({error:"Newsletter email must match your registered ZELEON account email."},403,origin);
   const ip=(req.headers.get("cf-connecting-ip")||"").slice(0,64);
   if(!await captcha(String(input.captcha||""),ip))return reply({error:"Human verification required"},403,origin);
   const h=await sha(email),ih=await sha(ip||"unknown");

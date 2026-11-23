@@ -364,13 +364,29 @@ export class Home {
       this.newsletterMessage.set('Enter a valid email and accept the newsletter consent.');
       return;
     }
+
+    // Validate against the signed-in, verified account before CAPTCHA or sending a request.
+    const { data: { user }, error: userError } = await this.supabase.auth.getUser();
+    if (userError || !user?.email || !user.email_confirmed_at) {
+      this.newsletterMessage.set('Sign in with your verified ZELEON account before subscribing.');
+      return;
+    }
+    if (email.value.trim().toLowerCase() !== user.email.trim().toLowerCase()) {
+      this.newsletterMessage.set('Newsletter email must match the email registered to your ZELEON account.');
+      return;
+    }
+    const { data: { session } } = await this.supabase.auth.getSession();
+    if (!session?.access_token || session.user.id !== user.id) {
+      this.newsletterMessage.set('Your session has expired. Please sign in again.');
+      return;
+    }
     if (!this.newsletterVerified() || !captcha) { this.newsletterMessage.set(this.newsletterVerificationError() || 'Complete the human verification first.'); return; }
     this.newsletterBusy.set(true);
     this.newsletterMessage.set('');
     try {
       const response = await fetch('https://nunxmgltzvknnmkdvjsw.supabase.co/functions/v1/newsletter-management', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ action: 'subscribe', email: email.value, consent: true, captcha }),
       });
       const data = await response.json();
