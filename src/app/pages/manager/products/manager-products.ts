@@ -32,6 +32,35 @@ export class ManagerProducts implements OnInit, OnDestroy, AfterViewChecked {
   readonly error = signal('');
   readonly success = signal('');
   readonly editorOpen = signal(false);
+  readonly step = signal(0);
+  readonly steps = ['Basic Information', 'Category and Flavor', 'Inventory', 'Image and Availability'];
+  private readonly stepFields = [
+    ['name', 'slug', 'price', 'description'],
+    ['category_id', 'flavor_id', 'product_type_id'],
+    ['quantity', 'threshold'],
+  ] as const;
+
+  private validateStep(step: number): boolean {
+    const controls = (this.stepFields[step] ?? []).map(name => this.form.controls[name]);
+    if (step === 2) controls.push(this.stockReason);
+    controls.forEach(control => control.markAsTouched());
+    return controls.every(control => control.valid);
+  }
+
+  changeStep(step: number): void {
+    this.step.set(step);
+    setTimeout(() => this.productDialog?.nativeElement.querySelector<HTMLElement>('.step-heading')?.focus());
+  }
+
+  nextStep(): void {
+    if (this.validateStep(this.step())) this.changeStep(Math.min(3, this.step() + 1));
+  }
+
+  submitEditor(): void {
+    if (!this.editing() && this.step() < 3) this.nextStep();
+    else void this.save();
+  }
+
   readonly editing = signal<ManagerProduct | null>(null);
   readonly query = signal('');
   readonly imagePreview = signal('');
@@ -153,6 +182,8 @@ export class ManagerProducts implements OnInit, OnDestroy, AfterViewChecked {
   openCreate(): void {
     this.clearImage();
     this.editing.set(null);
+    this.step.set(0);
+    this.stockReason.reset('Catalog correction');
     this.success.set('');
     this.error.set('');
     this.form.reset({
@@ -186,6 +217,12 @@ export class ManagerProducts implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   async save(): Promise<void> {
+    if (!this.editing()) {
+      for (let step = 0; step < 3; step++) {
+        if (!this.validateStep(step)) { this.changeStep(step); return; }
+      }
+      if (this.step() !== 3) return;
+    }
     this.form.markAllAsTouched();
     if (this.form.invalid || this.saving()) return;
     this.saving.set(true);

@@ -149,8 +149,17 @@
             ×
           </button>
         </div>
-        <form [formGroup]="form" (ngSubmit)="save()">
-          <h3>Basic Information</h3>
+        @if (!editing()) {
+          <ol class="editor-steps" aria-label="Product creation progress">
+            @for (label of steps; track $index) {
+              <li [class.current]="step() === $index" [class.complete]="step() > $index" [attr.aria-current]="step() === $index ? 'step' : null"><span>{{ $index + 1 }}</span>{{ label }}</li>
+            }
+          </ol>
+          <p class="step-progress" aria-live="polite">Step {{ step() + 1 }} of 4: {{ steps[step()] }}</p>
+        }
+        <form [formGroup]="form" (ngSubmit)="submitEditor()">
+          @if (editing() || step() === 0) {
+          <h3 class="step-heading" tabindex="-1">Basic Information</h3>
           <div class="form-grid">
             <div class="field">
               <label for="product-name">Product name</label
@@ -174,6 +183,8 @@
                 >Lowercase letters, numbers, and hyphens only.</small
               >
             </div>
+            <label class="field">Description<textarea formControlName="description" rows="4"></textarea></label>
+            <small class="field-error" [hidden]="!form.controls.description.touched || form.controls.description.valid">Description must be at most 10,000 characters.</small>
             <h3 class="editor-section-heading">Pricing</h3>
             <div class="field">
               <label for="product-price">Price (USD)</label
@@ -191,7 +202,9 @@
             </div>
 
           </div>
-          <h3>Category and Flavor</h3>
+          }
+          @if (editing() || step() === 1) {
+          <h3 class="step-heading" tabindex="-1">Category and Flavor</h3>
           <div class="form-grid">
             <div class="field">
               <label for="product-category">Category</label
@@ -209,24 +222,35 @@
             </div>
             <label class="field">Flavor<select formControlName="flavor_id"><option [ngValue]="null">No flavor</option>@for (option of references().flavors ?? []; track option.id) { <option [ngValue]="option.id">{{ option.name }}</option> }</select></label>
             <label class="field">Product type<select formControlName="product_type_id"><option [ngValue]="null">No type</option>@for (option of references().types ?? []; track option.id) { <option [ngValue]="option.id">{{ option.name }}</option> }</select></label>
-            <label class="field">Description<textarea formControlName="description" rows="4"></textarea></label>
+
           </div>
-          <h3>Inventory</h3>
+          }
+          @if (editing() || step() === 2) {
+          <h3 class="step-heading" tabindex="-1">Inventory</h3>
           <div class="form-grid">
             <label class="field">Stock quantity<input type="number" min="0" step="1" formControlName="quantity" required /></label>
             <label class="field">Low-stock threshold<input type="number" min="0" step="1" formControlName="threshold" required /></label>
             <label class="field">Correction reason<input [formControl]="stockReason" maxlength="200" required /></label>
           </div>
-          <h3>Product Image</h3>
+          @if ((form.controls.quantity.touched && form.controls.quantity.invalid) || (form.controls.threshold.touched && form.controls.threshold.invalid)) { <p class="field-error" role="alert">Enter whole numbers between 0 and 2,147,483,647 for stock and threshold.</p> }
+          @if (stockReason.touched && stockReason.invalid) { <p class="field-error" role="alert">Enter a correction reason up to 200 characters.</p> }
+          }
+          @if (editing() || step() === 3) {
+          <h3 class="step-heading" tabindex="-1">Product Image</h3>
           <label class="field">Upload or replace image (PNG, JPEG, WebP, up to 10 MB)<input type="file" accept="image/png,image/jpeg,image/webp" (change)="selectImage($event)" [disabled]="saving()" /></label>
           @if (imagePreview()) { <img class="image-preview" [src]="imagePreview()" alt="Product image preview" /> }
           @if (editing(); as product) { @if (product.images.length) { <button type="button" class="button danger" [disabled]="saving()" (click)="removeImage(product, 0)">Remove image and deactivate</button> } }
           <h3>Availability</h3>
           <label><input type="checkbox" formControlName="is_active" /> Active in customer catalog (requires an image)</label>
+          }
+          @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
           <div class="action-row">
-            <button type="button" class="button" (click)="closeEditor()">Cancel</button
-            ><button type="submit" class="button primary" [disabled]="form.invalid || saving()">
-              {{ saving() ? 'Saving…' : 'Save product' }}
+            <button type="button" class="button" [disabled]="saving()" (click)="closeEditor()">Cancel</button>
+            @if (!editing() && step() > 0) {
+              <button type="button" class="button" [disabled]="saving()" (click)="changeStep(step() - 1)">Back</button>
+            }
+            <button type="submit" class="button primary" [disabled]="saving()">
+              {{ saving() ? 'Saving?' : (!editing() && step() < 3 ? 'Next' : 'Save product') }}
             </button>
           </div>
         </form>

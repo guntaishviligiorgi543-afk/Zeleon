@@ -59,11 +59,17 @@ describe('Product editor form', () => {
     type('product-name', 'Test energy drink');
     type('product-slug', 'test-energy-drink');
     type('product-price', '4.50');
+    fixture.componentInstance.nextStep();
+    fixture.detectChanges();
     const select = fixture.nativeElement.querySelector('#product-category') as HTMLSelectElement;
     select.selectedIndex = 1;
     select.dispatchEvent(new Event('change', { bubbles: true }));
     fixture.detectChanges();
     expect(fixture.componentInstance.form.valid).toBe(true);
+    fixture.componentInstance.nextStep();
+    fixture.detectChanges();
+    fixture.componentInstance.nextStep();
+    fixture.detectChanges();
     const submit = fixture.nativeElement.querySelector(
       'button[type="submit"]',
     ) as HTMLButtonElement;
@@ -92,6 +98,48 @@ describe('Product editor form', () => {
     );
     await vi.waitFor(() => expect(fixture.componentInstance.saving()).toBe(false));
     expect(fixture.componentInstance.editorOpen()).toBe(false);
+  });
+
+  it('validates each step, preserves values going back and resets a new form', async () => {
+    const fixture = await create();
+    const component = fixture.componentInstance;
+    component.openCreate();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#product-category')).toBeNull();
+    component.submitEditor();
+    expect(component.step()).toBe(0);
+    expect(component.form.controls.name.touched).toBe(true);
+    component.form.patchValue({ name: 'Drink', slug: 'drink', price: 5 });
+    component.submitEditor();
+    expect(component.step()).toBe(1);
+    component.submitEditor();
+    expect(component.step()).toBe(1);
+    component.form.controls.category_id.setValue(1);
+    component.submitEditor();
+    expect(component.step()).toBe(2);
+    component.form.controls.quantity.setValue(-1);
+    component.submitEditor();
+    expect(component.step()).toBe(2);
+    component.form.controls.quantity.setValue(12);
+    component.stockReason.setValue('');
+    component.submitEditor();
+    expect(component.step()).toBe(2);
+    component.stockReason.setValue('Initial stock');
+    component.submitEditor();
+    fixture.detectChanges();
+    expect(component.step()).toBe(3);
+    expect(fixture.nativeElement.querySelector('input[type="file"]')).toBeTruthy();
+    expect(fixture.nativeElement.querySelector('input[type="checkbox"]')).toBeTruthy();
+    expect(dashboard.saveProduct).not.toHaveBeenCalled();
+    component.changeStep(0);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#product-name').value).toBe('Drink');
+    expect(component.form.controls.quantity.value).toBe(12);
+    component.closeEditor();
+    component.openCreate();
+    expect(component.step()).toBe(0);
+    expect(component.form.controls.name.value).toBe('');
+    expect(component.stockReason.value).toBe('Catalog correction');
   });
 
   it('opens Edit product with existing values and saves changes to that product', async () => {
