@@ -224,7 +224,7 @@
     @if (newsletterUnsubscribeMessage()) {
       <p class="newsletter-unsubscribe-success" role="status">{{ newsletterUnsubscribeMessage() }}</p>
     }
-    <form (submit)="submitNewsletter($event)">
+    <form (submit)="submitNewsletter($event)" (focusin)="startNewsletterVerification()" (pointerdown)="startNewsletterVerification()">
       <div class="mailInp">
         <label for="email">Email:</label>
         <input type="email" id="email" name="email" required #newsletterEmail (input)="newsletterEmailChanged()" />

@@ -26,7 +26,8 @@ export class Home {
   private newsletterCheckVersion = 0;
   private readonly supabase = inject(SUPABASE_CLIENT);
   readonly newsletterVerificationError = signal('');
-  readonly newsletterVerificationLoading = signal(true);
+  readonly newsletterVerificationLoading = signal(false);
+  readonly newsletterCaptchaStarted = signal(false);
   private newsletterVerificationTimer?: ReturnType<typeof setTimeout>;
   private newsletterScriptCleanup?: () => void;
   private newsletterWidgetId: string | null = null;
@@ -38,7 +39,7 @@ export class Home {
 
   constructor() {
     afterNextRender(() => {
-      void this.loadProducts(); this.setupNewsletterCaptcha();
+      void this.loadProducts();
       void this.checkNewsletterSubscription(true);
       const timer = this.zone.runOutsideAngular(() => setInterval(() => { if (!document.hidden && !this.productsLoading()) void this.loadProducts(true); }, 30000));
       this.destroyRef.onDestroy(() => clearInterval(timer));
@@ -183,10 +184,27 @@ export class Home {
     this.newsletterVerificationTimer = setTimeout(() => this.newsletterVerificationFailed('load-timeout'), 30000);
   }
 
+  private stopNewsletterVerification(): void {
+    clearTimeout(this.newsletterVerificationTimer);
+    this.newsletterScriptCleanup?.();
+    this.newsletterScriptCleanup = undefined;
+    const turnstile = (window as any).turnstile;
+    if (this.newsletterWidgetId !== null && turnstile) {
+      try { turnstile.remove(this.newsletterWidgetId); } catch { /* detached on view change */ }
+    }
+    this.newsletterWidgetId = null;
+    this.newsletterCaptchaStarted.set(false);
+    this.newsletterVerificationLoading.set(false);
+    this.newsletterVerificationError.set('');
+    this.newsletterVerified.set(false);
+  }
+
   private setupNewsletterCaptcha(): void {
     const siteKey = '0x4AAAAAAGHCqbPtlPdWY31w';
     const widget = this.element.nativeElement.querySelector<HTMLElement>('#zeleon-newsletter-turnstile');
-    if (!widget || this.destroyRef.destroyed) return;
+    if (!widget || this.destroyRef.destroyed || this.newsletterAlreadySubscribed()) return;
+    if (this.newsletterWidgetId !== null) return;
+    this.newsletterCaptchaStarted.set(true);
     this.waitForNewsletterVerification();
     const render = () => {
       if (this.destroyRef.destroyed) return;
@@ -246,7 +264,7 @@ export class Home {
   }
 
   retryNewsletterVerification(): void {
-    if (this.newsletterBusy()) return;
+    if (this.newsletterBusy() || this.newsletterAlreadySubscribed()) return;
     this.newsletterMessage.set('');
     const turnstile = (window as any).turnstile;
     if (this.newsletterWidgetId !== null && turnstile) {
@@ -275,7 +293,10 @@ export class Home {
       if (value !== session.user.email.trim().toLowerCase()) return;
       const { data, error } = await this.supabase.rpc('newsletter_my_active_status');
       if (this.destroyRef.destroyed || version !== this.newsletterCheckVersion || error) return;
-      if (emailInput.value.trim().toLowerCase() === value) this.newsletterAlreadySubscribed.set(data === true);
+      if (emailInput.value.trim().toLowerCase() === value) {
+        this.newsletterAlreadySubscribed.set(data === true);
+        if (data === true) this.stopNewsletterVerification();
+      }
     } catch {
       // Do not expose subscription membership or block regular signup on a lookup failure.
     }
@@ -306,7 +327,9 @@ export class Home {
         }
         this.newsletterWidgetId = null;
         this.newsletterVerified.set(false);
-        this.setupNewsletterCaptcha();
+        this.newsletterCaptchaStarted.set(false);
+        this.newsletterVerificationLoading.set(false);
+        // Verification will begin only if the user interacts with the form.
       }, 0);
     } catch (error) {
       this.newsletterUnsubscribeError.set(error instanceof Error ? error.message : 'Unsubscribe failed. Please try again.');
@@ -315,7 +338,13 @@ export class Home {
     }
   }
 
+  startNewsletterVerification(): void {
+    if (this.newsletterAlreadySubscribed() || this.newsletterCaptchaStarted()) return;
+    this.setupNewsletterCaptcha();
+  }
+
   newsletterEmailChanged(): void {
+    // Keep the signed-in user's subscription status current when they edit email.
     void this.checkNewsletterSubscription();
   }
 
