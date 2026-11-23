@@ -1,6 +1,7 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { StaffAccess } from '../../../services/staff-access';
 import {
   ManagerDashboard,
@@ -12,7 +13,7 @@ import {
 
 @Component({
   selector: 'app-manager-support',
-  imports: [DatePipe, FormsModule],
+  imports: [DatePipe, FormsModule, RouterLink],
   templateUrl: './manager-support.html',
   styleUrls: ['../manager-page.css', './manager-support.css'],
 })

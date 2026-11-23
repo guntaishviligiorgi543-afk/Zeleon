@@ -172,7 +172,12 @@
           <button type="button" class="thread-back" aria-label="Back to conversations" (click)="closeThread()">← Back</button>
         </header>
         <div class="thread-content-scroll">
-          <div class="thread-chat-label">Customer conversation</div>
+          @if (isSupport && conversation.subject?.toLowerCase()?.includes('consultation')) {
+          <div class="thread-actions">
+            <a class="button primary" [routerLink]="['/support/consultations']" [queryParams]="{conversation:conversation.id}">Forward agreed consultation to Admin</a>
+          </div>
+        }
+        <div class="thread-chat-label">Customer conversation</div>
         <div class="thread-messages" aria-live="polite">
           @if (messagesLoading()) {
             <div class="skeleton"></div>
