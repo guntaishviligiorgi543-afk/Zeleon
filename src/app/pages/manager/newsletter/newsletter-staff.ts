@@ -47,7 +47,7 @@ type SubscriberTab = 'active' | 'pending_confirmation' | 'unsubscribed';
         </nav>
         <p class="list-info">{{ visibleSubscribers().length }} {{ tab() === 'active' ? 'confirmed subscribers' : tab() === 'pending_confirmation' ? 'pending requests' : 'inactive subscribers' }} shown (latest 500 records across all statuses).</p>
         @if (staff.role() === 'manager') {
-          <button type="button" (click)="exportConsentReport()" [disabled]="busy()">Export consent report (CSV)</button>
+          <button type="button" (click)="exportConsentReport()" [disabled]="busy()">Export consent report (PDF)</button>
         }
         <div class="table-wrap">
           <table>
@@ -173,7 +173,45 @@ export class NewsletterStaff {
     finally { this.busy.set(false); }
   }
 
-  exportConsentReport(): void {
-    this.message.set('Consent PDF export requires the protected server-side report endpoint; it is not enabled yet.');
+  async exportConsentReport(): Promise<void> {
+    if (this.staff.role() !== 'manager' || this.busy()) return;
+    this.busy.set(true);
+    this.message.set('');
+    try {
+      // Generate the PDF on the server: no subscriber data is loaded into the browser
+      // just to export a report, and only verified Managers may call this endpoint.
+      const { data: session, error: sessionError } = await this.client.auth.getSession();
+      if (sessionError || !session.session?.access_token) throw new Error('Please sign in again before exporting.');
+      const response = await fetch(
+        'https://nunxmgltzvknnmkdvjsw.supabase.co/functions/v1/newsletter-consent-report',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + session.session.access_token,
+            'Content-Type': 'application/json',
+          },
+          body: '{}',
+        },
+      );
+      if (!response.ok) {
+        const failure = await response.json().catch(() => ({}));
+        throw new Error(failure.error || 'Unable to generate PDF report.');
+      }
+      const blob = await response.blob();
+      if (blob.type !== 'application/pdf' || blob.size < 100) throw new Error('Invalid PDF response.');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'zeleon-newsletter-consent-' + new Date().toISOString().slice(0, 10) + '.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      this.message.set('Consent PDF report downloaded.');
+    } catch (error) {
+      this.message.set(error instanceof Error ? error.message : 'Unable to export consent PDF.');
+    } finally {
+      this.busy.set(false);
+    }
   }
 }
