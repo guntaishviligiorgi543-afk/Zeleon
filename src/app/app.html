@@ -16,3 +16,18 @@
 }
 
 @if (!newsletterRoute()) { <app-cart-login-dialog></app-cart-login-dialog> }
+
+@if (analytics.consent() === null || analytics.preferencesOpen()) {
+  <aside class="zeleon-analytics-consent" role="region" aria-label="Analytics privacy choices">
+    <div>
+      <strong>Help us improve ZELEON</strong>
+      <p>Allow optional Google Analytics to measure visits and shopping activity. We do not send your email or account information. You can decline or change your choice later.</p>
+    </div>
+    <div class="zeleon-analytics-actions">
+      <button type="button" (click)="analytics.setConsent('rejected')">Reject optional analytics</button>
+      <button type="button" class="accept" (click)="analytics.setConsent('accepted')">Accept analytics</button>
+    </div>
+  </aside>
+} @else {
+  <button class="zeleon-analytics-settings" type="button" (click)="analytics.openPreferences()" aria-label="Change analytics privacy choice">Privacy choices</button>
+}

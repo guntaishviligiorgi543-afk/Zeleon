@@ -6,6 +6,7 @@ import { Products } from '../../services/products';
 import { Product } from '../../models/product';
 import { Cart } from '../../services/cart';
 import { Seo } from '../../services/seo';
+import { Analytics } from '../../services/analytics';
 
 @Component({
   imports: [RouterLink, CurrencyPipe],
@@ -28,6 +29,7 @@ export class ProductDetails {
   private cartFeedbackTimer?: ReturnType<typeof setTimeout>;
   private readonly router = inject(Router);
   private readonly seo = inject(Seo);
+  private readonly analytics = inject(Analytics);
 
   validQuantity(): boolean {
     return Number.isInteger(this.quantity()) && this.quantity() >= 1 && this.quantity() <= Math.min(99, this.product()?.stock ?? 0);
@@ -105,6 +107,7 @@ export class ProductDetails {
       if (!request.signal.aborted) {
         this.product.set(product);
         this.seo.productLoaded(product);
+        this.analytics.productEvent('view_item', product);
       }
     } catch (error) {
       if (!request.signal.aborted) this.error.set(error instanceof Error ? error.message : 'This product could not be loaded.');

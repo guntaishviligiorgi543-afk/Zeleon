@@ -1,4 +1,5 @@
 import { Auth } from './services/auth';
+import { Analytics } from './services/analytics';
 import { CartLoginDialog } from './components/cart-login-dialog/cart-login-dialog';
 import {
   AfterRenderRef,
@@ -32,6 +33,7 @@ import { legacyRatingPath } from './pages/support-rating/rating-link';
 })
 export class App implements AfterViewInit {
   protected readonly title = signal('zeleon');
+  protected readonly analytics = inject(Analytics);
   protected readonly router = inject(Router);
   protected readonly ratingRoute = signal(this.isRatingUrl(this.router.url));
   protected readonly checkoutRoute = signal(/^\/checkout(?:[/?#;]|$)/.test(this.router.url));

@@ -4,6 +4,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@
 import { RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { Cart } from '../../services/cart';
+import { Analytics } from '../../services/analytics';
 import { CheckoutCatalog, CheckoutProductFacts, checkoutUnitPrice } from '../../services/checkout-catalog';
 
 const requiredText = (control: AbstractControl) => String(control.value ?? '').trim() ? null : { required: true };
@@ -17,6 +18,7 @@ const requiredText = (control: AbstractControl) => String(control.value ?? '').t
 export class Checkout {
   readonly cart = inject(Cart);
   private readonly auth = inject(Auth);
+  private readonly analytics = inject(Analytics);
   private readonly catalog = inject(CheckoutCatalog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder).nonNullable;
@@ -93,6 +95,8 @@ export class Checkout {
     });
     afterNextRender(() => {
       this.browserReady.set(true);
+      const lines = this.cart.items();
+      if (lines.length) this.analytics.event('begin_checkout', lines.map(line => ({ item_id: String(line.product.id), item_name: line.product.name, price: line.product.price, quantity: line.quantity })), lines[0].product.currency);
       const timer = setInterval(() => this.now.set(Date.now()), 1000);
       const refresh = setInterval(() => { if (!this.loading()) void this.refresh(); }, 60_000);
       this.destroyRef.onDestroy(() => { clearInterval(timer); clearInterval(refresh); });

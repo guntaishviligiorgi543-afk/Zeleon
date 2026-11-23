@@ -2,12 +2,14 @@ import { computed, effect, inject, Injectable, signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Auth } from './auth';
 import { Product } from '../models/product';
+import { Analytics } from './analytics';
 
 export interface CartLine { product: Product; quantity: number; }
 
 @Injectable({ providedIn: 'root' })
 export class Cart {
   private readonly auth = inject(Auth);
+  private readonly analytics = inject(Analytics);
   readonly authenticated = computed(() => this.auth.initialized() && this.auth.isAuthenticated() && !this.auth.recovering());
   private readonly owner = computed(() => this.authenticated() ? this.auth.user()?.id ?? null : null);
   private readonly state = signal<{ owner: string | null; lines: readonly CartLine[] }>({ owner: null, lines: [] });
@@ -43,6 +45,7 @@ export class Cart {
       return existing ? items.map((item) => item.product.id === product.id
         ? { product, quantity: item.quantity + quantity } : item) : [...items, { product, quantity }];
     });
+    this.analytics.productEvent('add_to_cart', product, quantity);
     return true;
   }
 
