@@ -119,7 +119,14 @@ Deno.serve(async(req)=>{
     db.from('meeting_status_history').insert({meeting_id:saved.data.id,actor_id:user.id,to_status:'upcoming',note:'Admin scheduled the consultation'}),
     db.from('meeting_notifications').insert([{meeting_id:saved.data.id,recipient_role:'manager',message:'New consultation scheduled'},{meeting_id:saved.data.id,recipient_role:'support',message:'Meeting scheduled; confirm details with customer'}])
    ]);
-   return respond({message:'Meeting created and visible to Manager',id:saved.data.id});
+   // A successful database write is never rolled back by a mail-provider outage.
+   let delivered=false;
+   try {
+    const when=start.toLocaleString('en-GB',{timeZone:'Asia/Tbilisi',dateStyle:'full',timeStyle:'short'});
+    await email(request.data.customer_email,'ZELEON — Consultation scheduled','<p>Hello '+escape(request.data.customer_name)+',</p><p>Your consultation has been scheduled for <strong>'+escape(when)+' (Tbilisi time)</strong>.</p><p>ZELEON Support will confirm the meeting location and any further details. For changes, contact Support on our website.</p>','consultation-booked-'+saved.data.id);
+    delivered=true;
+   }catch(e){console.warn('Booking notification failed',e instanceof Error?e.message:'unknown');}
+   return respond({message:delivered?'Meeting created; customer emailed and Manager notified':'Meeting created; Manager notified, but customer email was not confirmed',id:saved.data.id});
   }
   const id=asUUID(body['meetingId']);if(!id)return respond({error:'Invalid meeting'},400);
   const found=await db.from('consultation_meetings').select('*').eq('id',id).maybeSingle();
@@ -136,6 +143,10 @@ Deno.serve(async(req)=>{
    const updated=await db.from('consultation_meetings').update({status:'postponed',starts_at:start.toISOString(),ends_at:end.toISOString(),reschedule_reason:note,reschedule_pending:true,customer_notification_pending:true,updated_at:new Date().toISOString()}).eq('id',id).in('status',['upcoming','postponed']);
    if(updated.error)return respond({error:'Meeting conflicts with another booking'},409);
    await Promise.all([db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:'postponed',note}),db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'support',message:'Meeting postponed. Contact customer to agree on new date and send email notice.'})]);
+   try {
+    const recipient=await db.auth.admin.getUserById(meeting.support_id);
+    if(recipient.data.user?.email) await email(recipient.data.user.email,'ZELEON — Consultation date changed','<p>A Manager postponed a consultation. Please agree the new time with the customer and send the rescheduling notice from <a href="https://zeleon.store/support/consultations">Consultation Desk</a>.</p>','consultation-postponed-'+id+'-'+start.getTime());
+   }catch(e){console.warn('Support postponement email failed',e instanceof Error?e.message:'unknown');}
    return respond({message:'Postponed. Support must notify the customer.'});
   }
   if(action==='not_held'){
@@ -155,6 +166,11 @@ Deno.serve(async(req)=>{
    const updated=await db.from('consultation_meetings').update({status:'cancelled',customer_confirmed_cancel:true,reschedule_pending:false,customer_notification_pending:false,updated_at:new Date().toISOString()}).eq('id',id).in('status',['upcoming','postponed']);
    if(updated.error)throw updated.error;
    await Promise.all([db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:'cancelled',note:reason}),db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'manager',message:'Customer confirmed meeting cancellation with Support: '+reason.slice(0,500)})]);
+   // Deliver an additional direct email alert to the assigned manager.
+   try {
+    const recipient=await db.auth.admin.getUserById(meeting.manager_id);
+    if(recipient.data.user?.email) await email(recipient.data.user.email,'ZELEON — Consultation cancelled by customer','<p>A customer confirmed cancellation of a scheduled consultation with Support.</p><p>Review your <a href="https://zeleon.store/manager/meetings">Meetings dashboard</a> for the updated record.</p>','consultation-cancel-manager-'+id);
+   }catch(e){console.warn('Manager cancellation email failed',e instanceof Error?e.message:'unknown');}
    return respond({message:'Customer cancellation recorded; Manager notified'});
   }
   if(action==='notify_postponed'){
