@@ -61,7 +61,8 @@
   text-transform: capitalize;
   font-size: 0.75rem;
   padding: 8px 12px;
-  background: #edf4ff;
+  background: var(--workspace-subtle, #edf4ff);
+  color: var(--workspace-text, #17233b);
   border-radius: 8px;
 }
 .user-controls,
