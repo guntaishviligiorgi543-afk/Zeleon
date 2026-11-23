@@ -6,7 +6,7 @@ import { SUPABASE_CLIENT } from '../../../services/supabase';
 import { StaffAccess } from '../../../services/staff-access';
 import { Auth } from '../../../services/auth';
 
-type RecordData = Record<string, any>;
+type RecordData = any;
 @Component({
  selector:'app-consultation-workspace',imports:[DatePipe,FormsModule],
  styleUrls:['../manager-page.css','./consultation-workspace.css'],
@@ -43,7 +43,7 @@ export class ConsultationWorkspace implements OnInit {
  readonly endTime=signal('18:00');
  readonly days=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
  ngOnInit():void{this.conversation.set(this.route.snapshot.queryParamMap.get('conversation')||'');void this.refresh();}
- private async api(action:string,extra:Record<string,unknown>={}):Promise<RecordData>{
+ private async api(action:string,extra:Record<string,unknown>={}):Promise<any>{
   const {data,error}=await this.client.functions.invoke('consultation-management',{body:{action,...extra}});
   if(error){let message='Unable to reach consultation service.';try{const response=await error.context?.json();if(response?.error)message=response.error;}catch{}throw new Error(message);}
   if(data?.error)throw new Error(data.error);
