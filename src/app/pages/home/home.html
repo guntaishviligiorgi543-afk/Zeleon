@@ -224,7 +224,7 @@
           <button type="button" (click)="retryNewsletterVerification()" [disabled]="newsletterBusy()">Retry verification</button>
         </div>
       }
-      <button type="submit" [disabled]="newsletterBusy()">{{ newsletterBusy() ? "Submitting…" : "Subscribe" }}</button>
+      <button type="submit" [disabled]="newsletterBusy() || !newsletterVerified()">{{ newsletterBusy() ? "Submitting…" : "Subscribe" }}</button>
       <p role="status" aria-live="polite">{{ newsletterMessage() }}</p>
     </form>
   </div>

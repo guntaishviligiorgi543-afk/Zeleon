@@ -89,6 +89,32 @@ describe('Home', () => {
     expect(component.newsletterVerificationError()).toContain('expired');
   });
 
+  it('enables Subscribe only after verification and disables it on expiry, errors and retry', () => {
+    const { callbacks } = mockVerification();
+    const disabled = () => {
+      fixture.detectChanges();
+      return (fixture.nativeElement.querySelector('.subscriptionForm form > button[type="submit"]') as HTMLButtonElement).disabled;
+    };
+    expect(disabled()).toBe(true);
+    callbacks['callback']('verified-token');
+    expect(disabled()).toBe(false);
+    component.newsletterBusy.set(true);
+    expect(disabled()).toBe(true);
+    component.newsletterBusy.set(false);
+    callbacks['expired-callback']();
+    expect(disabled()).toBe(true);
+    callbacks['callback']('new-token');
+    expect(disabled()).toBe(false);
+    callbacks['error-callback']('200500');
+    expect(disabled()).toBe(true);
+    callbacks['callback']('another-token');
+    expect(disabled()).toBe(false);
+    component.retryNewsletterVerification();
+    expect(disabled()).toBe(true);
+    callbacks['callback']('');
+    expect(disabled()).toBe(true);
+  });
+
   it('identifies an unauthorized hostname and never submits without a verification token', async () => {
     const { callbacks } = mockVerification();
     const fetch = vi.fn();

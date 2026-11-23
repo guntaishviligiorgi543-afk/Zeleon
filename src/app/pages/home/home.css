@@ -552,7 +552,7 @@
     transform 180ms ease;
 }
 
-.subscriptionForm form > button:hover {
+.subscriptionForm form > button:hover:not(:disabled) {
   border-color: #000;
   background: transparent;
   color: #000;
@@ -907,4 +907,9 @@
 .subscriptionForm .verification-error button:focus-visible {
   outline: 2px solid currentColor;
   outline-offset: 3px;
+}
+
+.subscriptionForm form > button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

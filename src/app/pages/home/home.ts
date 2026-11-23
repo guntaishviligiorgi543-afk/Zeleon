@@ -16,6 +16,7 @@ export class Home {
   readonly productsLoading = signal(true);
   readonly productsError = signal(false);
   readonly newsletterBusy = signal(false);
+  readonly newsletterVerified = signal(false);
   readonly newsletterMessage = signal('');
   readonly newsletterVerificationError = signal('');
   readonly newsletterVerificationLoading = signal(true);
@@ -154,6 +155,7 @@ export class Home {
       if (script) script.dataset['newsletterFailed'] = 'true';
     }
     this.zone.run(() => {
+      this.newsletterVerified.set(false);
       this.newsletterVerificationLoading.set(false);
       const configuration = code === '110200'
         ? 'This website address is not authorized for newsletter verification. Please contact ZELEON.'
@@ -166,6 +168,7 @@ export class Home {
 
   private waitForNewsletterVerification(): void {
     clearTimeout(this.newsletterVerificationTimer);
+    this.newsletterVerified.set(false);
     this.newsletterVerificationLoading.set(true);
     this.newsletterVerificationError.set('');
     this.newsletterVerificationTimer = setTimeout(() => this.newsletterVerificationFailed('load-timeout'), 30000);
@@ -183,10 +186,11 @@ export class Home {
       try {
         this.newsletterWidgetId = turnstile.render(widget, {
           sitekey: siteKey, theme: 'auto', size: 'flexible',
-          callback: () => {
+          callback: (token: string) => {
             if (this.destroyRef.destroyed) return;
             clearTimeout(this.newsletterVerificationTimer);
             this.zone.run(() => {
+              this.newsletterVerified.set(!!token);
               this.newsletterVerificationLoading.set(false);
               this.newsletterVerificationError.set('');
               this.newsletterMessage.set('');
@@ -197,6 +201,7 @@ export class Home {
             if (this.destroyRef.destroyed) return;
             this.zone.run(() => {
               this.newsletterVerificationLoading.set(false);
+              this.newsletterVerified.set(false);
               this.newsletterVerificationError.set('Verification expired. Please verify again before subscribing.');
             });
           },
@@ -256,7 +261,7 @@ export class Home {
       this.newsletterMessage.set('Enter a valid email and accept the newsletter consent.');
       return;
     }
-    if (!captcha) { this.newsletterMessage.set(this.newsletterVerificationError() || 'Complete the human verification first.'); return; }
+    if (!this.newsletterVerified() || !captcha) { this.newsletterMessage.set(this.newsletterVerificationError() || 'Complete the human verification first.'); return; }
     this.newsletterBusy.set(true);
     this.newsletterMessage.set('');
     try {
