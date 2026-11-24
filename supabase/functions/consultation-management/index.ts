@@ -175,8 +175,9 @@ Deno.serve(async(req)=>{
    if(windows.error||!sameSlot(start,end,windows.data??[]))return respond({error:'Choose a published manager appointment slot'},400);
    if(await isBlocked(managerId,start))return respond({error:'Manager blocked this date'},409);
    if(!await managerLimit(managerId,start))return respond({error:'Daily/weekly meeting limit reached'},409);
-   const held=await db.from('consultation_requests').select('id').eq('manager_id',managerId).eq('status','pending_admin').lt('proposed_at',end.toISOString()).gte('proposed_at',new Date(start.getTime()-180*60000).toISOString());
-   if(held.error||held.data?.some(r=>r.id))return respond({error:'Appointment is awaiting Admin approval'},409);
+   const held=await db.from('consultation_requests').select('proposed_at,duration_minutes').eq('manager_id',managerId).eq('status','pending_admin').lt('proposed_at',end.toISOString()).gte('proposed_at',new Date(start.getTime()-180*60000).toISOString());
+   if(held.error)throw held.error;
+   if((held.data||[]).some(r=>new Date(new Date(r.proposed_at).getTime()+r.duration_minutes*60000)>start))return respond({error:'Appointment is awaiting Admin approval'},409);
    const busy=await db.from('consultation_meetings').select('id').eq('manager_id',managerId).in('status',['upcoming','postponed']).lt('starts_at',end.toISOString()).gt('ends_at',start.toISOString()).limit(1);
    if(busy.error||busy.data?.length)return respond({error:'Manager is already booked'},409);
    const existing=await db.from('consultation_requests').select('id,status').eq('conversation_id',conversationId).maybeSingle();
