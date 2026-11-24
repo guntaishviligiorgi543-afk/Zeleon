@@ -140,38 +140,79 @@ export class ConsultationWorkspace implements OnInit {
  // Self-contained PDF renderer: downloadable PDF, no external script or service.
  exportPDF():void{
   if(this.role!=='manager')return;
-  const filtered=this.historical();
-  const lines=['ZELEON - Consultation History Report',
-   'Period: '+(this.historyFrom()||'All')+' to '+(this.historyTo()||'All'),
-   'Status: '+this.historyStatus(),'Exported: '+new Date().toISOString(),'',
-   ...filtered.flatMap(m=>[
-    'Date: '+this.local(m.starts_at)+' | Status: '+m.status,
-    'Customer: '+(m.customer_name||'Customer')+' | '+(m.customer_email||''),
-    'Manager: '+m.manager_id+' | Support: '+m.support_id,
-    'Reason: '+(m.reason||''),
-    ...this.history().filter(h=>h.meeting_id===m.id).map(h=>'History: '+h.to_status+' / '+this.local(h.created_at)+' / '+(h.note||'')),
-    ''
-   ])];
-  if(!filtered.length){this.error.set('No meetings match the selected history filters');return;}
-  const safe=(v:string)=>v.normalize('NFKD').replace(/[^\\x20-\\x7e]/g,'?').replace(/[()\\\\]/g, (char)=>'\\\\'+char);
-  const pages:string[][]=[];for(let i=0;i<lines.length;i+=48)pages.push(lines.slice(i,i+48));
-  const objects:string[]=[];const add=(s:string)=>{objects.push(s);return objects.length;};
-  const catalog=add('');const pagesRoot=add('');const font=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
-  const pageIds:number[]=[];
-  for(const pageLines of pages){
-   const content='BT /F1 10 Tf 45 790 Td 14 TL '+pageLines.map((line,i)=>(i?'T* ':'')+'('+safe(line.slice(0,115))+') Tj').join(' ')+' ET';
-   const stream=add('<< /Length '+content.length+' >>\nstream\n'+content+'\nendstream');
-   const page=add('<< /Type /Page /Parent '+pagesRoot+' 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 '+font+' 0 R >> >> /Contents '+stream+' 0 R >>');pageIds.push(page);
+  const meetings=this.historical();
+  if(!meetings.length){this.error.set('No meetings match the selected history filters');return;}
+  const lines:string[]=[
+   'ZELEON  |  Consultation History Report',
+   'Date range: '+(this.historyFrom()||'All')+' — '+(this.historyTo()||'All'),
+   'Status: '+this.historyStatus()+'  |  Generated: '+this.local(new Date().toISOString()),
+   'Number of meetings: '+meetings.length, ''
+  ];
+  for(const m of meetings){
+   lines.push('Meeting: '+this.local(m.starts_at)+'  |  '+m.status,
+    'Customer: '+(m.customer_name||'Customer')+'  |  '+(m.customer_email||''),
+    'Manager: '+m.manager_id+'  |  Support: '+m.support_id,
+    'Reason: '+(m.reason||''));
+   for(const e of this.history().filter(h=>h.meeting_id===m.id))
+    lines.push('Change: '+this.local(e.created_at)+'  |  '+e.to_status+'  |  '+(e.note||''));
+   lines.push('');
   }
-  objects[catalog-1]='<< /Type /Catalog /Pages '+pagesRoot+' 0 R >>';
-  objects[pagesRoot-1]='<< /Type /Pages /Kids ['+pageIds.map(id=>id+' 0 R').join(' ')+'] /Count '+pageIds.length+' >>';
-  let pdf='%PDF-1.4\n';const offsets=[0];
-  objects.forEach((obj,i)=>{offsets.push(pdf.length);pdf+=(i+1)+' 0 obj\n'+obj+'\nendobj\n';});
-  const xref=pdf.length;pdf+='xref\n0 '+(objects.length+1)+'\n0000000000 65535 f \n';
-  for(const offset of offsets.slice(1))pdf+=String(offset).padStart(10,'0')+' 00000 n \n';
-  pdf+='trailer\n<< /Size '+(objects.length+1)+' /Root '+catalog+' 0 R >>\nstartxref\n'+xref+'\n%%EOF';
-  const url=URL.createObjectURL(new Blob([pdf],{type:'application/pdf'}));
-  const a=document.createElement('a');a.href=url;a.download='ZELEON-consultations-'+new Date().toISOString().slice(0,10)+'.pdf';a.click();
+  // Render the report with the browser's own fonts, preserving Georgian names
+  // and notes without external PDF libraries or third-party uploads.
+  const canvas=document.createElement('canvas');canvas.width=1190;canvas.height=1684;
+  const ctx=canvas.getContext('2d');if(!ctx){this.error.set('PDF renderer unavailable');return;}
+  ctx.font='22px Arial, sans-serif';
+  const wrapped:string[]=[];
+  for(const line of lines){
+   let part='';
+   for(const word of line.split(' ')){
+    const candidate=part?part+' '+word:word;
+    if(ctx.measureText(candidate).width>1070&&part){wrapped.push(part);part=word;}
+    else part=candidate;
+   }
+   wrapped.push(part);
+  }
+  const pageLines:string[][]=[];
+  for(let i=0;i<wrapped.length;i+=53)pageLines.push(wrapped.slice(i,i+53));
+  const pageImages:Uint8Array[]=[];
+  for(const [index,chunk] of pageLines.entries()){
+   ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);
+   ctx.fillStyle='#172b4d';ctx.font='bold 26px Arial, sans-serif';
+   ctx.fillText('ZELEON  /  CONSULTATIONS',55,65);
+   ctx.fillStyle='#2c3f5c';ctx.font='22px Arial, sans-serif';
+   chunk.forEach((line,i)=>ctx.fillText(line,55,125+i*28));
+   ctx.font='18px Arial, sans-serif';
+   ctx.fillText('Page '+(index+1)+' of '+pageLines.length,55,1635);
+   const raw=atob(canvas.toDataURL('image/jpeg',0.85).split(',')[1]);
+   pageImages.push(Uint8Array.from(raw,ch=>ch.charCodeAt(0)));
+  }
+  const bytes=(value:string)=>new TextEncoder().encode(value);
+  const chunks:Uint8Array[]=[];let total=0;const offsets:number[]=[0];
+  const push=(data:Uint8Array)=>{chunks.push(data);total+=data.length;};
+  const pushText=(value:string)=>push(bytes(value));
+  const pagesRef=2;
+  pushText('%PDF-1.4\n');
+  const beginObj=(id:number)=>{offsets[id]=total;pushText(id+' 0 obj\n');};
+  const closeObj=()=>pushText('\nendobj\n');
+  beginObj(1);pushText('<< /Type /Catalog /Pages 2 0 R >>');closeObj();
+  beginObj(2);pushText('<< /Type /Pages /Count '+pageImages.length+' /Kids ['+pageImages.map((_,i)=>(5+i*3)+' 0 R').join(' ')+'] >>');closeObj();
+  for(const [i,image] of pageImages.entries()){
+   const imgId=3+i*3,contentId=4+i*3,pageId=5+i*3;
+   beginObj(imgId);
+   pushText('<< /Type /XObject /Subtype /Image /Width 1190 /Height 1684 /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+image.length+' >>\nstream\n');
+   push(image);pushText('\nendstream');closeObj();
+   const content=bytes('q 595 0 0 842 0 0 cm /Im0 Do Q\n');
+   beginObj(contentId);pushText('<< /Length '+content.length+' >>\nstream\n');push(content);pushText('endstream');closeObj();
+   beginObj(pageId);
+   pushText('<< /Type /Page /Parent '+pagesRef+' 0 R /MediaBox [0 0 595 842] /Resources << /XObject << /Im0 '+imgId+' 0 R >> >> /Contents '+contentId+' 0 R >>');
+   closeObj();
+  }
+  const xref=total;const objCount=2+pageImages.length*3;
+  pushText('xref\n0 '+(objCount+1)+'\n0000000000 65535 f \n');
+  for(let i=1;i<=objCount;i++)pushText(String(offsets[i]).padStart(10,'0')+' 00000 n \n');
+  pushText('trailer\n<< /Root 1 0 R /Size '+(objCount+1)+' >>\nstartxref\n'+xref+'\n%%EOF');
+  const url=URL.createObjectURL(new Blob(chunks as BlobPart[],{type:'application/pdf'}));
+  const link=document.createElement('a');link.href=url;link.download='ZELEON-consultations-'+new Date().toISOString().slice(0,10)+'.pdf';link.click();
   setTimeout(()=>URL.revokeObjectURL(url),10000);
  }
  request():void{
