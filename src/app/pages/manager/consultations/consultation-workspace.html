@@ -64,6 +64,7 @@
 <label class="ccheck"><input type="checkbox" [ngModel]="showArchived()" (ngModelChange)="showArchived.set($event)"> Show archived only</label>
 <button class="button primary" type="button" (click)="exportPDF()" [disabled]="!historical().length">Download PDF</button>
 <button class="button" type="button" [disabled]="!selectedArchives().length||loading()" (click)="archiveSelected()">Archive selected</button>
+<button class="button" type="button" [disabled]="loading()||!historical().length||showArchived()" (click)="archiveSelected(true)">Archive filtered closed</button>
 </div>
 <div class="table-wrap"><table><thead><tr><th>Select</th><th>Customer</th><th>Date</th><th>Status</th><th>Activity</th><th>Archive</th></tr></thead><tbody>
 @for(m of historical();track m.id){<tr>

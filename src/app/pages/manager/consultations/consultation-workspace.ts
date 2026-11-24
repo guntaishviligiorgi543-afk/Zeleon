@@ -124,8 +124,8 @@ export class ConsultationWorkspace implements OnInit {
   const reason=window.prompt('Reason for rejecting the consultation (at least 10 characters):');
   if(reason&&reason.trim().length>=10)await this.act('reject',{requestId:id,reason:reason.trim()});
  }
- async archiveSelected():Promise<void>{
-  const ids=this.selectedArchives();
+ async archiveSelected(filtered=false):Promise<void>{
+  const ids=filtered?this.historical().filter(m=>!m.archived_at&&['completed','cancelled'].includes(m.status)).map(m=>m.id):this.selectedArchives();
   if(!ids.length||this.loading())return;
   if(!window.confirm('Archive '+ids.length+' selected meetings? Records remain available in archived history until 90-day retention expires.'))return;
   this.loading.set(true);this.error.set('');
