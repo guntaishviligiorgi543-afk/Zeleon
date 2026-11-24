@@ -115,7 +115,7 @@ Deno.serve(async(req)=>{
   }
   if(action==='list'){
    const [requests,meetings,notes]=await Promise.all([
-    role==='support'?db.from('consultation_requests').select('id,conversation_id,customer_name,reason,manager_id,proposed_at,duration_minutes,status,created_at').eq('support_id',user.id).order('created_at',{ascending:false}).limit(200):db.from('consultation_requests').select('*').order('created_at',{ascending:false}).limit(300),
+    role==='support'?db.from('consultation_requests').select('id,conversation_id,customer_name,reason,rejected_reason,manager_id,proposed_at,duration_minutes,status,created_at').eq('support_id',user.id).order('created_at',{ascending:false}).limit(200):db.from('consultation_requests').select('*').order('created_at',{ascending:false}).limit(300),
     role==='support'?db.from('consultation_meetings').select('id,manager_id,starts_at,ends_at,status,reschedule_pending,customer_notification_pending,support_id').eq('support_id',user.id).order('starts_at',{ascending:false}).limit(300):db.from('consultation_meetings').select('*').order('starts_at',{ascending:false}).limit(300),
     role==='support'?db.from('meeting_notifications').select('*').eq('recipient_role','support').order('created_at',{ascending:false}).limit(100):role==='manager'?db.from('meeting_notifications').select('*').eq('recipient_role','manager').order('created_at',{ascending:false}).limit(100):db.from('meeting_notifications').select('*').eq('recipient_role','admin').order('created_at',{ascending:false}).limit(100)
    ]);
