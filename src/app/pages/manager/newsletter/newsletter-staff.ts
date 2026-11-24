@@ -16,7 +16,7 @@ type SubscriberTab = 'active' | 'pending_confirmation' | 'unsubscribed';
   selector: 'app-newsletter-staff',
   standalone: true,
   template: `
-    <section class="newsletter-workspace">
+    <section data-aos="fade" data-aos-duration="450" data-aos-offset="0" data-aos-once="true" data-aos-mirror="false" class="page newsletter-workspace">
       <header>
         <h1>Newsletter</h1>
         <p>Manage subscribers and subscription consent.</p>
@@ -79,6 +79,7 @@ type SubscriberTab = 'active' | 'pending_confirmation' | 'unsubscribed';
       }
     </section>
   `,
+  styleUrls: ['../manager-page.css'],
   styles: [`
     .newsletter-workspace { padding:24px; color:inherit; min-width:0; }
     header { margin-bottom:24px; }

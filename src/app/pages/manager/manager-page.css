@@ -98,7 +98,10 @@
     border: 1px solid var(--workspace-line, #dce5f2);
     border-radius: 17px;
     background: var(--workspace-surface, #fff);
-    box-shadow: 0 12px 30px rgba(42, 63, 94, 0.045);
+    border-color: var(--workspace-glass-line, #dce5f2);
+    backdrop-filter: blur(18px) saturate(125%);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+    box-shadow: var(--workspace-glass-shadow, 0 12px 30px rgba(42,63,94,.045));
 }
 
 .surface-heading {
@@ -553,4 +556,9 @@ tbody tr:hover {
     .field textarea {
         transition: none;
     }
+}
+/* Override AOS's neutral 3D transform so dialogs remain viewport-fixed. */
+.page[data-aos="fade"] { transform: none !important; }
+@media (prefers-reduced-motion: reduce) {
+    .page[data-aos] { opacity: 1 !important; transform: none !important; transition: none !important; }
 }
