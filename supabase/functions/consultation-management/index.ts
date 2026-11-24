@@ -167,7 +167,7 @@ Deno.serve(async(req)=>{
    if(body['customerAgreed']!==true)return respond({error:'Confirm the customer agreed to the proposed time'},400);
    const conversation=await db.from('support_conversations').select('id,customer_user_id,customer_first_name,customer_last_name,customer_email,assigned_support_id,subject').eq('id',conversationId).maybeSingle();
    if(conversation.error||!conversation.data||conversation.data.assigned_support_id!==user.id)return respond({error:'Claim this customer conversation before escalating'},403);
-   if(!/consultation/i.test(conversation.data.subject||''))return respond({error:'The support conversation subject must be Consultation'},400);
+   // The explicitly invoked Schedule Consultation action works for any claimed support chat.
    const manager=await db.from('staff_roles').select('role,status').eq('user_id',managerId).maybeSingle();
    if(manager.error||manager.data?.role!=='manager'||manager.data?.status!=='active')return respond({error:'Manager unavailable'},400);
    const end=new Date(start.getTime()+duration*60000);
