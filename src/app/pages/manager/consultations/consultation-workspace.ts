@@ -55,6 +55,7 @@ export class ConsultationWorkspace implements OnInit {
  readonly confirmed=signal(false);
  readonly actionNote=signal('');
  readonly actionDate=signal('');
+ readonly rescheduleSlots=signal<Array<{start:string;end:string;duration:number}>>([]);
  readonly day=signal(1);
  readonly startTime=signal('10:00');
  readonly endTime=signal('18:00');
@@ -219,9 +220,19 @@ export class ConsultationWorkspace implements OnInit {
   if(!this.confirmed()||!this.consultationChats().some(c=>c.id===this.conversation())||!this.manager()||!this.date()||this.reason().trim().length<10)return;
   void this.act('request',{conversationId:this.conversation().trim(),managerId:this.manager(),start:this.utc(this.date()),duration:this.duration(),reason:this.reason().trim(),customerAgreed:true});
  }
+ async openManage(m:RecordData):Promise<void>{
+  this.selected.set(m.id);this.actionNote.set('');this.actionDate.set('');this.confirmed.set(false);
+  this.rescheduleSlots.set([]);
+  if(this.role!=='manager'||!['upcoming','postponed'].includes(m.status))return;
+  try{
+   const data=await this.api('slots',{managerId:m.manager_id});
+   const duration=(new Date(m.ends_at).getTime()-new Date(m.starts_at).getTime())/60000;
+   this.rescheduleSlots.set((data.slots||[]).filter((s:{duration:number})=>s.duration===duration));
+  }catch(e){this.error.set(e instanceof Error?e.message:'Cannot load free appointment slots');}
+ }
  action(m:RecordData,kind:'postpone'|'cancel'|'notify_postponed'|'decline_postponed'):void{
   const data:Record<string,unknown>={meetingId:m.id};
-  if(kind==='postpone')data['start']=this.utc(this.actionDate());
+  if(kind==='postpone')data['start']=this.actionDate();
   if(kind==='postpone'||kind==='cancel')data['note']=this.actionNote().trim();
   if(kind==='cancel')data['customerConfirmed']=this.confirmed();
   if(kind==='notify_postponed')data['customerAgreed']=this.confirmed();

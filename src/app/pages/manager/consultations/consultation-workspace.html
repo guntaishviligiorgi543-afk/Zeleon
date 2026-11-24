@@ -29,11 +29,16 @@
 @for(s of slots();track $index){<tr><td>{{s.manager_id.slice(0,8)}}…</td><td>{{local(s.starts_at)}}</td><td>{{local(s.ends_at)}}</td></tr>}@empty{<tr><td colspan="3">No booked slots.</td></tr>}</tbody></table></div>}
 <div class="cfilters"><button class="button" type="button" (click)="filter.set('all')">All</button>@for(f of ['upcoming','completed','postponed','cancelled'];track f){<button class="button" type="button" (click)="filter.set(f)">{{f}}</button>}</div>
 <div class="table-wrap"><table><thead><tr><th>Customer</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead><tbody>
-@for(m of shown();track m.id){<tr><td>{{role==='support'?'Assigned client':m.customer_name}}</td><td>{{local(m.starts_at)}}</td><td>{{local(m.ends_at)}}</td><td><span class="status">{{m.status}}</span></td><td>@if((role==='manager'&&['upcoming','postponed','completed'].includes(m.status))||(role==='support'&&['upcoming','postponed'].includes(m.status))){<button class="button" type="button" (click)="selected.set(m.id);actionNote.set('');confirmed.set(false)">Manage</button>}</td></tr>}@empty{<tr><td colspan="5">No meetings.</td></tr>}</tbody></table></div></article>
+@for(m of shown();track m.id){<tr><td>{{role==='support'?'Assigned client':m.customer_name}}</td><td>{{local(m.starts_at)}}</td><td>{{local(m.ends_at)}}</td><td><span class="status">{{m.status}}</span></td><td>@if((role==='manager'&&['upcoming','postponed','completed'].includes(m.status))||(role==='support'&&['upcoming','postponed'].includes(m.status))){<button class="button" type="button" (click)="openManage(m)">Manage</button>}</td></tr>}@empty{<tr><td colspan="5">No meetings.</td></tr>}</tbody></table></div></article>
 @if(selected();as activeId){@for(m of meetings();track m.id){@if(m.id===activeId){
 <article class="surface cbox"><div class="surface-heading"><h2>Meeting · {{local(m.starts_at)}}</h2><button class="button" type="button" (click)="selected.set(null)">Close</button></div>
 @if(role==='manager'){
-@if(['upcoming','postponed'].includes(m.status)){<label class="cwide">New time<input type="datetime-local" [ngModel]="actionDate()" (ngModelChange)="actionDate.set($event)"></label>}
+@if(['upcoming','postponed'].includes(m.status)){<label class="cwide">New available appointment
+<select [ngModel]="actionDate()" (ngModelChange)="actionDate.set($event)">
+<option value="">Choose a free time</option>
+@for(s of rescheduleSlots();track s.start){<option [value]="s.start">{{local(s.start)}} · {{s.duration}} min</option>}
+</select></label>
+@if(!rescheduleSlots().length){<p>No matching free appointment slots currently available.</p>}}
 <label class="cwide">Reason<textarea rows="3" maxlength="1000" [ngModel]="actionNote()" (ngModelChange)="actionNote.set($event)"></textarea></label>
 <div class="cfields">@if(['upcoming','postponed'].includes(m.status)){<button class="button primary" type="button" [disabled]="loading()||!actionDate()||actionNote().trim().length<10" (click)="action(m,'postpone')">Postpone</button>}
 <button class="button" type="button" [disabled]="loading()||actionNote().trim().length<10" (click)="action(m,'cancel')">Cancel / Did not take place</button></div>}
