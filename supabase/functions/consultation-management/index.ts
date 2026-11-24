@@ -80,8 +80,9 @@ Deno.serve(async(req)=>{
    return respond({managers:ids,slots:slots.data,availability:availability.data,blocked:blocked.data});
   }
   if(action==='slots'){
-   if(role!=='support')return respond({error:'Support only'},403);
+   if(role!=='support'&&role!=='manager')return respond({error:'Staff only'},403);
    const managerId=asUUID(body['managerId']);
+   if(role==='manager'&&managerId!==user.id)return respond({error:'Only your own calendar'},403);
    if(!managerId)return respond({error:'Choose manager'},400);
    const [w,busy,pending,blocked]=await Promise.all([
     db.from('manager_availability').select('weekday,start_minute,end_minute').eq('manager_id',managerId),
@@ -178,7 +179,11 @@ Deno.serve(async(req)=>{
    if(held.error||held.data?.some(r=>r.id))return respond({error:'Appointment is awaiting Admin approval'},409);
    const busy=await db.from('consultation_meetings').select('id').eq('manager_id',managerId).in('status',['upcoming','postponed']).lt('starts_at',end.toISOString()).gt('ends_at',start.toISOString()).limit(1);
    if(busy.error||busy.data?.length)return respond({error:'Manager is already booked'},409);
-   const inserted=await db.from('consultation_requests').insert({conversation_id:conversationId,customer_id:conversation.data.customer_user_id,support_id:user.id,customer_name:[conversation.data.customer_first_name,conversation.data.customer_last_name].filter(Boolean).join(' ')||'Customer',customer_email:conversation.data.customer_email,reason,manager_id:managerId,proposed_at:start.toISOString(),duration_minutes:duration,customer_agreed:true}).select('id').single();
+   const existing=await db.from('consultation_requests').select('id,status').eq('conversation_id',conversationId).maybeSingle();
+   if(existing.error)throw existing.error;
+   if(existing.data&&existing.data.status!=='rejected'&&existing.data.status!=='cancelled')return respond({error:'This conversation already has an active consultation request'},409);
+   const details={conversation_id:conversationId,customer_id:conversation.data.customer_user_id,support_id:user.id,customer_name:[conversation.data.customer_first_name,conversation.data.customer_last_name].filter(Boolean).join(' ')||'Customer',customer_email:conversation.data.customer_email,reason,manager_id:managerId,proposed_at:start.toISOString(),duration_minutes:duration,customer_agreed:true,rejected_reason:null,status:'pending_admin'};
+   const inserted=existing.data?await db.from('consultation_requests').update(details).eq('id',existing.data.id).select('id').single():await db.from('consultation_requests').insert(details).select('id').single();
    if(inserted.error)return respond({error:inserted.error.code==='23505'?'This conversation already has a consultation request':'Could not save consultation'},409);
    return respond({message:'Consultation sent to Admin',id:inserted.data.id});
   }
@@ -255,13 +260,18 @@ Deno.serve(async(req)=>{
    const reason=asString(body['note']);if(reason.length<10)return respond({error:'Customer cancellation reason required'},400);
    const updated=await db.from('consultation_meetings').update({status:'cancelled',customer_confirmed_cancel:bySupport,reschedule_pending:false,customer_notification_pending:false,proposed_starts_at:null,proposed_ends_at:null,completed_automatically:false,updated_at:new Date().toISOString()}).eq('id',id).in('status',byManager?['upcoming','postponed','completed']:['upcoming','postponed']);
    if(updated.error)throw updated.error;
-   await Promise.all([db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:'cancelled',note:reason}),db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'manager',message:'Customer confirmed meeting cancellation with Support: '+reason.slice(0,500)})]);
+   await Promise.all([db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:'cancelled',note:reason}),db.from('meeting_notifications').insert({meeting_id:id,recipient_role:byManager?'support':'manager',message:(byManager?'Manager cancelled meeting: ':'Customer confirmed meeting cancellation with Support: ')+reason.slice(0,500)})]);
    // Deliver an additional direct email alert to the assigned manager.
    try {
     const recipient=await db.auth.admin.getUserById(meeting.manager_id);
     if(recipient.data.user?.email) await email(recipient.data.user.email,'ZELEON — Consultation cancelled by customer','<p>A customer confirmed cancellation of a scheduled consultation with Support.</p><p>Review your <a href="https://zeleon.store/manager/meetings">Meetings dashboard</a> for the updated record.</p>','consultation-cancel-manager-'+id);
    }catch(e){console.warn('Manager cancellation email failed',e instanceof Error?e.message:'unknown');}
-   return respond({message:'Customer cancellation recorded; Manager notified'});
+   try {
+    const recipient=await db.auth.admin.getUserById(meeting.support_id);
+    if(byManager&&recipient.data.user?.email)await email(recipient.data.user.email,'ZELEON — Manager cancelled consultation','<p>Manager cancelled a consultation. Please contact the customer from Support Chat.</p>','consultation-manager-cancel-support-'+id);
+    await email(meeting.customer_email,'ZELEON — Consultation cancelled','<p>Hello '+escape(meeting.customer_name)+',</p><p>Your consultation has been cancelled. Reason: '+escape(reason.slice(0,400))+'. Please contact ZELEON Support if you need another appointment.</p>','consultation-cancel-customer-'+id);
+   }catch(e){console.warn('Cancellation email unavailable',e instanceof Error?e.message:'unknown');}
+   return respond({message:'Meeting cancelled; staff notified; customer email attempted'});
   }
   if(action==='decline_postponed'){
    if(role!=='support'||meeting.support_id!==user.id||meeting.status!=='postponed'||!meeting.reschedule_pending)return respond({error:'Not permitted'},403);
@@ -276,12 +286,14 @@ Deno.serve(async(req)=>{
    const w=await db.from('manager_availability').select('weekday,start_minute,end_minute').eq('manager_id',meeting.manager_id);
    if(w.error||!sameSlot(proposedStart,proposedEnd,w.data||[])||await isBlocked(meeting.manager_id,proposedStart)||!await managerLimit(meeting.manager_id,proposedStart,id))return respond({error:'Proposed time is no longer available; ask Manager for another slot'},409);
    const slot=proposedStart.toLocaleString('en-GB',{timeZone:'Asia/Tbilisi',dateStyle:'full',timeStyle:'short'});
-   await email(meeting.customer_email,'ZELEON — Consultation rescheduled','<p>Hello '+escape(meeting.customer_name)+',</p><p>As agreed with ZELEON Support, your consultation is rescheduled to <strong>'+escape(slot)+' (Tbilisi time)</strong>.</p><p>If you need another change, please contact ZELEON Support through our website.</p>','consultation-moved-'+id+'-'+proposedStart.getTime());
    const updated=await db.from('consultation_meetings').update({status:'upcoming',starts_at:proposedStart.toISOString(),ends_at:proposedEnd.toISOString(),proposed_starts_at:null,proposed_ends_at:null,customer_notification_pending:false,reschedule_pending:false,updated_at:new Date().toISOString()}).eq('id',id).eq('status','postponed');
    if(updated.error)throw updated.error;
    await db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:'postponed',to_status:'upcoming',note:'Customer confirmed new time with Support'});
-   await db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'manager',message:'Support confirmed the postponed date with customer and sent email'});
-   return respond({message:'Customer notified by email; Manager updated'});
+   await db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'manager',message:'Support confirmed postponed date with customer'});
+   let emailed=true;
+   try{await email(meeting.customer_email,'ZELEON — Consultation rescheduled','<p>Hello '+escape(meeting.customer_name)+',</p><p>As agreed with ZELEON Support, your consultation is rescheduled to <strong>'+escape(slot)+' (Tbilisi time)</strong>.</p><p>If you need another change, please contact Support through our website.</p>','consultation-moved-'+id+'-'+proposedStart.getTime());}
+   catch(e){emailed=false;console.warn('Reschedule email unavailable',e instanceof Error?e.message:'unknown');}
+   return respond({message:emailed?'New slot confirmed; customer emailed':'New slot confirmed, but customer email delivery failed; contact customer manually'});
   }
   return respond({error:'Unsupported action'},400);
  }catch(e){console.error('Meeting operation failed',e instanceof Error?e.message:'unknown');return respond({error:'Unable to complete meeting operation'},503);}
