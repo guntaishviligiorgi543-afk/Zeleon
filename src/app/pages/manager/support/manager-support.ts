@@ -1,7 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { Auth } from '../../../services/auth';
 import { QuickConsultation } from '../consultations/quick-consultation';
 import { StaffAccess } from '../../../services/staff-access';
@@ -15,7 +14,7 @@ import {
 
 @Component({
   selector: 'app-manager-support',
-  imports: [DatePipe, FormsModule, RouterLink, QuickConsultation],
+  imports: [DatePipe, FormsModule, QuickConsultation],
   templateUrl: './manager-support.html',
   styleUrls: ['../manager-page.css', './manager-support.css'],
 })
