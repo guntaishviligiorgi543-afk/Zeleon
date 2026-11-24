@@ -399,3 +399,10 @@
   .thread-content-scroll .thread-messages { padding: 12px; }
   .thread-content-scroll .support-reply-form { padding: 14px; }
 }
+
+/* Conversation status is a read-only workflow indicator, never a manual selector. */
+.conversation-status-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+.conversation-status-cell > span:first-child { font-size: 12px; font-weight: 600; }
+.conversation-status-cell .status { display: inline-flex; align-items: center; padding: 7px 11px; border-radius: 999px; font-weight: 700; white-space: nowrap; }
+.conversation-status-cell .status.resolved { background: #e5f8eb; color: #116b37; }
+.conversation-status-cell .status.waiting { background: #fff3d9; color: #8a5200; }
