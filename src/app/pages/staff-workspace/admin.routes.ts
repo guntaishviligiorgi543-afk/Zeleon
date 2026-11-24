@@ -5,5 +5,7 @@ export const ADMIN_ROUTES: Routes = [
  { path: 'newsletter', data: { staffRole: 'admin' }, loadComponent: () => import('../manager/newsletter/newsletter-staff').then(m => m.NewsletterStaff) },
  { path: 'users', data: { staffRole: 'admin' }, loadComponent: () => import('../manager/users/manager-users').then(m => m.ManagerUsers) },
  { path: 'staff', data: { staffRole: 'admin' }, loadComponent: () => import('../manager/staff/manager-staff').then(m => m.ManagerStaff) },
+ { path: 'consultations', data: { staffRole: 'admin' }, loadComponent: () => import('../manager/consultations/consultation-workspace').then(m => m.ConsultationWorkspace) },
+ { path: 'contact', data: { staffRole: 'admin' }, loadComponent: () => import('../manager/contact/contact-inbox').then(m => m.ContactInbox) },
  { path: 'support', data: { staffRole: 'admin' }, loadComponent: () => import('../manager/support/manager-support').then(m => m.ManagerSupport) },
 ];

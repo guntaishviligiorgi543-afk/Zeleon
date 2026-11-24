@@ -229,3 +229,8 @@ img {
     transition: none;
   }
 }
+
+.contact-email-hint{font-size:11px;color:#44566b;line-height:1.5}
+.contact-feedback{font-size:13px;line-height:1.6;color:#9b283d;margin:0}.contact-feedback.success{color:#126749}
+.contactUsForm button:disabled{opacity:.55;cursor:not-allowed}
+.contact-honeypot{position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden}

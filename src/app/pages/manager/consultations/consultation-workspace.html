@@ -1,0 +1,73 @@
+<section class="page consultation">
+<header class="page-header"><div><h1>{{role==='manager'?'Meetings':role==='admin'?'Consultations':'Consultation Desk'}}</h1><p>Georgia time (Asia/Tbilisi) · Contact consultations and booked manager hours</p></div><button class="button" type="button" (click)="refresh()" [disabled]="loading()">Refresh</button></header>
+@if(error()){<div class="notice error" role="alert">{{error()}}</div>}@if(success()){<div class="notice success" role="status">{{success()}}</div>}
+@if(role==='manager'){
+<article class="surface cbox"><div class="surface-heading"><h2>Weekly manager availability</h2></div>
+<p>These hours tell Support when you are available for consultations.</p>
+@for(w of windows();track $index){<div class="cwindow"><span>{{days[w.weekday]}} {{time(w.start_minute)}}–{{time(w.end_minute)}} (Tbilisi)</span><button type="button" class="button" (click)="removeWindow($index)">Remove</button></div>}
+<div class="cfields"><label>Weekday<select [ngModel]="day()" (ngModelChange)="day.set(+$event)">@for(d of days;track $index){<option [value]="$index">{{d}}</option>}</select></label>
+<label>Start<input type="time" [ngModel]="startTime()" (ngModelChange)="startTime.set($event)"></label><label>End<input type="time" [ngModel]="endTime()" (ngModelChange)="endTime.set($event)"></label>
+<button class="button" type="button" (click)="addWindow()">Add</button><button class="button primary" type="button" (click)="saveWindows()" [disabled]="loading()">Save hours</button></div></article>
+}
+@if(role==='support'){
+<article class="surface cbox"><div class="surface-heading"><h2>Refer consultation to Admin</h2></div><p>Agree with the customer in Support Chat, claim the conversation, then send the request to Admin. Subject: Consultation.</p>
+<div class="cfields"><label>Customer conversation
+@if(forwardedFromChat() && selectedCustomer()){
+<input type="text" [value]="(selectedCustomer()?.customer_first_name || 'Customer') + ' ' + (selectedCustomer()?.customer_last_name || '')" readonly aria-label="Customer selected from Support Chat" />
+}@else{
+<select [ngModel]="conversation()" (ngModelChange)="conversation.set($event)">
+<option value="">Select a Consultation conversation</option>
+@for(chat of consultationChats();track chat.id){
+<option [value]="chat.id">{{(chat.customer_first_name || 'Customer') + ' ' + (chat.customer_last_name || '')}} · {{chat.customer_email || 'No email'}} · {{chat.subject}}</option>
+}
+</select>
+}</label>
+<label>Manager<select [ngModel]="manager()" (ngModelChange)="manager.set($event)"><option value="">Choose manager</option>@for(id of managers();track id){<option [value]="id">{{id.slice(0,8)}}…</option>}</select></label>
+<label>Agreed date/time<input type="datetime-local" [ngModel]="date()" (ngModelChange)="date.set($event)"></label>
+<label>Minutes<input type="number" min="15" max="180" [ngModel]="duration()" (ngModelChange)="duration.set(+$event)"></label></div>
+@if(selectedCustomer();as chat){
+<div class="c-selected-customer" role="status">
+ <strong>Customer details (automatically loaded from Support Chat)</strong>
+ <p><span>Name:</span> {{chat.customer_first_name || 'Customer'}} {{chat.customer_last_name || ''}}</p>
+ <p><span>Email:</span> {{chat.customer_email || 'Not provided'}}</p>
+ <p><span>Subject:</span> {{chat.subject}}</p>
+ <p><span>Conversation:</span> <code>{{chat.id}}</code></p>
+</div>
+}
+@if(!consultationChats().length){<p>No assigned Consultation conversations yet. Open My Conversations, claim the customer's chat, and use “Forward agreed consultation to Admin”.</p>}
+<label class="cwide">Reason<textarea maxlength="2000" rows="3" [ngModel]="reason()" (ngModelChange)="reason.set($event)"></textarea></label>
+<label class="ccheck"><input type="checkbox" [ngModel]="confirmed()" (ngModelChange)="confirmed.set($event)">Customer agreed to this time in Support Chat</label>
+<button class="button primary csubmit" type="button" (click)="request()" [disabled]="loading()||!confirmed()||!selectedCustomer()||!date()||!manager()||reason().trim().length<10">Forward to Admin</button></article>
+}
+@if(role!=='support'){
+<article class="surface cbox"><div class="surface-heading"><h2>Consultation requests</h2></div>
+<div class="table-wrap"><table><thead><tr><th>Customer</th><th>Reason</th><th>Proposed</th><th>Status</th><th></th></tr></thead><tbody>
+@for(r of requests();track r.id){<tr><td>{{r.customer_name}}</td><td>{{r.reason}}</td><td>{{local(r.proposed_at)}}</td><td>{{r.status}}</td><td>@if(role==='admin'&&r.status==='pending_admin'){<button class="button primary" type="button" [disabled]="loading()" (click)="act('create',{requestId:r.id})">Create meeting</button>}</td></tr>}@empty{<tr><td colspan="5">No requests.</td></tr>}</tbody></table></div></article>
+}
+<article class="surface cbox"><div class="surface-heading"><h2>{{role==='support'?'Manager calendar':'Meetings'}}</h2></div>
+@if(role==='support'){<p>Read-only booking schedule. Personal details of other customers are hidden.</p>
+@for(w of windows();track $index){<div class="cwindow">Available: {{days[w.weekday]}} · {{time(w.start_minute)}}–{{time(w.end_minute)}}</div>}
+<div class="table-wrap"><table><thead><tr><th>Manager</th><th>Busy from</th><th>Busy until</th></tr></thead><tbody>
+@for(s of slots();track $index){<tr><td>{{s.manager_id.slice(0,8)}}…</td><td>{{local(s.starts_at)}}</td><td>{{local(s.ends_at)}}</td></tr>}@empty{<tr><td colspan="3">No booked slots.</td></tr>}</tbody></table></div>}
+<div class="cfilters"><button class="button" type="button" (click)="filter.set('all')">All</button>@for(f of ['upcoming','completed','postponed','cancelled','not_held'];track f){<button class="button" type="button" (click)="filter.set(f)">{{f}}</button>}</div>
+<div class="table-wrap"><table><thead><tr><th>Customer</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead><tbody>
+@for(m of shown();track m.id){<tr><td>{{role==='support'?'Assigned client':m.customer_name}}</td><td>{{local(m.starts_at)}}</td><td>{{local(m.ends_at)}}</td><td><span class="status">{{m.status}}</span></td><td>@if((role==='manager'&&['upcoming','postponed','completed'].includes(m.status))||(role==='support'&&['upcoming','postponed'].includes(m.status))){<button class="button" type="button" (click)="selected.set(m.id);actionNote.set('');confirmed.set(false)">Manage</button>}</td></tr>}@empty{<tr><td colspan="5">No meetings.</td></tr>}</tbody></table></div></article>
+@if(selected();as activeId){@for(m of meetings();track m.id){@if(m.id===activeId){
+<article class="surface cbox"><div class="surface-heading"><h2>Meeting · {{local(m.starts_at)}}</h2><button class="button" type="button" (click)="selected.set(null)">Close</button></div>
+@if(role==='manager'){
+@if(['upcoming','postponed'].includes(m.status)){<label class="cwide">New time<input type="datetime-local" [ngModel]="actionDate()" (ngModelChange)="actionDate.set($event)"></label>}
+<label class="cwide">Reason<textarea rows="3" maxlength="1000" [ngModel]="actionNote()" (ngModelChange)="actionNote.set($event)"></textarea></label>
+<div class="cfields">@if(['upcoming','postponed'].includes(m.status)){<button class="button primary" type="button" [disabled]="loading()||!actionDate()||actionNote().trim().length<10" (click)="action(m,'postpone')">Postpone</button>}
+<button class="button" type="button" [disabled]="loading()||actionNote().trim().length<10" (click)="action(m,'not_held')">Mark not held</button></div>}
+@if(role==='support'){
+@if(m.status==='postponed'&&m.customer_notification_pending){<p>Manager postponed this meeting. Agree the new time with the customer before sending notification.</p>
+<label class="ccheck"><input type="checkbox" [ngModel]="confirmed()" (ngModelChange)="confirmed.set($event)">New date confirmed with customer</label>
+<button class="button primary csubmit" type="button" [disabled]="loading()||!confirmed()" (click)="action(m,'notify_postponed')">Email rescheduled date</button>}
+<label class="cwide">Customer cancellation reason<textarea rows="3" [ngModel]="actionNote()" (ngModelChange)="actionNote.set($event)"></textarea></label>
+<label class="ccheck"><input type="checkbox" [ngModel]="confirmed()" (ngModelChange)="confirmed.set($event)">Customer explicitly confirmed cancellation via Support</label>
+<button class="button csubmit" type="button" [disabled]="loading()||!confirmed()||actionNote().trim().length<10" (click)="action(m,'cancel')">Record customer cancellation</button>}
+</article>
+}}}
+<article class="surface cbox"><div class="surface-heading"><h2>Notifications</h2></div>
+@for(n of notes();track n.id){<div class="cwindow"><span>{{n.message}}<br><small>{{n.created_at | date:'medium'}}</small></span></div>}@empty{<p>No new notifications.</p>}</article>
+</section>

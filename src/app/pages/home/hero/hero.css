@@ -149,6 +149,10 @@
     transition: transform 0.3s ease;
 }
 
+.hero .heroBtns button.shopBtn {
+    color: #000;
+}
+
 .heroBtns button:hover {
     text-decoration: underline;
 }
