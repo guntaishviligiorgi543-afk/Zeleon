@@ -144,6 +144,7 @@ export interface SupportConversation {
   escalated_at: string | null;
   created_at: string;
   updated_at: string;
+  last_message_at: string | null;
   rating: SupportRating | null;
   review_status?: 'pending' | 'in_review' | 'returned' | 'resolved' | null;
   reviewer_id?: string | null;
@@ -395,16 +396,30 @@ export class ManagerDashboard {
       ]),
     );
     const ids = (conversations.data ?? []).map((row) => row.id);
+    // updated_at changes when a conversation is assigned or its status changes.
+    // The queue must show the timestamp of the latest *actual message* instead.
+    const timestamps = ids.length
+      ? await this.client.from('support_conversation_last_message')
+          .select('conversation_id,last_message_at').in('conversation_id', ids)
+      : { data: [], error: null };
+    if (timestamps.error) throw timestamps.error;
+    const messageTimes = new Map(
+      (timestamps.data ?? []).map(row => [row.conversation_id, row.last_message_at]),
+    );
     const reviews = ids.length ? await this.client.from('support_escalation_reviews').select('conversation_id,review_status,reviewer_id').in('conversation_id', ids) : { data: [], error: null };
     if (reviews.error) throw reviews.error;
     const reviewMap = new Map((reviews.data ?? []).map(row => [row.conversation_id, row]));
     return ((conversations.data ?? []) as unknown as Omit<SupportConversation, 'rating'>[]).map(
       (conversation) => ({
         ...conversation,
+        last_message_at: messageTimes.get(conversation.id) ?? null,
         rating: byConversation.get(conversation.id) ?? null,
         review_status: reviewMap.get(conversation.id)?.review_status ?? 'pending',
         reviewer_id: reviewMap.get(conversation.id)?.reviewer_id ?? null,
       }),
+    ).sort((a, b) =>
+      new Date(b.last_message_at ?? b.created_at).getTime() -
+      new Date(a.last_message_at ?? a.created_at).getTime()
     );
   }
 

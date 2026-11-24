@@ -93,7 +93,7 @@
               ><span>{{ conversation.customer_email }}</span
               ><small
                 >{{ conversation.subject || 'General support request' }} ·
-                {{ conversation.updated_at | date: 'MMM d, HH:mm' }}</small
+                {{ (conversation.last_message_at || conversation.created_at) | date: 'MMM d, y, HH:mm':'':'en-GB' }}</small
               >
             </div>
             @if (!isSupport) { <label
