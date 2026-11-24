@@ -153,7 +153,7 @@ export class ConsultationWorkspace implements OnInit {
     ''
    ])];
   if(!filtered.length){this.error.set('No meetings match the selected history filters');return;}
-  const safe=(v:string)=>v.normalize('NFKD').replace(/[^\x20-\x7e]/g,'?').replace(/[()\\]/g,'\\ request():void{');
+  const safe=(v:string)=>v.normalize('NFKD').replace(/[^\\x20-\\x7e]/g,'?').replace(/[()\\\\]/g, (char)=>'\\\\'+char);
   const pages:string[][]=[];for(let i=0;i<lines.length;i+=48)pages.push(lines.slice(i,i+48));
   const objects:string[]=[];const add=(s:string)=>{objects.push(s);return objects.length;};
   const catalog=add('');const pagesRoot=add('');const font=add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>');
