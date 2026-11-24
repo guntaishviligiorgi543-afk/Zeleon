@@ -162,11 +162,18 @@
           <button type="button" class="thread-back" aria-label="Back to conversations" (click)="closeThread()">← Back</button>
         </header>
         <div class="thread-content-scroll">
-          @if (isSupport && conversation.subject?.toLowerCase()?.includes('consultation') && conversation.assigned_support_id === auth.user()?.id) {
-          <div class="thread-actions">
-            <a class="button primary" [routerLink]="['/support/consultations']" [queryParams]="{conversation:conversation.id}">Forward agreed consultation to Admin</a>
-          </div>
-        }
+          @if (isSupport && conversation.assigned_support_id === auth.user()?.id) {
+            <div class="thread-actions"><button type="button" class="button primary" (click)="consultationOpen.set(!consultationOpen())">
+              {{consultationOpen()?'Hide consultation':'Schedule consultation'}}
+            </button></div>
+            @if(consultationOpen()){
+              <app-quick-consultation [conversationId]="conversation.id"
+                [customerName]="conversation.customer_first_name + ' ' + conversation.customer_last_name"
+                [customerEmail]="conversation.customer_email"
+                [subject]="conversation.subject || ''"
+                (close)="consultationOpen.set(false)" />
+            }
+          }
         <div class="thread-chat-label">Customer conversation</div>
         <div class="thread-messages" aria-live="polite">
           @if (messagesLoading()) {

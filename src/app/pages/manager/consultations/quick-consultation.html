@@ -1,0 +1,17 @@
+<section class="qc" aria-label="Schedule consultation">
+ <header class="qc-head"><div><h3>Quick consultation</h3><p>Agree on an available slot and forward to Admin.</p></div><button type="button" class="button" (click)="close.emit()">Close</button></header>
+ @if(error()){<p class="qc-error" role="alert">{{error()}}</p>}
+ @if(success()){<p class="qc-success" role="status">{{success()}}</p>}@else{
+ <div class="qc-customer"><strong>{{customerName}}</strong><span>{{customerEmail}}</span></div>
+ <label>Manager<select [ngModel]="managerId()" (ngModelChange)="chooseManager($event)" [disabled]="loading()">
+ <option value="">Choose manager</option>@for(id of managers();track id){<option [value]="id">Manager {{id.slice(0,8)}}</option>}
+ </select></label>
+ <label>Available appointment (Tbilisi time)<select [ngModel]="chosen()" (ngModelChange)="chosen.set($event)" [disabled]="loading()||!slots().length">
+ <option value="">Choose a free time</option>@for(slot of slots();track slot.start){<option [value]="slot.start">{{local(slot.start)}} · {{slot.duration}} min</option>}
+ </select></label>
+ @if(managerId()&&!slots().length&&!loading()){<p>No slots available in the next 35 days. Ask Manager to publish availability.</p>}
+ <label>Consultation reason<textarea rows="3" maxlength="2000" [ngModel]="reason()" (ngModelChange)="reason.set($event)"></textarea></label>
+ <label class="qc-confirm"><input type="checkbox" [ngModel]="agreed()" (ngModelChange)="agreed.set($event)"> Customer agreed to this exact time in Support Chat</label>
+ <button type="button" class="button primary" (click)="submit()" [disabled]="loading()||!chosenSlot()||!agreed()||reason().trim().length<10">{{loading()?'Loading…':'Send to Admin'}}</button>
+ }
+</section>

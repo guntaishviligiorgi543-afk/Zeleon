@@ -3,6 +3,7 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Auth } from '../../../services/auth';
+import { QuickConsultation } from '../consultations/quick-consultation';
 import { StaffAccess } from '../../../services/staff-access';
 import {
   ManagerDashboard,
@@ -14,7 +15,7 @@ import {
 
 @Component({
   selector: 'app-manager-support',
-  imports: [DatePipe, FormsModule, RouterLink],
+  imports: [DatePipe, FormsModule, RouterLink, QuickConsultation],
   templateUrl: './manager-support.html',
   styleUrls: ['../manager-page.css', './manager-support.css'],
 })
@@ -23,6 +24,7 @@ export class ManagerSupport implements OnInit {
   readonly access = inject(StaffAccess);
   readonly auth = inject(Auth);
   readonly isSupport = this.access.role() === 'support';
+  readonly consultationOpen = signal(false);
   readonly section = signal<'conversations' | 'ratings'>('conversations');
   readonly ratings = signal<SupportRatingEntry[]>([]);
   readonly averageRating = computed(() => this.ratings().length ? (this.ratings().reduce((sum, row) => sum + row.rating, 0) / this.ratings().length).toFixed(1) : '—');
@@ -103,6 +105,7 @@ export class ManagerSupport implements OnInit {
     if (this.isSupport && conversation.status === 'escalated' && value === 'resolved') return;
     if (value === 'escalated' && conversation.status !== 'escalated') {
       this.selected.set(conversation);
+    this.consultationOpen.set(false);
       this.escalationReason.set('');
       this.escalationTarget.set('admin');
       this.escalationOpen.set(true);
@@ -254,6 +257,7 @@ export class ManagerSupport implements OnInit {
   }
 
   closeThread(): void {
+    this.consultationOpen.set(false);
     this.selected.set(null);
     this.escalationOpen.set(false);
     this.messages.set([]);
