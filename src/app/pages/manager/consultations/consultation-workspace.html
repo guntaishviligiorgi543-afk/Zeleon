@@ -47,8 +47,8 @@
 <label class="ccheck"><input type="checkbox" [ngModel]="confirmed()" (ngModelChange)="confirmed.set($event)">New date confirmed with customer</label>
 <button class="button primary csubmit" type="button" [disabled]="loading()||!confirmed()" (click)="action(m,'notify_postponed')">Confirm &amp; email new date</button><button class="button csubmit" type="button" [disabled]="loading()" (click)="action(m,'decline_postponed')">Customer declined → notify Manager</button>}
 <label class="cwide">Customer cancellation reason<textarea rows="3" [ngModel]="actionNote()" (ngModelChange)="actionNote.set($event)"></textarea></label>
-<label class="ccheck"><input type="checkbox" [ngModel]="confirmed()" (ngModelChange)="confirmed.set($event)">Customer explicitly confirmed cancellation via Support</label>
-<button class="button csubmit" type="button" [disabled]="loading()||!confirmed()||actionNote().trim().length<10" (click)="action(m,'cancel')">Record customer cancellation</button>}
+<label class="ccheck"><input type="checkbox" [ngModel]="cancelConfirmed()" (ngModelChange)="cancelConfirmed.set($event)">Customer explicitly confirmed cancellation via Support</label>
+<button class="button csubmit" type="button" [disabled]="loading()||!cancelConfirmed()||actionNote().trim().length<10" (click)="action(m,'cancel')">Record customer cancellation</button>}
 </article>
 }}}
 @if(role==='manager'){

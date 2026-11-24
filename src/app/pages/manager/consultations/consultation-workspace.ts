@@ -53,6 +53,7 @@ export class ConsultationWorkspace implements OnInit {
  readonly duration=signal(45);
  readonly reason=signal('');
  readonly confirmed=signal(false);
+ readonly cancelConfirmed=signal(false);
  readonly actionNote=signal('');
  readonly actionDate=signal('');
  readonly rescheduleSlots=signal<Array<{start:string;end:string;duration:number}>>([]);
@@ -103,7 +104,7 @@ export class ConsultationWorkspace implements OnInit {
  }
  async act(action:string,extra:Record<string,unknown>):Promise<void>{
   if(this.loading())return;this.loading.set(true);this.error.set('');this.success.set('');
-  try{const result=await this.api(action,extra);this.success.set(result.message||'Saved');this.selected.set(null);this.actionNote.set('');this.confirmed.set(false);
+  try{const result=await this.api(action,extra);this.success.set(result.message||'Saved');this.selected.set(null);this.actionNote.set('');this.confirmed.set(false);this.cancelConfirmed.set(false);
    if(action==='request'){this.conversation.set('');this.forwardedFromChat.set(false);this.reason.set('');this.date.set('');}
   }
   catch(e){this.error.set(e instanceof Error?e.message:'Action failed');}
@@ -234,7 +235,7 @@ export class ConsultationWorkspace implements OnInit {
   const data:Record<string,unknown>={meetingId:m.id};
   if(kind==='postpone')data['start']=this.actionDate();
   if(kind==='postpone'||kind==='cancel')data['note']=this.actionNote().trim();
-  if(kind==='cancel')data['customerConfirmed']=this.confirmed();
+  if(kind==='cancel')data['customerConfirmed']=this.cancelConfirmed();
   if(kind==='notify_postponed')data['customerAgreed']=this.confirmed();
   void this.act(kind,data);
  }
