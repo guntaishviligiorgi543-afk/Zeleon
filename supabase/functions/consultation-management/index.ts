@@ -17,8 +17,25 @@ function tbilisiSlot(start:Date,end:Date,windows:Array<{weekday:number;start_min
  if(local.toISOString().slice(0,10)!==localEnd.toISOString().slice(0,10))return false;
  const weekday=local.getUTCDay(),minute=local.getUTCHours()*60+local.getUTCMinutes();
  const endMinute=localEnd.getUTCHours()*60+localEnd.getUTCMinutes();
- return windows.some(w=>w.weekday===weekday&&minute>=w.start_minute&&endMinute<=w.end_minute);
+ return weekday>=1 && weekday<=5 && windows.some(w=>w.weekday===weekday&&minute===w.start_minute&&endMinute===w.end_minute);
 }
+const localDate=(d:Date)=>new Date(d.getTime()+4*3600_000).toISOString().slice(0,10);
+const weekMonday=(date:string)=>{const d=new Date(date+'T00:00:00Z');const delta=(d.getUTCDay()+6)%7;d.setUTCDate(d.getUTCDate()-delta);return d.toISOString().slice(0,10);};
+const managerLimit=async(managerId:string,start:Date,excludeId?:string):Promise<boolean>=>{
+ const day=localDate(start),monday=weekMonday(day);
+ const end=new Date(monday+'T00:00:00Z');end.setUTCDate(end.getUTCDate()+5);
+ const query=await db.from('consultation_meetings').select('id,starts_at,status').eq('manager_id',managerId)
+ .in('status',['upcoming','postponed','completed']).gte('starts_at',new Date(monday+'T00:00:00+04:00').toISOString())
+ .lt('starts_at',new Date(end.toISOString().slice(0,10)+'T00:00:00+04:00').toISOString()).limit(200);
+ if(query.error)throw query.error;
+ const list=(query.data||[]).filter(m=>m.id!==excludeId);
+ return list.length<20 && list.filter(m=>localDate(new Date(m.starts_at))===day).length<4;
+};
+const isBlocked=async(managerId:string,start:Date):Promise<boolean>=>{
+ const result=await db.from('manager_blocked_dates').select('blocked_date').eq('manager_id',managerId).eq('blocked_date',localDate(start)).maybeSingle();
+ if(result.error)throw result.error;return !!result.data;
+};
+const sameSlot=(start:Date,end:Date,windows:Array<{weekday:number;start_minute:number;end_minute:number}>)=>tbilisiSlot(start,end,windows);
 async function email(to:string,subject:string,body:string,idempotency:string):Promise<void>{
  const key=Deno.env.get('RESEND_API_KEY'); if(!key)throw new Error('Email provider unavailable');
  const markup='<div style="background:#eaf2fb;padding:35px;font-family:Arial,sans-serif;color:#20324d"><div style="max-width:540px;margin:auto;background:white;border-radius:18px;padding:32px"><h2 style="color:#137eb4">⚡ ZELEON</h2>'+body+'<p style="font-size:12px;color:#6b7b92">ZELEON Customer Experience · zeleon.store</p></div></div>';
@@ -58,7 +75,42 @@ Deno.serve(async(req)=>{
    const ids=managers.data.map(m=>m.user_id);
    const availability=await db.from('manager_availability').select('manager_id,weekday,start_minute,end_minute').in('manager_id',ids.length?ids:['00000000-0000-0000-0000-000000000000']);
    if(availability.error)throw availability.error;
-   return respond({managers:ids,slots:slots.data,availability:availability.data});
+   const blocked=await db.from('manager_blocked_dates').select('manager_id,blocked_date').in('manager_id',ids.length?ids:['00000000-0000-0000-0000-000000000000']).gte('blocked_date',localDate(new Date()));
+   if(blocked.error)throw blocked.error;
+   return respond({managers:ids,slots:slots.data,availability:availability.data,blocked:blocked.data});
+  }
+  if(action==='slots'){
+   if(role!=='support')return respond({error:'Support only'},403);
+   const managerId=asUUID(body['managerId']);
+   if(!managerId)return respond({error:'Choose manager'},400);
+   const [w,busy,pending,blocked]=await Promise.all([
+    db.from('manager_availability').select('weekday,start_minute,end_minute').eq('manager_id',managerId),
+    db.from('consultation_meetings').select('starts_at,ends_at,status').eq('manager_id',managerId).in('status',['upcoming','postponed','completed']).gte('starts_at',new Date(Date.now()-86400000).toISOString()).limit(500),
+    db.from('consultation_requests').select('proposed_at,duration_minutes').eq('manager_id',managerId).eq('status','pending_admin').gte('proposed_at',new Date().toISOString()).limit(200),
+    db.from('manager_blocked_dates').select('blocked_date').eq('manager_id',managerId)
+   ]);
+   if(w.error||busy.error||pending.error||blocked.error)throw Error('Slots unavailable');
+   const blockedDays=new Set((blocked.data||[]).map(b=>b.blocked_date));
+   const free:Array<{start:string;end:string;duration:number}>=[];
+   const bookings=busy.data||[];
+   for(let i=0;i<35;i++){
+    const localNow=new Date(Date.now()+4*3600_000+i*86400000);
+    const day=localNow.toISOString().slice(0,10);
+    const wd=localNow.getUTCDay();if(wd===0||wd===6||blockedDays.has(day))continue;
+    const monday=weekMonday(day);
+    const bookedDay=bookings.filter(b=>localDate(new Date(b.starts_at))===day);
+    const bookedWeek=bookings.filter(b=>weekMonday(localDate(new Date(b.starts_at)))===monday);
+    if(bookedDay.length>=4||bookedWeek.length>=20)continue;
+    for(const win of (w.data||[]).filter(v=>v.weekday===wd).sort((a,b)=>a.start_minute-b.start_minute)){
+     const start=new Date(day+'T00:00:00+04:00');start.setTime(start.getTime()+win.start_minute*60000);
+     const end=new Date(start.getTime()+(win.end_minute-win.start_minute)*60000);
+     if(start.getTime()<=Date.now()+60000)continue;
+     if(bookings.some(b=>new Date(b.starts_at)<end&&new Date(b.ends_at)>start))continue;
+     if((pending.data||[]).some(b=>new Date(b.proposed_at)<end&&new Date(new Date(b.proposed_at).getTime()+b.duration_minutes*60000)>start))continue;
+     free.push({start:start.toISOString(),end:end.toISOString(),duration:win.end_minute-win.start_minute});
+    }
+   }
+   return respond({slots:free});
   }
   if(action==='list'){
    const [requests,meetings,notes]=await Promise.all([
@@ -68,20 +120,43 @@ Deno.serve(async(req)=>{
    ]);
    if(requests.error||meetings.error||notes.error)throw Error('Meetings cannot be loaded');
    // Support may view associated customer only through its own linked request.
-   return respond({requests:requests.data,meetings:meetings.data,notifications:notes.data});
+   const ownMeetings=role==='manager'?meetings.data.filter(m=>m.manager_id===user.id):meetings.data;
+   const visibleMeetings=role==='manager'?ownMeetings:role==='support'?ownMeetings:meetings.data;
+   const noteMeetingIds=new Set(visibleMeetings.map(m=>m.id));
+   const visibleNotes=(notes.data||[]).filter(n=>noteMeetingIds.has(n.meeting_id));
+   const history=role==='manager'?await db.from('meeting_status_history').select('meeting_id,actor_id,from_status,to_status,note,created_at').in('meeting_id',visibleMeetings.length?visibleMeetings.map(m=>m.id):['00000000-0000-0000-0000-000000000000']).order('created_at',{ascending:false}).limit(400):{data:[],error:null};
+   if(history.error)throw history.error;
+   return respond({requests:requests.data,meetings:visibleMeetings,notifications:visibleNotes,history:history.data});
   }
   if(action==='availability'){
    if(role!=='manager')return respond({error:'Manager only'},403);
    const windows=body['windows'];
-   if(!Array.isArray(windows)||windows.length>28)return respond({error:'Invalid availability'},400);
+   if(!Array.isArray(windows)||windows.length>20)return respond({error:'Maximum 20 weekly slots'},400);
    const accepted:Array<{manager_id:string;weekday:number;start_minute:number;end_minute:number}>=[];
    for(const item of windows){
-    if(!item||!Number.isInteger(item.weekday)||!Number.isInteger(item.start_minute)||!Number.isInteger(item.end_minute)||item.weekday<0||item.weekday>6||item.start_minute<0||item.end_minute>1440||item.end_minute<=item.start_minute) return respond({error:'Invalid weekly hours'},400);
+    if(!item||!Number.isInteger(item.weekday)||!Number.isInteger(item.start_minute)||!Number.isInteger(item.end_minute)||item.weekday<1||item.weekday>5||item.start_minute<0||item.end_minute>1440||item.end_minute<=item.start_minute) return respond({error:'Invalid weekly hours'},400);
     accepted.push({manager_id:user.id,weekday:item.weekday,start_minute:item.start_minute,end_minute:item.end_minute});
+   }
+   const counts=new Map<number,number>();
+   for(const w of accepted){counts.set(w.weekday,(counts.get(w.weekday)||0)+1);}
+   if([...counts.values()].some(n=>n>4))return respond({error:'Maximum four slots per workday'},400);
+   for(const [i,w] of accepted.entries()){
+    if(accepted.some((v,j)=>j!==i&&v.weekday===w.weekday&&v.start_minute<w.end_minute&&v.end_minute>w.start_minute))
+     return respond({error:'Availability slots must not overlap'},400);
    }
    const deleted=await db.from('manager_availability').delete().eq('manager_id',user.id);if(deleted.error)throw deleted.error;
    if(accepted.length){const created=await db.from('manager_availability').insert(accepted);if(created.error)throw created.error;}
    return respond({message:'Availability saved'});
+  }
+  if(action==='block_date'){
+   if(role!=='manager')return respond({error:'Manager only'},403);
+   const date=asString(body['date']),reason=asString(body['reason'])||'Unavailable';
+   if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(date)||!Number.isFinite(Date.parse(date))||reason.length>500)return respond({error:'Invalid date'},400);
+   const write=body['blocked']===false
+    ?await db.from('manager_blocked_dates').delete().eq('manager_id',user.id).eq('blocked_date',date)
+    :await db.from('manager_blocked_dates').upsert({manager_id:user.id,blocked_date:date,reason});
+   if(write.error)throw write.error;
+   return respond({message:body['blocked']===false?'Day reopened':'Day blocked for future requests'});
   }
   if(action==='request'){
    if(role!=='support')return respond({error:'Support only'},403);
@@ -96,7 +171,11 @@ Deno.serve(async(req)=>{
    if(manager.error||manager.data?.role!=='manager'||manager.data?.status!=='active')return respond({error:'Manager unavailable'},400);
    const end=new Date(start.getTime()+duration*60000);
    const windows=await db.from('manager_availability').select('weekday,start_minute,end_minute').eq('manager_id',managerId);
-   if(windows.error||!tbilisiSlot(start,end,windows.data??[]))return respond({error:'Requested time is outside manager availability'},400);
+   if(windows.error||!sameSlot(start,end,windows.data??[]))return respond({error:'Choose a published manager appointment slot'},400);
+   if(await isBlocked(managerId,start))return respond({error:'Manager blocked this date'},409);
+   if(!await managerLimit(managerId,start))return respond({error:'Daily/weekly meeting limit reached'},409);
+   const held=await db.from('consultation_requests').select('id').eq('manager_id',managerId).eq('status','pending_admin').lt('proposed_at',end.toISOString()).gte('proposed_at',new Date(start.getTime()-180*60000).toISOString());
+   if(held.error||held.data?.some(r=>r.id))return respond({error:'Appointment is awaiting Admin approval'},409);
    const busy=await db.from('consultation_meetings').select('id').eq('manager_id',managerId).in('status',['upcoming','postponed']).lt('starts_at',end.toISOString()).gt('ends_at',start.toISOString()).limit(1);
    if(busy.error||busy.data?.length)return respond({error:'Manager is already booked'},409);
    const inserted=await db.from('consultation_requests').insert({conversation_id:conversationId,customer_id:conversation.data.customer_user_id,support_id:user.id,customer_name:[conversation.data.customer_first_name,conversation.data.customer_last_name].filter(Boolean).join(' ')||'Customer',customer_email:conversation.data.customer_email,reason,manager_id:managerId,proposed_at:start.toISOString(),duration_minutes:duration,customer_agreed:true}).select('id').single();
@@ -111,7 +190,8 @@ Deno.serve(async(req)=>{
    const start=new Date(request.data.proposed_at),end=new Date(start.getTime()+request.data.duration_minutes*60000);
    if(start.getTime()<=Date.now())return respond({error:'Meeting time is in the past; ask Support to reschedule'},409);
    const w=await db.from('manager_availability').select('weekday,start_minute,end_minute').eq('manager_id',request.data.manager_id);
-   if(w.error||!tbilisiSlot(start,end,w.data??[]))return respond({error:'Outside manager availability'},409);
+   if(w.error||!sameSlot(start,end,w.data??[]))return respond({error:'Outside manager appointment slots'},409);
+   if(await isBlocked(request.data.manager_id,start)||!await managerLimit(request.data.manager_id,start))return respond({error:'Meeting limit or blocked day; return to Support'},409);
    const saved=await db.from('consultation_meetings').insert({request_id:id,manager_id:request.data.manager_id,support_id:request.data.support_id,customer_id:request.data.customer_id,created_by:user.id,customer_name:request.data.customer_name,customer_email:request.data.customer_email,reason:request.data.reason,starts_at:start.toISOString(),ends_at:end.toISOString()}).select('id').single();
    if(saved.error)return respond({error:'Time unavailable or meeting already exists'},409);
    await Promise.all([
@@ -128,6 +208,14 @@ Deno.serve(async(req)=>{
    }catch(e){console.warn('Booking notification failed',e instanceof Error?e.message:'unknown');}
    return respond({message:delivered?'Meeting created; customer emailed and Manager notified':'Meeting created; Manager notified, but customer email was not confirmed',id:saved.data.id});
   }
+  if(action==='reject'){
+   if(role!=='admin')return respond({error:'Admin only'},403);
+   const id=asUUID(body['requestId']),reason=asString(body['reason']);
+   if(!id||reason.length<10||reason.length>500)return respond({error:'Provide rejection reason (10-500 characters)'},400);
+   const result=await db.from('consultation_requests').update({status:'rejected',rejected_reason:reason}).eq('id',id).eq('status','pending_admin').select('support_id').maybeSingle();
+   if(result.error||!result.data)return respond({error:'Request no longer pending'},409);
+   return respond({message:'Consultation rejected; Support can see reason'});
+  }
   const id=asUUID(body['meetingId']);if(!id)return respond({error:'Invalid meeting'},400);
   const found=await db.from('consultation_meetings').select('*').eq('id',id).maybeSingle();
   if(found.error||!found.data)return respond({error:'Meeting not found'},404);
@@ -139,8 +227,9 @@ Deno.serve(async(req)=>{
    if(!start||start.getTime()<Date.now()||note.length<10)return respond({error:'New date and reason required'},400);
    const end=new Date(start.getTime()+new Date(meeting.ends_at).getTime()-new Date(meeting.starts_at).getTime());
    const w=await db.from('manager_availability').select('weekday,start_minute,end_minute').eq('manager_id',meeting.manager_id);
-   if(w.error||!tbilisiSlot(start,end,w.data??[]))return respond({error:'Outside available hours'},409);
-   const updated=await db.from('consultation_meetings').update({status:'postponed',starts_at:start.toISOString(),ends_at:end.toISOString(),reschedule_reason:note,reschedule_pending:true,customer_notification_pending:true,updated_at:new Date().toISOString()}).eq('id',id).in('status',['upcoming','postponed']);
+   if(w.error||!sameSlot(start,end,w.data??[]))return respond({error:'Choose an exact available meeting slot'},409);
+   if(await isBlocked(meeting.manager_id,start)||!await managerLimit(meeting.manager_id,start,id))return respond({error:'Date unavailable or limit reached'},409);
+   const updated=await db.from('consultation_meetings').update({status:'postponed',proposed_starts_at:start.toISOString(),proposed_ends_at:end.toISOString(),reschedule_reason:note,reschedule_pending:true,customer_notification_pending:true,updated_at:new Date().toISOString()}).eq('id',id).in('status',['upcoming','postponed']);
    if(updated.error)return respond({error:'Meeting conflicts with another booking'},409);
    await Promise.all([db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:'postponed',note}),db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'support',message:'Meeting postponed. Contact customer to agree on new date and send email notice.'})]);
    try {
@@ -149,21 +238,22 @@ Deno.serve(async(req)=>{
    }catch(e){console.warn('Support postponement email failed',e instanceof Error?e.message:'unknown');}
    return respond({message:'Postponed. Support must notify the customer.'});
   }
-  if(action==='not_held'){
+  if(action==='archive'){
    if(role!=='manager'||meeting.manager_id!==user.id)return respond({error:'Manager only'},403);
-   if(!['upcoming','completed','postponed'].includes(meeting.status))return respond({error:'Invalid status'},409);
-   const reason=asString(body['note']);if(reason.length<10)return respond({error:'Reason required'},400);
-   const saved=await db.from('consultation_meetings').update({status:'not_held',completed_automatically:false,updated_at:new Date().toISOString()}).eq('id',id);
-   if(saved.error)throw saved.error;
-   await db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:'not_held',note:reason});
-   return respond({message:'Meeting marked not held'});
+   if(!['completed','cancelled'].includes(meeting.status))return respond({error:'Only closed meetings can be archived'},409);
+   const updated=await db.from('consultation_meetings').update({archived_at:body['restore']===true?null:new Date().toISOString()}).eq('id',id);
+   if(updated.error)throw updated.error;
+   await db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:meeting.status,note:body['restore']===true?'Restored from archive':'Archived by Manager'});
+   return respond({message:body['restore']===true?'Meeting restored':'Meeting archived'});
   }
   if(action==='cancel'){
-   if(role!=='support'||meeting.support_id!==user.id)return respond({error:'Assigned Support only'},403);
-   if(body['customerConfirmed']!==true)return respond({error:'Customer confirmation required'},400);
-   if(!['upcoming','postponed'].includes(meeting.status))return respond({error:'Already closed'},409);
+   const byManager=role==='manager'&&meeting.manager_id===user.id;
+   const bySupport=role==='support'&&meeting.support_id===user.id;
+   if(!byManager&&!bySupport)return respond({error:'Not permitted'},403);
+   if(bySupport&&body['customerConfirmed']!==true)return respond({error:'Customer confirmation required'},400);
+   if(!['upcoming','postponed','completed'].includes(meeting.status)||(!byManager&&meeting.status==='completed'))return respond({error:'Already closed'},409);
    const reason=asString(body['note']);if(reason.length<10)return respond({error:'Customer cancellation reason required'},400);
-   const updated=await db.from('consultation_meetings').update({status:'cancelled',customer_confirmed_cancel:true,reschedule_pending:false,customer_notification_pending:false,updated_at:new Date().toISOString()}).eq('id',id).in('status',['upcoming','postponed']);
+   const updated=await db.from('consultation_meetings').update({status:'cancelled',customer_confirmed_cancel:bySupport,reschedule_pending:false,customer_notification_pending:false,proposed_starts_at:null,proposed_ends_at:null,completed_automatically:false,updated_at:new Date().toISOString()}).eq('id',id).in('status',byManager?['upcoming','postponed','completed']:['upcoming','postponed']);
    if(updated.error)throw updated.error;
    await Promise.all([db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:meeting.status,to_status:'cancelled',note:reason}),db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'manager',message:'Customer confirmed meeting cancellation with Support: '+reason.slice(0,500)})]);
    // Deliver an additional direct email alert to the assigned manager.
@@ -173,14 +263,23 @@ Deno.serve(async(req)=>{
    }catch(e){console.warn('Manager cancellation email failed',e instanceof Error?e.message:'unknown');}
    return respond({message:'Customer cancellation recorded; Manager notified'});
   }
+  if(action==='decline_postponed'){
+   if(role!=='support'||meeting.support_id!==user.id||meeting.status!=='postponed'||!meeting.reschedule_pending)return respond({error:'Not permitted'},403);
+   await db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'manager',message:'Customer declined postponed slot. Please suggest a new time or cancel.'});
+   return respond({message:'Manager notified that customer declined new time'});
+  }
   if(action==='notify_postponed'){
    if(role!=='support'||meeting.support_id!==user.id)return respond({error:'Assigned Support only'},403);
-   if(meeting.status!=='postponed'||!meeting.customer_notification_pending)return respond({error:'No pending postponement'},409);
+   if(meeting.status!=='postponed'||!meeting.customer_notification_pending||!meeting.proposed_starts_at)return respond({error:'No pending postponement'},409);
    if(body['customerAgreed']!==true)return respond({error:'Please confirm the customer accepted the new date first'},400);
-   const slot=new Date(meeting.starts_at).toLocaleString('en-GB',{timeZone:'Asia/Tbilisi',dateStyle:'full',timeStyle:'short'});
-   await email(meeting.customer_email,'ZELEON — Consultation rescheduled','<p>Hello '+escape(meeting.customer_name)+',</p><p>As agreed with ZELEON Support, your consultation is rescheduled to <strong>'+escape(slot)+' (Tbilisi time)</strong>.</p><p>If you need another change, please contact ZELEON Support through our website.</p>','consultation-moved-'+id+'-'+new Date(meeting.starts_at).getTime());
-   const updated=await db.from('consultation_meetings').update({customer_notification_pending:false,reschedule_pending:false,updated_at:new Date().toISOString()}).eq('id',id).eq('status','postponed');
+   const proposedStart=new Date(meeting.proposed_starts_at),proposedEnd=new Date(meeting.proposed_ends_at);
+   const w=await db.from('manager_availability').select('weekday,start_minute,end_minute').eq('manager_id',meeting.manager_id);
+   if(w.error||!sameSlot(proposedStart,proposedEnd,w.data||[])||await isBlocked(meeting.manager_id,proposedStart)||!await managerLimit(meeting.manager_id,proposedStart,id))return respond({error:'Proposed time is no longer available; ask Manager for another slot'},409);
+   const slot=proposedStart.toLocaleString('en-GB',{timeZone:'Asia/Tbilisi',dateStyle:'full',timeStyle:'short'});
+   await email(meeting.customer_email,'ZELEON — Consultation rescheduled','<p>Hello '+escape(meeting.customer_name)+',</p><p>As agreed with ZELEON Support, your consultation is rescheduled to <strong>'+escape(slot)+' (Tbilisi time)</strong>.</p><p>If you need another change, please contact ZELEON Support through our website.</p>','consultation-moved-'+id+'-'+proposedStart.getTime());
+   const updated=await db.from('consultation_meetings').update({status:'upcoming',starts_at:proposedStart.toISOString(),ends_at:proposedEnd.toISOString(),proposed_starts_at:null,proposed_ends_at:null,customer_notification_pending:false,reschedule_pending:false,updated_at:new Date().toISOString()}).eq('id',id).eq('status','postponed');
    if(updated.error)throw updated.error;
+   await db.from('meeting_status_history').insert({meeting_id:id,actor_id:user.id,from_status:'postponed',to_status:'upcoming',note:'Customer confirmed new time with Support'});
    await db.from('meeting_notifications').insert({meeting_id:id,recipient_role:'manager',message:'Support confirmed the postponed date with customer and sent email'});
    return respond({message:'Customer notified by email; Manager updated'});
   }
