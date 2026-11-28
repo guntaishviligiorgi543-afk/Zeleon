@@ -69,11 +69,11 @@ describe('ManagerNavigation', () => {
     });
   }
 
-  it('shows an accessible link only after checking the user and their RLS-protected assignment', async () => {
+  it('shows an accessible link after checking an initialized user and RLS-protected assignment', async () => {
     const test = setup();
     expect(test.button()).toBeNull();
     await test.fixture.whenStable();
-    expect(test.client.auth.getUser).toHaveBeenCalledOnce();
+    expect(test.client.auth.getUser).not.toHaveBeenCalled();
     expect(test.client.from).toHaveBeenCalledWith('staff_roles');
     expect(test.select).toHaveBeenCalledWith('user_id, role, status');
     expect(test.eq).toHaveBeenCalledWith('user_id', 'manager-id');
@@ -109,12 +109,12 @@ describe('ManagerNavigation', () => {
     expect(test.button()).toBeNull();
   });
 
-  it('fails closed if the server rejects the session', async () => {
+  it('uses an already-initialized auth session without requesting user verification again', async () => {
     const test = setup();
-    test.client.auth.getUser.mockResolvedValueOnce({ data: { user: { id: 'another-user' } }, error: null });
     await test.fixture.whenStable();
-    expect(test.button()).toBeNull();
-    expect(test.client.from).not.toHaveBeenCalled();
+    expect(test.button()?.getAttribute('href')).toBe('/manager');
+    expect(test.client.auth.getUser).not.toHaveBeenCalled();
+    expect(test.client.from).toHaveBeenCalledWith('staff_roles');
   });
 
   it('fails closed if the assignment request fails', async () => {
