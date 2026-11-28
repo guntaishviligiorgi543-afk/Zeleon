@@ -48,7 +48,17 @@ export class Auth {
   private readonly document = inject(DOCUMENT);
   private callbackExchange: { key: string; promise: Promise<'recovery' | 'confirmation'> } | null = null;
   private readonly sessionState = signal<Session | null>(null);
-  readonly user = computed(() => this.toAuthUser(this.sessionState()?.user ?? null));
+  // TOKEN_REFRESHED replaces the Session object without changing user identity.
+  // Preserve the derived user value in that case to avoid re-running every
+  // profile/avatar/consent/staff effect on each token renewal.
+  readonly user = computed(() => this.toAuthUser(this.sessionState()?.user ?? null), {
+    equal: (a, b) =>
+      a?.id === b?.id &&
+      a?.email === b?.email &&
+      a?.firstName === b?.firstName &&
+      a?.lastName === b?.lastName &&
+      a?.phoneNumber === b?.phoneNumber,
+  });
   readonly preferredName = signal('');
   readonly displayName = computed(() => this.preferredName() || [this.user()?.firstName, this.user()?.lastName].filter(Boolean).join(' '));
   readonly isAuthenticated = computed(() => !!this.sessionState()?.user);

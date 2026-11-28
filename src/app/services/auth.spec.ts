@@ -43,6 +43,35 @@ describe('Auth', () => {
     ] });
   });
 
+  it('keeps a stable user signal on token renewal for the same identity', async () => {
+    let authListener!: (event: string, session: any) => void;
+    supabase.auth.onAuthStateChange.mockImplementation((listener: typeof authListener) => {
+      authListener = listener;
+      return { data: { subscription: { unsubscribe: vi.fn() } } };
+    });
+    const auth = TestBed.inject(Auth);
+    await auth.ready;
+    authListener('SIGNED_IN', {
+      user,
+      access_token: 'first-access-token',
+      refresh_token: 'first-refresh-token',
+    });
+    const first = auth.user();
+    expect(first?.id).toBe(user.id);
+    authListener('TOKEN_REFRESHED', {
+      user: { ...user, user_metadata: { ...user.user_metadata } },
+      access_token: 'second-access-token',
+      refresh_token: 'second-refresh-token',
+    });
+    expect(auth.user()).toBe(first);
+    authListener('SIGNED_IN', {
+      user: { ...user, id: 'another-user' },
+      access_token: 'other-access-token',
+    });
+    expect(auth.user()?.id).toBe('another-user');
+    expect(auth.user()).not.toBe(first);
+  });
+
   it('registers with email, password and display metadata', async () => {
     const auth = TestBed.inject(Auth);
     await auth.ready;

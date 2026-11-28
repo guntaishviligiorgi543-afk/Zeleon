@@ -90,15 +90,16 @@ export class ManagerNavigation {
     try {
       // Same RLS-protected assignment source as StaffAccess.load(). This lookup
       // only controls navigation visibility; it grants no workspace privileges.
-      const {
-        data: { user },
-        error: userError,
-      } = await this.client.auth.getUser();
-      if (userError || user?.id !== expectedUserId) throw new Error('Session not verified');
+      // Auth.initialize() verifies the browser session once. This lookup is
+      // only for showing a navigation shortcut, not for granting staff access.
+      // Avoid calling auth.getUser() on focus/navigation: repeated auth-server
+      // verification can trigger unnecessary token refreshes and rate limits.
+      if (!this.auth.initialized() || this.auth.user()?.id !== expectedUserId)
+        return;
       const { data, error } = await this.client
         .from('staff_roles')
         .select('user_id, role, status')
-        .eq('user_id', user.id)
+        .eq('user_id', expectedUserId)
         .maybeSingle();
       if (error) throw error;
       if (version !== this.requestVersion || this.auth.user()?.id !== expectedUserId) return;
