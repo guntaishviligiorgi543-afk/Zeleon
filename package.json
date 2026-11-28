@@ -12,7 +12,7 @@
     "test:seo:browser": "node scripts/verify-seo.mjs",
     "test:seo:local": "node scripts/verify-local.mjs",
     "test:prerender": "node scripts/prerender.mjs validate",
-    "test:public-safety": "ng test --watch=false --include=src/app/services/seo.spec.ts --include=src/app/services/products.spec.ts --include=src/app/services/cart.spec.ts --include=src/app/services/auth*.spec.ts --include=src/app/services/staff-access.spec.ts --include=src/app/guards/*.spec.ts --include=src/app/pages/product-details/*.spec.ts --include=src/app/components/product-card/*.spec.ts --include=src/app/pages/shop/*.spec.ts --include=src/app/pages/auth-callback/*.spec.ts --include=src/app/pages/staff-auth/*.spec.ts",
+    "test:public-safety": "ng test --watch=false --include=src/app/services/seo.spec.ts --include=src/app/services/products.spec.ts --include=src/app/services/cart.spec.ts --include=src/app/services/free-shipping.spec.ts --include=src/app/services/auth*.spec.ts --include=src/app/services/staff-access.spec.ts --include=src/app/guards/*.spec.ts --include=src/app/pages/product-details/*.spec.ts --include=src/app/components/product-card/*.spec.ts --include=src/app/pages/shop/*.spec.ts --include=src/app/pages/auth-callback/*.spec.ts --include=src/app/pages/staff-auth/*.spec.ts",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

@@ -15,6 +15,17 @@ describe('Cart', () => {
     service = TestBed.inject(Cart);
   });
 
+  it('keeps the signed-in cart for a browser refresh and clears storage when emptied', () => {
+    const product = { id: 'flavor-1', name: 'Berry Energy', slug: 'berry', price: 12,
+      currency: 'USD', stock: 50, category: 'classic', categoryName: 'Classic', image: '' };
+    expect(service.add(product, 3)).toBe(true);
+    const stored = sessionStorage.getItem('zeleon.cart.session.v1:user-1');
+    expect(stored).toBeTruthy();
+    expect(JSON.parse(stored!)).toEqual([{ product, quantity: 3 }]);
+    service.clear();
+    expect(sessionStorage.getItem('zeleon.cart.session.v1:user-1')).toBeNull();
+  });
+
   it('should be created', () => {
     expect(service).toBeTruthy();
   });
