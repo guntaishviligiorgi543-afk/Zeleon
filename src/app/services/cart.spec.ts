@@ -7,6 +7,10 @@ describe('Cart', () => {
   let service: Cart;
 
   beforeEach(() => {
+    for (let i = sessionStorage.length - 1; i >= 0; i--) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith('zeleon.cart.session.v1:')) sessionStorage.removeItem(key);
+    }
     TestBed.configureTestingModule({ providers: [{ provide: Auth, useFactory: createAuthenticatedAuthStub }] });
     service = TestBed.inject(Cart);
   });

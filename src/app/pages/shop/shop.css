@@ -383,3 +383,11 @@ section {
 @media (max-width: 600px) {
   .shop-empty-state { min-height: 320px; padding: 42px 12px; }
 }
+
+/* Free-shipping reminder is deliberately a non-modal surface and does not
+   obscure the filters, cart actions, or page navigation. */
+.shipping-popup{position:fixed;z-index:70;right:clamp(12px,2vw,28px);bottom:clamp(16px,3vw,32px);width:min(380px,calc(100vw - 24px));box-sizing:border-box;border:1px solid #83b8eb80;border-radius:18px;padding:18px 20px;background:linear-gradient(145deg,#13233c,#0a1122 92%);box-shadow:0 18px 55px #0009;color:#fff;text-transform:none;display:grid;gap:10px;font-family:'Montserrat',Arial,sans-serif;animation:shipping-pop-in 260ms ease-out;}
+.shipping-popup-top{display:flex;align-items:center;gap:9px}.shipping-popup-top strong{font-size:14px;font-weight:700;line-height:1.35}.shipping-popup-icon{display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:#7dc4ff24;color:#85c8ff;flex-shrink:0}.shipping-popup-minimize{margin-left:auto;flex-shrink:0;width:34px;height:34px;border:1px solid #ffffff45;border-radius:9px;color:#fff;background:#ffffff13;font-size:24px;line-height:1;cursor:pointer}.shipping-popup-minimize:hover,.shipping-popup-minimize:focus-visible{background:#ffffff28;outline-offset:2px}.shipping-popup p{margin:0;font-size:13px;line-height:1.65;color:#d4e2f3}.shipping-popup p strong{color:#fff}.shipping-popup small{font-size:11px;color:#a7bcd5}.shipping-popup-track{height:7px;overflow:hidden;background:#ffffff28;border-radius:20px}.shipping-popup-track>span{display:block;height:100%;border-radius:20px;background:linear-gradient(90deg,#7dbdff,#a2e7ff);transition:width 220ms}.shipping-popup-success{border-color:#8be1c166}.shipping-popup-success .shipping-popup-icon{color:#a8ffe2;background:#44b68d26}
+@keyframes shipping-pop-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:600px){.shipping-popup{right:12px;bottom:max(12px,env(safe-area-inset-bottom));padding:15px 16px;width:min(350px,calc(100vw - 24px))}.shipping-popup-top strong{font-size:12px}.shipping-popup p{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.shipping-popup{animation:none}.shipping-popup-track>span{transition:none}}

@@ -220,3 +220,5 @@ button:active:not(:disabled), a:active { transform: translateY(1px); }
   .cart-dialog[open] .cart-empty { animation: none; }
   :host *, :host *::before, :host *::after { transition: none !important; }
 }
+
+.free-shipping-inline{margin:8px 0 12px;border:1px solid #8ac5ff55;border-radius:10px;padding:10px 12px;background:#85bfff13;color:#d8e9ff;font-size:12px;line-height:1.6;text-align:left}.free-shipping-inline strong{color:#fff}

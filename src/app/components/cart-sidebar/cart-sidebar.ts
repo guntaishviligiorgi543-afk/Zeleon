@@ -4,6 +4,7 @@ import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CurrencyPipe } from '@angular/common';
 import { Cart, CartLine } from '../../services/cart';
+import { FreeShipping } from '../../services/free-shipping';
 
 type CartPhase = 'closed' | 'opening' | 'open' | 'closing';
 type ProductId = CartLine['product']['id'];
@@ -31,6 +32,7 @@ export class CartSidebar {
     finally { if (version === this.refreshVersion) this.validating.set(false); }
   }
   readonly cart = inject(Cart);
+  readonly freeShipping = inject(FreeShipping);
   readonly phase = signal<CartPhase>('closed');
   readonly opened = computed(() => this.phase() !== 'closed');
   readonly removingIds = signal<ReadonlySet<ProductId>>(new Set());

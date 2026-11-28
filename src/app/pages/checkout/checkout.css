@@ -141,3 +141,5 @@ dl > .summary-total { margin-top: 4px; padding-top: 18px; border-top: 1px solid 
 
 .action-icon { display:inline-block; width:20px; height:20px; flex-shrink:0; vertical-align:middle; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; }
 .quantity button,.arrow { display:grid; place-items:center; }
+
+.free-shipping-inline{margin:14px 0;padding:12px 14px;border:1px solid #89c7ff50;border-radius:10px;background:#85bfff12;color:#d9e9fd;font-size:12px;line-height:1.6}.free-shipping-inline strong{color:#fff}

@@ -1,16 +1,18 @@
 import { afterNextRender, Component, DestroyRef, ElementRef, inject, NgZone, signal } from '@angular/core';
+import { CurrencyPipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { combineLatest } from 'rxjs';
 import { Product } from '../../models/product';
 import { Products } from '../../services/products';
 import { ProductCard } from '../../components/product-card/product-card';
+import { FreeShipping } from '../../services/free-shipping';
 
 type Category = string;
 type Sort = 'default' | 'priceLowToHigh' | 'priceHighToLow' | 'nameAToZ' | 'nameZToA';
 
 @Component({
-  imports: [RouterLink, ProductCard],
+  imports: [RouterLink, ProductCard, CurrencyPipe],
   selector: 'app-shop',
   styleUrl: './shop.css',
   templateUrl: './shop.html',
@@ -25,6 +27,7 @@ export class Shop {
   readonly error = signal('');
   readonly pageSize = 6;
   readonly currentPage = signal(1);
+  readonly freeShipping = inject(FreeShipping);
   private readonly catalog = inject(Products);
   private readonly router = inject(Router);
   private request?: AbortController;

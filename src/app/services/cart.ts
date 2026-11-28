@@ -1,4 +1,5 @@
-import { computed, effect, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Subject } from 'rxjs';
 import { Auth } from './auth';
 import { Product } from '../models/product';
@@ -10,6 +11,7 @@ export interface CartLine { product: Product; quantity: number; }
 export class Cart {
   private readonly auth = inject(Auth);
   private readonly analytics = inject(Analytics);
+  private readonly browser = isPlatformBrowser(inject(PLATFORM_ID));
   readonly authenticated = computed(() => this.auth.initialized() && this.auth.isAuthenticated() && !this.auth.recovering());
   private readonly owner = computed(() => this.authenticated() ? this.auth.user()?.id ?? null : null);
   private readonly state = signal<{ owner: string | null; lines: readonly CartLine[] }>({ owner: null, lines: [] });
@@ -21,8 +23,14 @@ export class Cart {
     let previous = this.owner();
     effect(() => {
       const owner = this.owner();
-      if (this.state().owner !== owner) this.state.set({ owner, lines: [] });
-      if (previous !== owner) { previous = owner; this.accountChanges.next(); }
+      if (previous !== owner) {
+        // A browser refresh creates a new service, so previous is null and
+        // restores this signed-in user's cart. Switching/signing out clears it.
+        if (previous) this.forget(previous);
+        this.state.set({ owner, lines: owner ? this.restore(owner) : [] });
+        previous = owner;
+        this.accountChanges.next();
+      }
     });
   }
   requestAccess(): boolean {
@@ -30,8 +38,46 @@ export class Cart {
     this.loginRequests.next();
     return false;
   }
+  private storageKey(owner: string): string { return 'zeleon.cart.session.v1:' + owner; }
+
+  private restore(owner: string): readonly CartLine[] {
+    if (!this.browser) return [];
+    try {
+      const raw = sessionStorage.getItem(this.storageKey(owner));
+      if (!raw) return [];
+      const data: unknown = JSON.parse(raw);
+      if (!Array.isArray(data)) return [];
+      return data.slice(0, 60).filter((entry): entry is CartLine => {
+        if (!entry || typeof entry !== 'object') return false;
+        const item = entry as Partial<CartLine>;
+        const p = item.product;
+        return !!p && (typeof p.id === 'string' || typeof p.id === 'number') &&
+          typeof p.price === 'number' && Number.isFinite(p.price) && p.price >= 0 &&
+          typeof p.currency === 'string' &&
+          typeof p.name === 'string' &&
+          Number.isInteger(item.quantity) && (item.quantity ?? 0) >= 1 && (item.quantity ?? 0) <= 99;
+      });
+    } catch { return []; }
+  }
+
+  private persist(): void {
+    const owner = this.owner();
+    if (!this.browser || !owner) return;
+    try {
+      if (this.items().length) sessionStorage.setItem(this.storageKey(owner), JSON.stringify(this.items()));
+      else sessionStorage.removeItem(this.storageKey(owner));
+    } catch { /* Storage restrictions must not block shopping. */ }
+  }
+
+  private forget(owner: string): void {
+    if (!this.browser) return;
+    try { sessionStorage.removeItem(this.storageKey(owner)); }
+    catch { /* No storage access. */ }
+  }
+
   private update(change: (items: readonly CartLine[]) => readonly CartLine[]): void {
     this.state.set({ owner: this.owner(), lines: change(this.items()) });
+    this.persist();
   }
   readonly openRequests = new Subject<void>();
 

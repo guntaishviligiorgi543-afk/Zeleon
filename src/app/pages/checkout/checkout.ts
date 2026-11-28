@@ -4,6 +4,7 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, Validators } from '@
 import { RouterLink } from '@angular/router';
 import { Auth } from '../../services/auth';
 import { Cart } from '../../services/cart';
+import { FreeShipping } from '../../services/free-shipping';
 import { Analytics } from '../../services/analytics';
 import { CheckoutCatalog, CheckoutProductFacts, checkoutUnitPrice } from '../../services/checkout-catalog';
 
@@ -17,6 +18,7 @@ const requiredText = (control: AbstractControl) => String(control.value ?? '').t
 })
 export class Checkout {
   readonly cart = inject(Cart);
+  readonly freeShipping = inject(FreeShipping);
   private readonly auth = inject(Auth);
   private readonly analytics = inject(Analytics);
   private readonly catalog = inject(CheckoutCatalog);

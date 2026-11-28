@@ -63,6 +63,15 @@
     <footer class="cart-footer">
       @if (validating()) { <p role="status">Checking availability?</p> }
       @if (validationError()) { <p role="alert">{{ validationError() }}</p> }
+      @if (freeShipping.progress().visible) {
+        <p class="free-shipping-inline" role="status">
+          @if (freeShipping.unlocked()) {
+            <strong>✓ Free shipping unlocked!</strong> Your item subtotal reached $40.
+          } @else {
+            Add <strong>{{ freeShipping.remaining() | currency:'USD' }}</strong> more for FREE shipping on orders of $40 or more.
+          }
+        </p>
+      }
       <div class="estimated-total">
         <span>Estimated total</span>
         <span class="total-values">

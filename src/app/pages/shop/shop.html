@@ -1,4 +1,24 @@
 <section class="shop-section">
+  @if (freeShipping.popupVisible()) {
+    <aside class="shipping-popup" [class.shipping-popup-success]="freeShipping.showSuccess()" role="status" aria-live="polite" aria-label="Free shipping progress">
+      <div class="shipping-popup-top">
+        <span class="shipping-popup-icon" aria-hidden="true">✦</span>
+        <strong>{{ freeShipping.showSuccess() ? 'FREE SHIPPING UNLOCKED!' : 'Almost there! Free shipping awaits.' }}</strong>
+        @if (!freeShipping.showSuccess()) {
+          <button type="button" class="shipping-popup-minimize" (click)="freeShipping.collapse()" aria-label="Minimize free shipping reminder" title="Minimize until page refresh">−</button>
+        }
+      </div>
+      @if (freeShipping.showSuccess()) {
+        <p>Your cart has reached $40. Enjoy free shipping when ordering becomes available.</p>
+      } @else {
+        <p>Add <strong>{{ freeShipping.remaining() | currency:'USD' }}</strong> more to your cart to unlock FREE shipping on $40+ orders.</p>
+        <div class="shipping-popup-track" role="progressbar" aria-label="Free shipping threshold" [attr.aria-valuenow]="freeShipping.progress().percent" aria-valuemin="0" aria-valuemax="100">
+          <span [style.width.%]="freeShipping.progress().percent"></span>
+        </div>
+        <small>{{ freeShipping.progress().percent }}% of your $40 goal reached</small>
+      }
+    </aside>
+  }
   <div class="navigationInfo">
     <p class="breadcrumb">
       <a routerLink="/">Home</a> / <a routerLink="/shop">Shop</a>

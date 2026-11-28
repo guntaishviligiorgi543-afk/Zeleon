@@ -2,6 +2,7 @@ import { afterNextRender, Component, computed, DestroyRef, effect, inject, signa
 import { CurrencyPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { Cart as CartStore } from '../../services/cart';
+import { FreeShipping } from '../../services/free-shipping';
 import { CheckoutCatalog, CheckoutProductFacts, checkoutUnitPrice } from '../../services/checkout-catalog';
 
 @Component({
@@ -10,6 +11,7 @@ import { CheckoutCatalog, CheckoutProductFacts, checkoutUnitPrice } from '../../
 })
 export class Cart {
   readonly cart = inject(CartStore);
+  readonly freeShipping = inject(FreeShipping);
   private readonly catalog = inject(CheckoutCatalog);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
